@@ -1,0 +1,26 @@
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+COPY apps/worker/package*.json ./apps/worker/
+COPY packages/db/package*.json ./packages/db/
+COPY packages/ai/package*.json ./packages/ai/
+RUN npm ci
+
+COPY . .
+RUN npx prisma generate --schema=./packages/db/prisma/schema.prisma
+RUN npm run build --workspace=packages/db
+RUN npm run build --workspace=packages/ai
+RUN npm run build --workspace=apps/worker
+
+FROM node:18-alpine AS runner
+WORKDIR /app
+RUN apk add --no-cache libc6-compat openssl
+ENV NODE_ENV=production
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages/db ./packages/db
+COPY --from=builder /app/packages/ai ./packages/ai
+COPY --from=builder /app/apps/worker/dist ./apps/worker/dist
+COPY --from=builder /app/apps/worker/package*.json ./apps/worker/
+
+CMD ["node", "apps/worker/dist/index.js"]

@@ -1,0 +1,218 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+enum Role {
+  USER
+  TEAM_MEMBER
+  ADMIN
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  UNPAID
+}
+
+enum ProjectStatus {
+  DRAFT
+  GENERATING
+  FAILED
+  PUBLISHED
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String?
+  passwordHash  String?
+  image         String?
+  role          Role           @default(USER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Tenant / Team relationships
+  tenantId      String
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  memberships   TeamMember[]
+  apiKeys       ApiKey[]
+}
+
+model Tenant {
+  id                   String             @id @default(uuid())
+  name                 String
+  slug                 String             @unique // Subdomain e.g. "tenant.webbing.io"
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  
+  // Relations
+  users                User[]
+  projects             Project[]
+  subscription         Subscription?
+  usageMetrics         UsageMetric[]
+  teamMembers          TeamMember[]
+}
+
+model TeamMember {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @default(TEAM_MEMBER)
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, userId])
+}
+
+model Subscription {
+  id                 String             @id @default(uuid())
+  tenantId           String             @unique
+  tenant             Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  planId             String             // stripe/razorpay price ID
+  status             SubscriptionStatus
+  stripeCustomerId   String?            @unique
+  stripeSubscriptionId String?          @unique
+  razorpaySubscriptionId String?        @unique
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean            @default(false)
+  creditsLimit       Int                @default(10) // Monthly allocation
+  creditsUsed        Int                @default(0)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model Project {
+  id            String        @id @default(uuid())
+  name          String
+  description   String?
+  subdomain     String        @unique
+  status        ProjectStatus @default(DRAFT)
+  theme         Json          // { primary: "#000", font: "Inter", etc. }
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Tenant reference
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Custom Domain Mapping
+  customDomain  CustomDomain?
+  
+  // Pages and Assets
+  pages         Page[]
+  assets        Asset[]
+  ecomStore     EcomStore?
+}
+
+model Page {
+  id            String    @id @default(uuid())
+  projectId     String
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  slug          String    // e.g. "about", "contact"
+  title         String
+  description   String?
+  seoMetadata   Json?     // { title: "...", description: "...", keywords: [] }
+  sections      Section[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([projectId, slug])
+}
+
+model Section {
+  id            String   @id @default(uuid())
+  pageId        String
+  page          Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type          String   // e.g. "HERO", "FEATURES", "FOOTER"
+  order         Int
+  content       Json     // Raw structured block content (headers, copy, CTA URLs)
+  styles        Json     // Section-specific Tailwind override classes or CSS variables
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CustomDomain {
+  id            String   @id @default(uuid())
+  projectId     String   @unique
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  hostname      String   @unique // e.g. "customerdomain.com"
+  verified      Boolean  @default(false)
+  dnsToken      String   // TXT record value for validation
+  sslStatus     String   @default("PENDING") // PENDING, ACTIVE, FAILED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Asset {
+  id            String   @id @default(uuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  url           String
+  key           String   // R2 Object key
+  fileSize      Int
+  mimeType      String
+  createdAt     DateTime @default(now())
+}
+
+model UsageMetric {
+  id            String   @id @default(uuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actionType    String   // e.g. "AI_GENERATION", "IMAGE_OPTIMIZATION"
+  tokenCount    Int      @default(0)
+  creditsCost   Int      @default(1)
+  createdAt     DateTime @default(now())
+}
+
+model EcomStore {
+  id            String    @id @default(uuid())
+  projectId     String    @unique
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  currency      String    @default("USD")
+  products      Product[]
+  orders        Order[]
+}
+
+model Product {
+  id            String    @id @default(uuid())
+  storeId       String
+  store         EcomStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name          String
+  description   String
+  price         Decimal   @db.Decimal(10, 2)
+  images        String[]
+  inventory     Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Order {
+  id            String    @id @default(uuid())
+  storeId       String
+  store         EcomStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customerEmail String
+  customerName  String
+  items         Json      // [{ productId, quantity, price }]
+  total         Decimal   @db.Decimal(10, 2)
+  status        String    @default("PENDING") // PENDING, PAID, SHIPPED, REFUNDED
+  paymentId     String?   // Stripe/Razorpay charge ID
+  createdAt     DateTime  @default(now())
+}
+
+model ApiKey {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key           String   @unique
+  createdAt     DateTime @default(now())
+}

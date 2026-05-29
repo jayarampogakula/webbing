@@ -1,0 +1,37 @@
+{
+  "name": "webbing",
+  "version": "0.1.0",
+  "description": "Production-grade multi-tenant AI Website Builder SaaS",
+  "keywords": [],
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --parallel",
+    "build": "npm run build --workspaces",
+    "start": "npm run start --workspaces",
+    "ts": "npm run ts --workspaces",
+    "db:generate": "prisma generate --schema=packages/db/prisma/schema.prisma",
+    "db:push": "prisma db push --schema=packages/db/prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "zod": "^3.22.4",
+    "dotenv": "^16.4.7",
+    "ioredis": "^5.3.2",
+    "bullmq": "^5.8.0",
+    "stripe": "^14.18.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0",
+    "typescript": "^5.8.3",
+    "rimraf": "^6.0.1",
+    "cross-env": "^7.0.3"
+  },
+  "engines": {
+    "node": ">=20",
+    "npm": ">=10.0.0"
+  }
+}

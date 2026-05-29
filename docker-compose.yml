@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: webbing-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-supersecret}
+      POSTGRES_DB: ${DB_NAME:-webbing}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: webbing-redis
+    restart: always
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispassword}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+
+  nextjs:
+    build:
+      context: ./
+      dockerfile: docker/prod/Dockerfile.app
+    container_name: webbing-app
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-supersecret}@postgres:5432/${DB_NAME:-webbing}?schema=public
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-super-secret-auth-key}
+      NEXT_PUBLIC_APP_URL: ${APP_URL:-https://app.webbing.io}
+    ports:
+      - "3000:3000"
+
+  worker:
+    build:
+      context: ./
+      dockerfile: docker/prod/Dockerfile.worker
+    container_name: webbing-worker
+    restart: always
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-supersecret}@postgres:5432/${DB_NAME:-webbing}?schema=public
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+
+volumes:
+  postgres_data:
+  redis_data:
+
+

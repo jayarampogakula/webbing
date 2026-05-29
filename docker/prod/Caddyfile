@@ -1,0 +1,22 @@
+{
+    # Enable dynamic On-Demand TLS
+    on_demand_tls {
+        # Ask Next.js SaaS if custom domains are verified before generating SSL
+        ask http://nextjs:3000/api/domains/check
+        interval 2m
+        burst 10
+    }
+}
+
+# Main SaaS and subdomain router
+*.webbing.io, webbing.io {
+    reverse_proxy nextjs:3000
+}
+
+# Fallback for dynamic customer custom domains mapping
+:443 {
+    tls {
+        on_demand
+    }
+    reverse_proxy nextjs:3000
+}

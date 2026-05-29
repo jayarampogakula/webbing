@@ -1,0 +1,214 @@
+"use client";
+
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+
+interface GeneratorFormProps {
+  user: { userId: string; email: string; role: string; tenantId: string } | null;
+}
+
+export default function GeneratorForm({ user }: GeneratorFormProps) {
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [niche, setNiche] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [style, setStyle] = useState("Modern Dark Style");
+  const [ecommerce, setEcommerce] = useState(false);
+  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState<{ projectId: string; subdomain: string } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess(null);
+
+    if (!user) {
+      setError("You must be signed in to generate a website. Redirecting to Sign In...");
+      setTimeout(() => {
+        router.push("/signin");
+      }, 2000);
+      return;
+    }
+
+    if (!name.trim()) {
+      setError("Please enter a name for your website.");
+      return;
+    }
+    if (!niche.trim()) {
+      setError("Please specify your website's niche (e.g., Restaurant, Portfolio).");
+      return;
+    }
+    if (prompt.trim().length < 5) {
+      setError("Please write a description of at least 5 characters.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          niche: niche.trim(),
+          prompt: prompt.trim(),
+          style,
+          colors: style.includes("Light") ? "#ffffff" : "#0f172a",
+          ecommerce,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to generate website.");
+      }
+
+      setSuccess({
+        projectId: data.projectId,
+        subdomain: data.subdomain,
+      });
+      // Clear inputs
+      setName("");
+      setNiche("");
+      setPrompt("");
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: "750px", margin: "0 auto", textAlign: "left" }}>
+      <form onSubmit={handleSubmit} className="glass-card" style={{ padding: "2rem", borderRadius: "1.25rem", border: "1px solid rgba(255, 255, 255, 0.08)", boxShadow: "0 20px 40px rgba(0, 0, 0, 0.3)", backdropFilter: "blur(20px)" }}>
+        <h3 style={{ margin: "0 0 1.5rem 0", fontSize: "1.25rem", fontWeight: 700, color: "#ffffff" }}>Generate Your AI Website</h3>
+        
+        {error && (
+          <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#f87171", padding: "1rem", borderRadius: "0.75rem", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", color: "#34d399", padding: "1.25rem", borderRadius: "0.75rem", marginBottom: "1.5rem", fontSize: "0.95rem" }}>
+            <h4 style={{ margin: "0 0 0.5rem 0", fontWeight: 700 }}>Success! Your website is being built 🪄</h4>
+            <p style={{ margin: "0 0 0.75rem 0", color: "#a7f3d0", fontSize: "0.9rem" }}>
+              Our background worker is constructing your pages, copy, layout, and theme structure.
+            </p>
+            <a 
+              href={`http://${success.subdomain}.localhost:3000`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ display: "inline-block", background: "#10b981", color: "#ffffff", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontWeight: 600, textDecoration: "none", fontSize: "0.85rem", transition: "background 0.2s" }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "#059669"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "#10b981"}
+            >
+              Visit {success.subdomain}.localhost:3000 ↗
+            </a>
+          </div>
+        )}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.25rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <label style={{ fontSize: "0.85rem", color: "#9ca3af", fontWeight: 600 }}>Website Name</label>
+            <input 
+              type="text" 
+              placeholder="e.g. My Vegan Bistro" 
+              className="premium-input"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <label style={{ fontSize: "0.85rem", color: "#9ca3af", fontWeight: 600 }}>Niche/Category</label>
+            <input 
+              type="text" 
+              placeholder="e.g. Restaurant, Agency" 
+              className="premium-input"
+              value={niche}
+              onChange={(e) => setNiche(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "1.25rem" }}>
+          <label style={{ fontSize: "0.85rem", color: "#9ca3af", fontWeight: 600 }}>Describe your business, style, and requirements</label>
+          <textarea 
+            placeholder="e.g. A modern vegan restaurant in Seattle with a dark theme, organic color palette, clean font, and table booking widget..." 
+            className="premium-input"
+            style={{ height: "100px", resize: "none" }}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            disabled={loading}
+          />
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1.5rem", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "1.25rem", alignItems: "center" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+              <select 
+                className="premium-input" 
+                style={{ padding: "0.5rem 1rem", fontSize: "0.85rem" }}
+                value={style}
+                onChange={(e) => setStyle(e.target.value)}
+                disabled={loading}
+              >
+                <option value="Modern Dark Style">Modern Dark Style</option>
+                <option value="Clean Light Minimalist">Clean Light Minimalist</option>
+                <option value="Bold Colorful Vibrant">Bold Colorful Vibrant</option>
+              </select>
+            </div>
+            <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#9ca3af", cursor: "pointer", userSelect: "none" }}>
+              <input 
+                type="checkbox" 
+                style={{ accentColor: "#6366f1", width: "16px", height: "16px" }} 
+                checked={ecommerce}
+                onChange={(e) => setEcommerce(e.target.checked)}
+                disabled={loading}
+              /> 
+              Include E-Commerce
+            </label>
+          </div>
+
+          <button 
+            type="submit"
+            className="glow-btn"
+            style={{ 
+              background: loading ? "rgba(99, 102, 241, 0.4)" : "linear-gradient(to right, #6366f1, #d946ef)", 
+              border: "none", 
+              color: "#ffffff", 
+              padding: "0.85rem 2rem", 
+              borderRadius: "0.75rem", 
+              cursor: loading ? "not-allowed" : "pointer", 
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              boxShadow: "0 4px 15px rgba(217, 70, 239, 0.4)" 
+            }}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <svg className="animate-spin" style={{ width: "18px", height: "18px", marginRight: "4px" }} viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" style={{ opacity: 0.25 }} />
+                  <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Generating Layout...
+              </>
+            ) : (
+              "Generate Website 🪄"
+            )}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
