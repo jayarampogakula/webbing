@@ -1,4 +1,4 @@
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 COPY package*.json ./
@@ -14,7 +14,7 @@ RUN npm run build --workspace=packages/db
 RUN npm run build --workspace=packages/ai
 RUN DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres" NEXTAUTH_SECRET="dummy-secret-key-for-build" npm run build --workspace=apps/web
 
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl
 ENV NODE_ENV=production
