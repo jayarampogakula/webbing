@@ -14,7 +14,10 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const key = await prisma.llmApiKey.findUnique({ where: { id: params.id } });
+  const key = await prisma.llmApiKey.findUnique({ where: { id: params.id } }).catch((error) => {
+    console.error("LLM key table is not ready yet:", error);
+    return null;
+  });
   if (!key) {
     return NextResponse.json({ error: "Key not found" }, { status: 404 });
   }

@@ -32,32 +32,37 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const keys = await prisma.llmApiKey.findMany({
-    where:
-      user.role === "ADMIN"
-        ? {}
-        : {
-            OR: [
-              { scope: LlmKeyScope.GLOBAL, isActive: true },
-              { scope: LlmKeyScope.USER, ownerUserId: user.userId },
-            ],
-          },
-    orderBy: [{ scope: "asc" }, { createdAt: "desc" }],
-    select: {
-      id: true,
-      provider: true,
-      label: true,
-      maskedKey: true,
-      baseUrl: true,
-      model: true,
-      scope: true,
-      ownerUserId: true,
-      isActive: true,
-      createdAt: true,
-    },
-  });
+  try {
+    const keys = await prisma.llmApiKey.findMany({
+      where:
+        user.role === "ADMIN"
+          ? {}
+          : {
+              OR: [
+                { scope: LlmKeyScope.GLOBAL, isActive: true },
+                { scope: LlmKeyScope.USER, ownerUserId: user.userId },
+              ],
+            },
+      orderBy: [{ scope: "asc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        provider: true,
+        label: true,
+        maskedKey: true,
+        baseUrl: true,
+        model: true,
+        scope: true,
+        ownerUserId: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
 
-  return NextResponse.json({ keys });
+    return NextResponse.json({ keys });
+  } catch (error) {
+    console.error("LLM key table is not ready yet:", error);
+    return NextResponse.json({ keys: [] });
+  }
 }
 
 export async function POST(req: Request) {
@@ -69,31 +74,36 @@ export async function POST(req: Request) {
   const payload = keySchema.parse(await req.json());
   const scope = payload.scope === "GLOBAL" && user.role === "ADMIN" ? LlmKeyScope.GLOBAL : LlmKeyScope.USER;
 
-  const key = await prisma.llmApiKey.create({
-    data: {
-      provider: payload.provider as LlmProvider,
-      label: payload.label.trim(),
-      secret: payload.apiKey.trim(),
-      maskedKey: maskKey(payload.apiKey),
-      baseUrl: payload.baseUrl || null,
-      model: payload.model || null,
-      scope,
-      ownerUserId: scope === LlmKeyScope.USER ? user.userId : null,
-      createdById: user.userId,
-    },
-    select: {
-      id: true,
-      provider: true,
-      label: true,
-      maskedKey: true,
-      baseUrl: true,
-      model: true,
-      scope: true,
-      ownerUserId: true,
-      isActive: true,
-      createdAt: true,
-    },
-  });
+  try {
+    const key = await prisma.llmApiKey.create({
+      data: {
+        provider: payload.provider as LlmProvider,
+        label: payload.label.trim(),
+        secret: payload.apiKey.trim(),
+        maskedKey: maskKey(payload.apiKey),
+        baseUrl: payload.baseUrl || null,
+        model: payload.model || null,
+        scope,
+        ownerUserId: scope === LlmKeyScope.USER ? user.userId : null,
+        createdById: user.userId,
+      },
+      select: {
+        id: true,
+        provider: true,
+        label: true,
+        maskedKey: true,
+        baseUrl: true,
+        model: true,
+        scope: true,
+        ownerUserId: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
 
-  return NextResponse.json({ key });
+    return NextResponse.json({ key });
+  } catch (error) {
+    console.error("Unable to save LLM key:", error);
+    return NextResponse.json({ error: "LLM key storage is not ready. Please run the latest database migration." }, { status: 503 });
+  }
 }

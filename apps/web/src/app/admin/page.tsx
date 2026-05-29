@@ -7,18 +7,9 @@ import UpgradeButton from "./UpgradeButton";
 import LlmKeyManager from "../components/LlmKeyManager";
 import { Sparkles } from "lucide-react";
 
-export default async function AdminPage() {
-  const sessionToken = cookies().get("webbing-session")?.value;
-  const user = sessionToken ? verifySession(sessionToken) : null;
-
-  if (!user || user.role !== "ADMIN") redirect("/signin");
-
-  const [users, projects, subscriptions, totalTenants, llmKeys] = await Promise.all([
-    prisma.user.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
-    prisma.project.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
-    prisma.subscription.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
-    prisma.tenant.count(),
-    prisma.llmApiKey.findMany({
+async function getLlmKeys() {
+  try {
+    return await prisma.llmApiKey.findMany({
       orderBy: [{ scope: "asc" }, { createdAt: "desc" }],
       select: {
         id: true,
@@ -32,7 +23,25 @@ export default async function AdminPage() {
         isActive: true,
         createdAt: true,
       },
-    }),
+    });
+  } catch (error) {
+    console.error("LLM key table is not ready yet:", error);
+    return [];
+  }
+}
+
+export default async function AdminPage() {
+  const sessionToken = cookies().get("webbing-session")?.value;
+  const user = sessionToken ? verifySession(sessionToken) : null;
+
+  if (!user || user.role !== "ADMIN") redirect("/signin");
+
+  const [users, projects, subscriptions, totalTenants, llmKeys] = await Promise.all([
+    prisma.user.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
+    prisma.project.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
+    prisma.subscription.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
+    prisma.tenant.count(),
+    getLlmKeys(),
   ]);
 
   const totalUsers = users.length;

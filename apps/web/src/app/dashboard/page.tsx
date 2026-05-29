@@ -7,22 +7,13 @@ import GeneratorForm from "../GeneratorForm";
 import LlmKeyManager from "../components/LlmKeyManager";
 import { Sparkles } from "lucide-react";
 
-export default async function DashboardPage() {
-  const sessionToken = cookies().get("webbing-session")?.value;
-  const user = sessionToken ? verifySession(sessionToken) : null;
-
-  if (!user) redirect("/signin");
-
-  const [tenant, llmKeys] = await Promise.all([
-    prisma.tenant.findUnique({
-      where: { id: user.tenantId },
-      include: { subscription: true, projects: { orderBy: { createdAt: "desc" } } },
-    }),
-    prisma.llmApiKey.findMany({
+async function getLlmKeys(userId: string) {
+  try {
+    return await prisma.llmApiKey.findMany({
       where: {
         OR: [
           { scope: "GLOBAL", isActive: true },
-          { scope: "USER", ownerUserId: user.userId },
+          { scope: "USER", ownerUserId: userId },
         ],
       },
       orderBy: [{ scope: "asc" }, { createdAt: "desc" }],
@@ -38,7 +29,25 @@ export default async function DashboardPage() {
         isActive: true,
         createdAt: true,
       },
+    });
+  } catch (error) {
+    console.error("LLM key table is not ready yet:", error);
+    return [];
+  }
+}
+
+export default async function DashboardPage() {
+  const sessionToken = cookies().get("webbing-session")?.value;
+  const user = sessionToken ? verifySession(sessionToken) : null;
+
+  if (!user) redirect("/signin");
+
+  const [tenant, llmKeys] = await Promise.all([
+    prisma.tenant.findUnique({
+      where: { id: user.tenantId },
+      include: { subscription: true, projects: { orderBy: { createdAt: "desc" } } },
     }),
+    getLlmKeys(user.userId),
   ]);
 
   if (!tenant) {
