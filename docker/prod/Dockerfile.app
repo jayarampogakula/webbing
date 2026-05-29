@@ -21,10 +21,10 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=base /app/apps/web/next.config.js ./
-COPY --from=base /app/apps/web/public ./public
 COPY --from=base --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=base --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static
+COPY --from=base --chown=nextjs:nodejs /app/apps/web/next.config.js ./apps/web/next.config.js
+COPY --from=base --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+COPY --from=base --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=base --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=base --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
 COPY --from=base --chown=nextjs:nodejs /app/packages/db/prisma ./packages/db/prisma
