@@ -2,6 +2,7 @@ import React from "react";
 import { cookies } from "next/headers";
 import { verifySession } from "@/lib/session";
 import GeneratorForm from "./GeneratorForm";
+import MarketingHeader from "./components/MarketingHeader";
 import { CheckCircle2, Compass, Globe2, Layers3, Mail, ShieldCheck, Sparkles, Zap } from "lucide-react";
 
 const features = [
@@ -23,34 +24,7 @@ export default function LandingPage() {
 
   return (
     <div className="app-shell">
-      <header className="site-nav">
-        <a className="brand" href="#home">
-          <span className="brand-mark"><Sparkles size={18} /></span>
-          Webbing
-        </a>
-        <nav className="nav-links">
-          <a href="#home">Home</a>
-          <a href="#features">Features</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#about">About us</a>
-          <a href="#contact">Contact us</a>
-          {user && <a href="/dashboard">Dashboard</a>}
-          {user?.role === "ADMIN" && <a href="/admin">Admin</a>}
-        </nav>
-        <div className="nav-actions">
-          {user ? (
-            <>
-              <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>{user.email}</span>
-              <a className="danger-action" href="/api/auth/signout">Sign out</a>
-            </>
-          ) : (
-            <>
-              <a className="secondary-action" href="/signin">Sign in</a>
-              <a className="primary-action" href="/signup">Sign up</a>
-            </>
-          )}
-        </div>
-      </header>
+      <MarketingHeader user={user} />
 
       <main id="home">
         <section className="hero">
