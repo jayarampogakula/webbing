@@ -42,13 +42,49 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/signin");
 
-  const [tenant, llmKeys] = await Promise.all([
-    prisma.tenant.findUnique({
-      where: { id: user.tenantId },
-      include: { subscription: true, projects: { orderBy: { createdAt: "desc" } } },
-    }),
-    getLlmKeys(user.userId),
-  ]);
+  let tenant = null;
+  let llmKeys: Awaited<ReturnType<typeof getLlmKeys>> = [];
+
+  try {
+    [tenant, llmKeys] = await Promise.all([
+      prisma.tenant.findUnique({
+        where: { id: user.tenantId },
+        include: { subscription: true, projects: { orderBy: { createdAt: "desc" } } },
+      }),
+      getLlmKeys(user.userId),
+    ]);
+  } catch (error) {
+    console.error("Dashboard data load failed:", error);
+    return (
+      <div className="app-shell">
+        <header className="site-nav">
+          <a className="brand" href="/">
+            <span className="brand-mark"><Sparkles size={18} /></span>
+            Webbing
+          </a>
+          <nav className="nav-links">
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            {user.role === "ADMIN" && <a href="/admin">Admin</a>}
+          </nav>
+          <div className="nav-actions">
+            <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>{user.email}</span>
+            <a className="danger-action" href="/api/auth/signout">Sign out</a>
+          </div>
+        </header>
+        <main className="app-main">
+          <section className="surface-panel">
+            <span className="eyebrow">Dashboard unavailable</span>
+            <h1>Database schema is still syncing.</h1>
+            <p style={{ color: "#9aa7bd" }}>
+              Your login worked, but the dashboard data could not be read from the production database yet.
+              Rebuild/restart the app container so the entrypoint can run the latest Prisma schema sync.
+            </p>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   if (!tenant) {
     return <div className="app-shell"><main className="app-main"><div className="form-alert">Workspace not found. Please contact support.</div></main></div>;

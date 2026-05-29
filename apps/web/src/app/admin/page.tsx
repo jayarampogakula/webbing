@@ -36,13 +36,52 @@ export default async function AdminPage() {
 
   if (!user || user.role !== "ADMIN") redirect("/signin");
 
-  const [users, projects, subscriptions, totalTenants, llmKeys] = await Promise.all([
-    prisma.user.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
-    prisma.project.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
-    prisma.subscription.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
-    prisma.tenant.count(),
-    getLlmKeys(),
-  ]);
+  let users: any[] = [];
+  let projects: any[] = [];
+  let subscriptions: any[] = [];
+  let totalTenants = 0;
+  let llmKeys: Awaited<ReturnType<typeof getLlmKeys>> = [];
+
+  try {
+    [users, projects, subscriptions, totalTenants, llmKeys] = await Promise.all([
+      prisma.user.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
+      prisma.project.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
+      prisma.subscription.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
+      prisma.tenant.count(),
+      getLlmKeys(),
+    ]);
+  } catch (error) {
+    console.error("Admin data load failed:", error);
+    return (
+      <div className="app-shell">
+        <header className="site-nav">
+          <a className="brand" href="/">
+            <span className="brand-mark"><Sparkles size={18} /></span>
+            Webbing
+          </a>
+          <nav className="nav-links">
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/admin">Admin</a>
+          </nav>
+          <div className="nav-actions">
+            <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>Admin: {user.email}</span>
+            <a className="danger-action" href="/api/auth/signout">Sign out</a>
+          </div>
+        </header>
+        <main className="app-main">
+          <section className="surface-panel">
+            <span className="eyebrow">Admin unavailable</span>
+            <h1>Database schema is still syncing.</h1>
+            <p style={{ color: "#9aa7bd" }}>
+              The admin session is valid, but production database reads failed. Rebuild/restart the app
+              container so the latest Prisma schema and seed can run.
+            </p>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   const totalUsers = users.length;
   const totalSites = projects.length;
