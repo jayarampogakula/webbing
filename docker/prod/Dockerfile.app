@@ -17,6 +17,7 @@ RUN DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres" NEXTAU
 FROM node:20-alpine AS runner
 WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl
+RUN npm install -g prisma@5.22.0
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
