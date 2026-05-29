@@ -40,6 +40,10 @@ const worker = new Worker<WebsiteGenerationJobData>(
       
       // 3. Begin Database Transaction
       await prisma.$transaction(async (tx) => {
+        // Clear previous pages (sections will cascade delete) and store data to support regeneration
+        await tx.page.deleteMany({ where: { projectId } });
+        await tx.ecomStore.deleteMany({ where: { projectId } });
+
         // Update project theme config
         await tx.project.update({
           where: { id: projectId },

@@ -3,9 +3,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
-import GeneratorForm from "../GeneratorForm";
-import LlmKeyManager from "../components/LlmKeyManager";
-import ProjectSettingsModal from "./ProjectSettingsModal";
+import DashboardEditor from "./DashboardEditor";
 import { Sparkles } from "lucide-react";
 
 async function getLlmKeys(userId: string) {
@@ -56,7 +54,17 @@ export default async function DashboardPage() {
         where: { id: user.tenantId },
         include: {
           subscription: true,
-          projects: { include: { customDomain: true }, orderBy: { createdAt: "desc" } },
+          projects: {
+            include: {
+              customDomain: true,
+              pages: {
+                include: {
+                  sections: { orderBy: { order: "asc" } }
+                }
+              }
+            },
+            orderBy: { createdAt: "desc" }
+          },
         },
       }),
       getLlmKeys(user.userId),
@@ -98,20 +106,16 @@ export default async function DashboardPage() {
     return <div className="app-shell"><main className="app-main"><div className="form-alert">Workspace not found. Please contact support.</div></main></div>;
   }
 
-  const totalCredits = tenant.subscription?.creditsLimit || 0;
-  const usedCredits = tenant.subscription?.creditsUsed || 0;
-  const remainingCredits = Math.max(0, totalCredits - usedCredits);
-
   return (
-    <div className="app-shell">
-      <header className="site-nav">
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0a0e17" }}>
+      <header className="site-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: "70px", padding: "0 2rem", margin: 0, background: "rgba(10, 14, 23, 0.95)" }}>
         <a className="brand" href="/">
           <span className="brand-mark"><Sparkles size={18} /></span>
           Webbing
         </a>
         <nav className="nav-links">
           <a href="/">Home</a>
-          <a href="/dashboard">Dashboard</a>
+          <a href="/dashboard" className="active">Dashboard</a>
           {user.role === "ADMIN" && <a href="/admin">Admin</a>}
         </nav>
         <div className="nav-actions">
@@ -120,111 +124,12 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <main className="app-main">
-        <div className="app-title">
-          <div>
-            <span className="eyebrow">Workspace</span>
-            <h1>{tenant.name}</h1>
-            <p>Generate websites, monitor quota, and connect your own AI providers.</p>
-          </div>
-          <div className="metric-row">
-            <div className="stat-tile"><strong>{usedCredits}</strong><span>credits used</span></div>
-            <div className="stat-tile"><strong>{remainingCredits}</strong><span>remaining of {totalCredits}</span></div>
-          </div>
-        </div>
-
-        <GeneratorForm user={user} />
-
-        <LlmKeyManager
-          initialKeys={llmKeys}
-          title="Your LLM API keys"
-          description="Add personal keys for OpenAI, Gemini, Claude, DeepSeek, MiniMax, Kimi, and other providers. Admin global keys are visible here when active."
-        />
-
-        <section className="surface-panel">
-          <div className="section-heading-row">
-            <div>
-              <span className="eyebrow">Generated websites</span>
-              <h2>My websites ({tenant.projects.length})</h2>
-              <p>Track hosting, customize custom domains, or export source bundle code.</p>
-            </div>
-          </div>
-          {tenant.projects.length === 0 ? (
-            <div className="empty-state">No websites yet. Generate your first project above.</div>
-          ) : (
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Site</th>
-                    <th>Hosting & URL</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tenant.projects.map((project) => {
-                    const subdomainUrl = `${protocol}://${project.subdomain}.${baseDomain}`;
-                    const customDomain = project.customDomain;
-                    const hasCustomDomain = customDomain && customDomain.hostname;
-                    const customDomainUrl = hasCustomDomain ? `${protocol}://${customDomain.hostname}` : null;
-                    const projectUrl = project.selfHosted
-                      ? null
-                      : (customDomain && hasCustomDomain && customDomain.verified ? customDomainUrl : subdomainUrl);
-
-                    return (
-                      <tr key={project.id}>
-                        <td><strong>{project.name}</strong></td>
-                        <td>
-                          {project.selfHosted ? (
-                            <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>Self-Hosted / External</span>
-                          ) : (
-                            <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
-                              <code>{project.subdomain}.{baseDomain}</code>
-                              {customDomain && hasCustomDomain && (
-                                <span style={{ fontSize: "0.75rem", color: customDomain.verified ? "#34d399" : "#f87171" }}>
-                                  Domain: {customDomain.hostname} {customDomain.verified ? "(Verified)" : "(Unverified)"}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </td>
-                        <td><span className="status-pill">{project.status}</span></td>
-                        <td>{new Date(project.createdAt).toLocaleDateString()}</td>
-                        <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                            {project.status === "PUBLISHED" ? (
-                              project.selfHosted ? (
-                                <span style={{ color: "#34d399", fontSize: "0.85rem", fontWeight: 600 }}>Self-Hosted</span>
-                              ) : (
-                                <a className="secondary-action" href={projectUrl || "#"} target="_blank" rel="noopener noreferrer">Visit</a>
-                              )
-                            ) : (
-                              <span style={{ color: "#9aa7bd" }}>{project.status === "GENERATING" ? "Building" : "Pending"}</span>
-                            )}
-                            <ProjectSettingsModal
-                              projectId={project.id}
-                              projectName={project.name}
-                              subdomain={project.subdomain}
-                              currentCustomDomain={project.customDomain?.hostname || null}
-                              currentSelfHosted={project.selfHosted}
-                              subscriptionDomainType={tenant.subscription?.domainType || "SUBDOMAIN"}
-                              subscriptionHostingType={tenant.subscription?.hostingType || "OURS"}
-                              baseDomain={baseDomain}
-                              protocol={protocol}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      </main>
+      <DashboardEditor
+        user={user}
+        tenant={tenant as any}
+        baseDomain={baseDomain}
+        protocol={protocol}
+      />
     </div>
   );
 }
