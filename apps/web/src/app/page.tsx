@@ -67,18 +67,7 @@ export default function LandingPage() {
             <>
               <a 
                 href="/signin" 
-                style={{ 
-                  background: "transparent", 
-                  border: "1px solid rgba(255, 255, 255, 0.1)", 
-                  color: "#f3f4f6", 
-                  padding: "0.6rem 1.25rem", 
-                  borderRadius: "0.6rem", 
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
-                  transition: "background 0.2s"
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                className="signin-btn"
               >
                 Sign In
               </a>
@@ -180,7 +169,7 @@ export default function LandingPage() {
                   <li style={{ display: "flex", alignItems: "center", gap: "0.75rem", opacity: 0.4, textDecoration: "line-through" }}><CheckCircle2 size={18} /> Custom domain connection</li>
                 </ul>
               </div>
-              <a href="/signup" className="glow-btn" style={{ display: "block", width: "100%", padding: "0.85rem", borderRadius: "0.75rem", background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)", color: "#f3f4f6", fontWeight: 700, textAlign: "center", transition: "all 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)"}>
+              <a href="/signup" className="plan-btn-secondary">
                 Start Free
               </a>
             </div>
@@ -225,7 +214,7 @@ export default function LandingPage() {
                   <li style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}><CheckCircle2 size={18} color="#10b981" /> Priority ticket support</li>
                 </ul>
               </div>
-              <a href="/signup" className="glow-btn" style={{ display: "block", width: "100%", padding: "0.85rem", borderRadius: "0.75rem", background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)", color: "#f3f4f6", fontWeight: 700, textAlign: "center", transition: "all 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)"}>
+              <a href="/signup" className="plan-btn-secondary">
                 Get Agency
               </a>
             </div>

@@ -172,3 +172,39 @@ a {
 .animate-pulse-slow {
   animation: pulse-slow 8s ease-in-out infinite;
 }
+
+/* Plan and sign-in button helper classes to avoid inline event handlers in Server Components */
+.signin-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f3f4f6;
+  padding: 0.6rem 1.25rem;
+  border-radius: 0.6rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.signin-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.plan-btn-secondary {
+  display: block;
+  width: 100%;
+  padding: 0.85rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f3f4f6;
+  font-weight: 700;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.plan-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
