@@ -34,7 +34,14 @@ export default function middleware(req: NextRequest) {
 
   // Local development fallback/handling
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://webbing.io";
-  const appHost = appUrl.startsWith("http") ? new URL(appUrl).host : appUrl;
+  let appHost = appUrl.startsWith("http") ? new URL(appUrl).host : appUrl;
+
+  // Auto-adapt base domain mapping to support webbing.in dynamically
+  if (hostname.endsWith("webbing.in")) {
+    appHost = "webbing.in";
+  } else if (hostname.endsWith("webbing.io")) {
+    appHost = "webbing.io";
+  }
   
   let currentHost = "";
   if (process.env.NODE_ENV === "production") {
