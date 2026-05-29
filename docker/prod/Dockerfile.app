@@ -3,6 +3,7 @@ WORKDIR /app
 RUN apk add --no-cache libc6-compat
 COPY package*.json ./
 COPY apps/web/package*.json ./apps/web/
+COPY apps/worker/package*.json ./apps/worker/
 COPY packages/db/package*.json ./packages/db/
 COPY packages/ai/package*.json ./packages/ai/
 RUN npm ci
