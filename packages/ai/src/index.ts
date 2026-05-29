@@ -164,7 +164,7 @@ export class AIService {
 
   async generateWebsiteLayout(prompt: string, style: string): Promise<any> {
     const provider = this.getProvider("anthropic"); // Default layout orchestration to Claude
-    const systemPrompt = "You are a master web designer SaaS engine. Respond only with structured layout design parameters matching the business specifications.";
+    const systemPrompt = "You are a master web designer SaaS engine. Respond only with structured layout design parameters matching the business specifications. Favor modern, non-white visual systems with rich contrast, clear spacing, and complete sections.";
     const userPrompt = `
       Create a website layout mapping for the following business:
       Description: ${prompt}
@@ -200,6 +200,31 @@ export class AIService {
                   "items": [
                     { "title": "Feature 1 title", "description": "Short explanation text" }
                   ]
+                }
+              },
+              {
+                "type": "PRICING",
+                "order": 3,
+                "content": {
+                  "plans": [
+                    { "name": "Starter", "price": "$0", "description": "Short plan description" }
+                  ]
+                }
+              },
+              {
+                "type": "ABOUT",
+                "order": 4,
+                "content": {
+                  "heading": "About section heading",
+                  "body": "About section body"
+                }
+              },
+              {
+                "type": "CONTACT",
+                "order": 5,
+                "content": {
+                  "heading": "Contact heading",
+                  "email": "hello@example.com"
                 }
               }
             ]

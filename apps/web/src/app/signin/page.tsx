@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { LogIn, Sparkles } from "lucide-react";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -27,14 +28,8 @@ export default function SignInPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Invalid credentials.");
-      }
-
-      // Redirect to dashboard on success
+      if (!res.ok) throw new Error(data.error || "Invalid credentials.");
       router.push("/dashboard");
       router.refresh();
     } catch (err: any) {
@@ -45,101 +40,39 @@ export default function SignInPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", background: "radial-gradient(circle at top left, #111827, #030712)", padding: "2rem", position: "relative", overflow: "hidden" }}>
-      
-      {/* Decorative Blur Orbs */}
-      <div style={{ position: "absolute", width: "300px", height: "300px", background: "rgba(99, 102, 241, 0.15)", borderRadius: "50%", filter: "blur(80px)", top: "10%", left: "15%", zIndex: 0, pointerEvents: "none" }} />
-      <div style={{ position: "absolute", width: "300px", height: "300px", background: "rgba(217, 70, 239, 0.15)", borderRadius: "50%", filter: "blur(80px)", bottom: "10%", right: "15%", zIndex: 0, pointerEvents: "none" }} />
-
-      <div style={{ width: "100%", maxWidth: "450px", position: "relative", zIndex: 1 }}>
-        
-        {/* Logo/Header */}
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <a href="/" style={{ fontSize: "2rem", fontWeight: "bold", background: "linear-gradient(to right, #6366f1, #3b82f6, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: "-0.03em" }}>Webbing</a>
-          <p style={{ color: "#9ca3af", marginTop: "0.5rem", fontSize: "0.9rem" }}>Sign in to build and manage your AI-powered websites</p>
+    <div className="app-shell">
+      <div className="auth-shell">
+        <div className="auth-copy">
+          <a className="brand" href="/">
+            <span className="brand-mark"><Sparkles size={18} /></span>
+            Webbing
+          </a>
+          <h1>Welcome back to your builder.</h1>
+          <p>Sign in to manage generated websites, credits, provider keys, domains, and publishing status.</p>
+          <div className="demo-box">
+            <strong>Demo accounts</strong>
+            <div>Admin: admin@webbing.in / Admin123</div>
+            <div>User: user@webbing.in / User123</div>
+          </div>
         </div>
 
-        {/* Card Form */}
-        <form onSubmit={handleSubmit} className="glass-card" style={{ padding: "2.5rem 2rem", borderRadius: "1.25rem", border: "1px solid rgba(255, 255, 255, 0.08)", boxShadow: "0 20px 40px rgba(0, 0, 0, 0.4)", backdropFilter: "blur(20px)" }}>
-          <h2 style={{ margin: "0 0 1.5rem 0", fontSize: "1.25rem", fontWeight: 700, color: "#ffffff", textAlign: "center" }}>Welcome Back</h2>
-
-          {error && (
-            <div style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#f87171", padding: "0.85rem 1rem", borderRadius: "0.75rem", marginBottom: "1.5rem", fontSize: "0.85rem" }}>
-              {error}
-            </div>
-          )}
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <label style={{ fontSize: "0.85rem", color: "#9ca3af", fontWeight: 600 }}>Email Address</label>
-              <input 
-                type="email" 
-                placeholder="you@example.com" 
-                className="premium-input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                required
-              />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <label style={{ fontSize: "0.85rem", color: "#9ca3af", fontWeight: 600 }}>Password</label>
-              </div>
-              <input 
-                type="password" 
-                placeholder="••••••••" 
-                className="premium-input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                required
-              />
-            </div>
-
-            <button 
-              type="submit"
-              className="glow-btn"
-              style={{ 
-                background: "linear-gradient(to right, #6366f1, #3b82f6)", 
-                border: "none", 
-                color: "#ffffff", 
-                padding: "0.85rem", 
-                borderRadius: "0.75rem", 
-                cursor: loading ? "not-allowed" : "pointer", 
-                fontWeight: 600,
-                marginTop: "0.5rem",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: "0.5rem",
-                boxShadow: "0 4px 15px rgba(99, 102, 241, 0.3)" 
-              }}
-              disabled={loading}
-            >
-              {loading ? "Authenticating..." : "Sign In"}
-            </button>
+        <form onSubmit={handleSubmit} className="auth-card">
+          <h2>Sign in</h2>
+          {error && <div className="form-alert">{error}</div>}
+          <div className="field-group">
+            <label>Email address</label>
+            <input className="field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" disabled={loading} required />
           </div>
-
-          <div style={{ marginTop: "1.5rem", textAlign: "center", fontSize: "0.85rem", color: "#9ca3af" }}>
-            Don't have an account?{" "}
-            <a href="/signup" style={{ color: "#818cf8", fontWeight: 600, textDecoration: "none" }}>Sign Up</a>
+          <div className="field-group" style={{ marginTop: "1rem" }}>
+            <label>Password</label>
+            <input className="field" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" disabled={loading} required />
           </div>
+          <button className="primary-action" style={{ width: "100%", marginTop: "1.25rem" }} disabled={loading}>
+            <LogIn size={17} />
+            {loading ? "Signing in" : "Sign in"}
+          </button>
+          <div className="auth-links">Need an account? <a href="/signup">Sign up</a></div>
         </form>
-
-        {/* Demo Credentials Helper Box */}
-        <div className="glass-card" style={{ marginTop: "1.5rem", padding: "1rem 1.5rem", borderRadius: "0.75rem", fontSize: "0.85rem", color: "#9ca3af", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
-          <strong style={{ color: "#ffffff" }}>Demo Accounts:</strong>
-          <div style={{ marginTop: "0.5rem", display: "grid", gridTemplateColumns: "1fr", gap: "0.25rem" }}>
-            <div>🔑 <span style={{ color: "#818cf8" }}>Admin:</span> admin@webbing.in / AdminPassword123</div>
-            <div>🔑 <span style={{ color: "#818cf8" }}>User:</span> user@webbing.in / UserPassword123</div>
-          </div>
-        </div>
-
-        <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
-          <a href="/" style={{ fontSize: "0.85rem", color: "#6366f1", textDecoration: "none" }}>← Back to Landing Page</a>
-        </div>
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ async function main() {
   });
 
   // 2. Create or update Admin User
-  const adminPasswordHash = hashPassword("AdminPassword123");
+  const adminPasswordHash = hashPassword("Admin123");
   const adminUser = await prisma.user.upsert({
     where: { email: "admin@webbing.in" },
     update: {
@@ -54,7 +54,7 @@ async function main() {
     },
   });
 
-  console.log(`Ensured Admin User: ${adminUser.email} (Password: AdminPassword123)`);
+  console.log(`Ensured Admin User: ${adminUser.email} (Password: Admin123)`);
 
   // 4. Create or get Standard User Tenant
   const standardTenant = await prisma.tenant.upsert({
@@ -67,7 +67,7 @@ async function main() {
   });
 
   // 5. Create or update Standard User
-  const userPasswordHash = hashPassword("UserPassword123");
+  const userPasswordHash = hashPassword("User123");
   const standardUser = await prisma.user.upsert({
     where: { email: "user@webbing.in" },
     update: {
@@ -104,7 +104,7 @@ async function main() {
     },
   });
 
-  console.log(`Ensured Standard User: ${standardUser.email} (Password: UserPassword123)`);
+  console.log(`Ensured Standard User: ${standardUser.email} (Password: User123)`);
   console.log("Database seeding/upsert completed successfully! 🎉");
 }
 

@@ -29,6 +29,25 @@ enum ProjectStatus {
   PUBLISHED
 }
 
+enum LlmProvider {
+  OPENAI
+  GEMINI
+  CLAUDE
+  DEEPSEEK
+  MINIMAX
+  KIMI
+  MISTRAL
+  GROQ
+  COHERE
+  OPENROUTER
+  CUSTOM
+}
+
+enum LlmKeyScope {
+  GLOBAL
+  USER
+}
+
 model User {
   id            String         @id @default(uuid())
   email         String         @unique
@@ -215,4 +234,24 @@ model ApiKey {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   key           String   @unique
   createdAt     DateTime @default(now())
+}
+
+model LlmApiKey {
+  id            String       @id @default(uuid())
+  provider      LlmProvider
+  label         String
+  secret        String
+  maskedKey     String
+  baseUrl       String?
+  model         String?
+  scope         LlmKeyScope  @default(USER)
+  ownerUserId   String?
+  createdById   String?
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([scope])
+  @@index([ownerUserId])
+  @@index([provider])
 }
