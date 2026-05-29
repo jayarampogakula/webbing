@@ -6,7 +6,7 @@ COPY apps/web/package*.json ./apps/web/
 COPY apps/worker/package*.json ./apps/worker/
 COPY packages/db/package*.json ./packages/db/
 COPY packages/ai/package*.json ./packages/ai/
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps || (mkdir -p /tmp/logs && ls -la /root/.npm/_logs/ && cat /root/.npm/_logs/*.log && exit 1)
 
 COPY . .
 RUN npx prisma generate --schema=./packages/db/prisma/schema.prisma
