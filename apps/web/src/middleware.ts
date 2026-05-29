@@ -85,15 +85,7 @@ export default function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Subdomain routing (e.g., customer.webbing.io or customer.localhost:3000)
-  // If it's a subdomain, rewrite to /_sites/subdomain/[path]
-  if (!currentHost.includes(".")) {
-    return NextResponse.rewrite(new URL(`/_sites/${currentHost}${path}`, req.url));
-  }
-
-  // 3. Custom domain routing (e.g., customdomain.com)
-  // Rewrite to /_sites/custom/[domain]/[path]
-  return NextResponse.rewrite(
-    new URL(`/_sites/custom/${currentHost}${path}`, req.url)
-  );
+  // 2. Subdomain & Custom Domain routing
+  // Rewrites requests to the unified dynamic site renderer
+  return NextResponse.rewrite(new URL(`/_sites/${currentHost}${path}`, req.url));
 }

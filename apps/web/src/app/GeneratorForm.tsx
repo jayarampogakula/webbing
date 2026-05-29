@@ -18,6 +18,18 @@ export default function GeneratorForm({ user }: GeneratorFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<{ projectId: string; subdomain: string } | null>(null);
+  const [siteUrl, setSiteUrl] = useState("");
+  const [siteDisplay, setSiteDisplay] = useState("");
+
+  React.useEffect(() => {
+    if (success && typeof window !== "undefined") {
+      const host = window.location.host;
+      const cleanHost = host.startsWith("app.") ? host.substring(4) : host;
+      const protocol = host.includes("localhost") ? "http:" : window.location.protocol;
+      setSiteUrl(`${protocol}//${success.subdomain}.${cleanHost}`);
+      setSiteDisplay(`${success.subdomain}.${cleanHost}`);
+    }
+  }, [success]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,9 +92,9 @@ export default function GeneratorForm({ user }: GeneratorFormProps) {
         <div className="success-alert">
           <strong>Your website is being built.</strong>
           <p>Pages, sections, copy, and theme settings are being prepared in the background.</p>
-          <a className="secondary-action" href={`http://${success.subdomain}.localhost:3000`} target="_blank" rel="noopener noreferrer">
+          <a className="secondary-action" href={siteUrl || "#"} target="_blank" rel="noopener noreferrer">
             <Globe size={16} />
-            Visit {success.subdomain}.localhost:3000
+            Visit {siteDisplay || "website"}
           </a>
         </div>
       )}

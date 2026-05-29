@@ -5,10 +5,43 @@ import { CheckCircle2, Mail } from "lucide-react";
 
 export default async function GeneratedSitePage({ params }: { params: { subdomain: string; path?: string[] } }) {
   const slug = params.path?.join("/") || "index";
-  const project = await prisma.project.findUnique({
-    where: { subdomain: params.subdomain },
-    include: { pages: { include: { sections: { orderBy: { order: "asc" } } } } },
-  });
+  const hostnameOrSubdomain = params.subdomain.toLowerCase();
+
+  let project = null;
+
+  if (hostnameOrSubdomain.includes(".")) {
+    // Lookup project by verified custom domain
+    const customDomainRecord = await prisma.customDomain.findUnique({
+      where: { hostname: hostnameOrSubdomain },
+      include: {
+        project: {
+          include: {
+            pages: {
+              include: {
+                sections: { orderBy: { order: "asc" } }
+              }
+            }
+          }
+        }
+      }
+    });
+    // Resolve if the custom domain is mapped and verified
+    if (customDomainRecord && customDomainRecord.verified) {
+      project = customDomainRecord.project;
+    }
+  } else {
+    // Lookup by standard subdomain
+    project = await prisma.project.findUnique({
+      where: { subdomain: hostnameOrSubdomain },
+      include: {
+        pages: {
+          include: {
+            sections: { orderBy: { order: "asc" } }
+          }
+        }
+      },
+    });
+  }
 
   if (!project) notFound();
 

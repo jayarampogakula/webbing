@@ -132,6 +132,7 @@ model Project {
 
   // Custom Domain Mapping
   customDomain  CustomDomain?
+  selfHosted    Boolean       @default(false)
   
   // Pages and Assets
   pages         Page[]

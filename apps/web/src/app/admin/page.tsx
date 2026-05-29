@@ -1,5 +1,5 @@
 import React from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
@@ -36,6 +36,10 @@ export default async function AdminPage() {
 
   if (!user || user.role !== "ADMIN") redirect("/signin");
 
+  const hostHeader = headers().get("host") || "webbing.in";
+  const baseDomain = hostHeader.startsWith("app.") ? hostHeader.slice(4) : hostHeader;
+  const protocol = hostHeader.includes("localhost") ? "http" : "https";
+
   let users: any[] = [];
   let projects: any[] = [];
   let subscriptions: any[] = [];
@@ -45,7 +49,7 @@ export default async function AdminPage() {
   try {
     [users, projects, subscriptions, totalTenants, llmKeys] = await Promise.all([
       prisma.user.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
-      prisma.project.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
+      prisma.project.findMany({ include: { tenant: true, customDomain: true }, orderBy: { createdAt: "desc" } }),
       prisma.subscription.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
       prisma.tenant.count(),
       getLlmKeys(),
@@ -168,14 +172,40 @@ export default async function AdminPage() {
                 <tr><th>Site</th><th>Subdomain</th><th>Status</th><th>Workspace</th></tr>
               </thead>
               <tbody>
-                {projects.map((p) => (
-                  <tr key={p.id}>
-                    <td><strong>{p.name}</strong></td>
-                    <td><a href={`http://${p.subdomain}.localhost:3000`} target="_blank" rel="noopener noreferrer">{p.subdomain}.localhost:3000</a></td>
-                    <td><span className="status-pill">{p.status}</span></td>
-                    <td>{p.tenant.name}</td>
-                  </tr>
-                ))}
+                {projects.map((p) => {
+                  const subdomainUrl = `${protocol}://${p.subdomain}.${baseDomain}`;
+                  const hasCustomDomain = p.customDomain && p.customDomain.hostname;
+                  const customDomainUrl = hasCustomDomain ? `${protocol}://${p.customDomain.hostname}` : null;
+                  const projectUrl = p.selfHosted
+                    ? null
+                    : (hasCustomDomain && p.customDomain.verified ? customDomainUrl : subdomainUrl);
+
+                  return (
+                    <tr key={p.id}>
+                      <td><strong>{p.name}</strong></td>
+                      <td>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                          {p.selfHosted ? (
+                            <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>Self-Hosted / External</span>
+                          ) : (
+                            <>
+                              <a href={projectUrl || "#"} target="_blank" rel="noopener noreferrer">
+                                {p.subdomain}.{baseDomain}
+                              </a>
+                              {hasCustomDomain && (
+                                <span style={{ fontSize: "0.75rem", color: p.customDomain.verified ? "#34d399" : "#f87171" }}>
+                                  Domain: {p.customDomain.hostname} {p.customDomain.verified ? "(Verified)" : "(Unverified)"}
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </td>
+                      <td><span className="status-pill">{p.status}</span></td>
+                      <td>{p.tenant.name}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -1,10 +1,11 @@
 import React from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
 import GeneratorForm from "../GeneratorForm";
 import LlmKeyManager from "../components/LlmKeyManager";
+import ProjectSettingsModal from "./ProjectSettingsModal";
 import { Sparkles } from "lucide-react";
 
 async function getLlmKeys(userId: string) {
@@ -42,6 +43,10 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/signin");
 
+  const hostHeader = headers().get("host") || "webbing.in";
+  const baseDomain = hostHeader.startsWith("app.") ? hostHeader.slice(4) : hostHeader;
+  const protocol = hostHeader.includes("localhost") ? "http" : "https";
+
   let tenant = null;
   let llmKeys: Awaited<ReturnType<typeof getLlmKeys>> = [];
 
@@ -49,7 +54,10 @@ export default async function DashboardPage() {
     [tenant, llmKeys] = await Promise.all([
       prisma.tenant.findUnique({
         where: { id: user.tenantId },
-        include: { subscription: true, projects: { orderBy: { createdAt: "desc" } } },
+        include: {
+          subscription: true,
+          projects: { include: { customDomain: true }, orderBy: { createdAt: "desc" } },
+        },
       }),
       getLlmKeys(user.userId),
     ]);
@@ -138,7 +146,7 @@ export default async function DashboardPage() {
             <div>
               <span className="eyebrow">Generated websites</span>
               <h2>My websites ({tenant.projects.length})</h2>
-              <p>Track build status and open published subdomains.</p>
+              <p>Track hosting, customize custom domains, or export source bundle code.</p>
             </div>
           </div>
           {tenant.projects.length === 0 ? (
@@ -149,28 +157,68 @@ export default async function DashboardPage() {
                 <thead>
                   <tr>
                     <th>Site</th>
-                    <th>Subdomain</th>
+                    <th>Hosting & URL</th>
                     <th>Status</th>
                     <th>Created</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {tenant.projects.map((project) => (
-                    <tr key={project.id}>
-                      <td><strong>{project.name}</strong></td>
-                      <td><code>{project.subdomain}.localhost:3000</code></td>
-                      <td><span className="status-pill">{project.status}</span></td>
-                      <td>{new Date(project.createdAt).toLocaleDateString()}</td>
-                      <td>
-                        {project.status === "PUBLISHED" ? (
-                          <a className="secondary-action" href={`http://${project.subdomain}.localhost:3000`} target="_blank" rel="noopener noreferrer">Visit</a>
-                        ) : (
-                          <span style={{ color: "#9aa7bd" }}>{project.status === "GENERATING" ? "Building" : "Pending"}</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {tenant.projects.map((project) => {
+                    const subdomainUrl = `${protocol}://${project.subdomain}.${baseDomain}`;
+                    const customDomain = project.customDomain;
+                    const hasCustomDomain = customDomain && customDomain.hostname;
+                    const customDomainUrl = hasCustomDomain ? `${protocol}://${customDomain.hostname}` : null;
+                    const projectUrl = project.selfHosted
+                      ? null
+                      : (customDomain && hasCustomDomain && customDomain.verified ? customDomainUrl : subdomainUrl);
+
+                    return (
+                      <tr key={project.id}>
+                        <td><strong>{project.name}</strong></td>
+                        <td>
+                          {project.selfHosted ? (
+                            <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>Self-Hosted / External</span>
+                          ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                              <code>{project.subdomain}.{baseDomain}</code>
+                              {customDomain && hasCustomDomain && (
+                                <span style={{ fontSize: "0.75rem", color: customDomain.verified ? "#34d399" : "#f87171" }}>
+                                  Domain: {customDomain.hostname} {customDomain.verified ? "(Verified)" : "(Unverified)"}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td><span className="status-pill">{project.status}</span></td>
+                        <td>{new Date(project.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                            {project.status === "PUBLISHED" ? (
+                              project.selfHosted ? (
+                                <span style={{ color: "#34d399", fontSize: "0.85rem", fontWeight: 600 }}>Self-Hosted</span>
+                              ) : (
+                                <a className="secondary-action" href={projectUrl || "#"} target="_blank" rel="noopener noreferrer">Visit</a>
+                              )
+                            ) : (
+                              <span style={{ color: "#9aa7bd" }}>{project.status === "GENERATING" ? "Building" : "Pending"}</span>
+                            )}
+                            <ProjectSettingsModal
+                              projectId={project.id}
+                              projectName={project.name}
+                              subdomain={project.subdomain}
+                              currentCustomDomain={project.customDomain?.hostname || null}
+                              currentSelfHosted={project.selfHosted}
+                              subscriptionDomainType={tenant.subscription?.domainType || "SUBDOMAIN"}
+                              subscriptionHostingType={tenant.subscription?.hostingType || "OURS"}
+                              baseDomain={baseDomain}
+                              protocol={protocol}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
