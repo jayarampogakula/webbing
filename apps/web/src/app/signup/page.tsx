@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, UserPlus } from "lucide-react";
+import MarketingHeader from "../components/MarketingHeader";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -43,6 +44,7 @@ export default function SignUpPage() {
 
   return (
     <div className="app-shell">
+      <MarketingHeader active="signup" />
       <div className="auth-shell">
         <div className="auth-copy">
           <a className="brand" href="/">

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn, Sparkles } from "lucide-react";
+import MarketingHeader from "../components/MarketingHeader";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -41,6 +42,7 @@ export default function SignInPage() {
 
   return (
     <div className="app-shell">
+      <MarketingHeader active="signin" />
       <div className="auth-shell">
         <div className="auth-copy">
           <a className="brand" href="/">

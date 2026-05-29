@@ -372,7 +372,7 @@ option {
 }
 
 .auth-shell {
-  min-height: 100vh;
+  min-height: calc(100vh - 4.75rem);
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(360px, 520px);
   gap: 2rem;
