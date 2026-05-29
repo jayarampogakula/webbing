@@ -45,7 +45,14 @@ async function ensureDemoUser(email: string, password: string) {
 
   await prisma.subscription.upsert({
     where: { tenantId: tenant.id },
-    update: { planId, status: SubscriptionStatus.ACTIVE, creditsLimit },
+    update: { 
+      planId, 
+      status: SubscriptionStatus.ACTIVE, 
+      creditsLimit,
+      withLlm: true,
+      hostingType: isAdmin ? "BOTH" : "OURS",
+      domainType: isAdmin ? "CUSTOM" : "SUBDOMAIN",
+    },
     create: {
       tenantId: tenant.id,
       planId,
@@ -54,6 +61,9 @@ async function ensureDemoUser(email: string, password: string) {
       currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
       creditsLimit,
       creditsUsed: 0,
+      withLlm: true,
+      hostingType: isAdmin ? "BOTH" : "OURS",
+      domainType: isAdmin ? "CUSTOM" : "SUBDOMAIN",
     },
   });
 

@@ -42,6 +42,9 @@ async function main() {
       planId: "agency-plan",
       status: SubscriptionStatus.ACTIVE,
       creditsLimit: 500,
+      withLlm: true,
+      hostingType: "BOTH",
+      domainType: "CUSTOM",
     },
     create: {
       tenantId: adminTenant.id,
@@ -51,6 +54,9 @@ async function main() {
       currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
       creditsLimit: 500,
       creditsUsed: 0,
+      withLlm: true,
+      hostingType: "BOTH",
+      domainType: "CUSTOM",
     },
   });
 
@@ -92,6 +98,9 @@ async function main() {
       planId: "pro-plan",
       status: SubscriptionStatus.ACTIVE,
       creditsLimit: 100,
+      withLlm: true,
+      hostingType: "OURS",
+      domainType: "SUBDOMAIN",
     },
     create: {
       tenantId: standardTenant.id,
@@ -101,6 +110,9 @@ async function main() {
       currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
       creditsLimit: 100,
       creditsUsed: 0,
+      withLlm: true,
+      hostingType: "OURS",
+      domainType: "SUBDOMAIN",
     },
   });
 

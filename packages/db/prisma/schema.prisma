@@ -106,6 +106,12 @@ model Subscription {
   cancelAtPeriodEnd  Boolean            @default(false)
   creditsLimit       Int                @default(10) // Monthly allocation
   creditsUsed        Int                @default(0)
+
+  // Configurable options
+  withLlm            Boolean            @default(true)
+  hostingType        String             @default("OURS") // "OURS", "THEIRS", "BOTH"
+  domainType         String             @default("SUBDOMAIN") // "SUBDOMAIN", "CUSTOM"
+
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 }

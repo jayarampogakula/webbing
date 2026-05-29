@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
-import UpgradeButton from "./UpgradeButton";
+import PlanEditor from "./PlanEditor";
 import LlmKeyManager from "../components/LlmKeyManager";
 import { Sparkles } from "lucide-react";
 
@@ -192,16 +192,53 @@ export default async function AdminPage() {
           <div className="table-wrap">
             <table className="data-table">
               <thead>
-                <tr><th>Workspace</th><th>Plan</th><th>Status</th><th>Used</th><th>Limit</th></tr>
+                <tr>
+                  <th>Workspace</th>
+                  <th>Plan</th>
+                  <th>Status</th>
+                  <th>Used</th>
+                  <th>Limit</th>
+                  <th>AI / LLM</th>
+                  <th>Hosting</th>
+                  <th>Domain</th>
+                  <th style={{ textAlign: "right" }}>Action</th>
+                </tr>
               </thead>
               <tbody>
                 {subscriptions.map((s) => (
                   <tr key={s.id}>
                     <td><strong>{s.tenant.name}</strong></td>
-                    <td>{s.planId.replace("-", " ")}</td>
+                    <td style={{ textTransform: "capitalize" }}>{s.planId.replace("-", " ")}</td>
                     <td><span className="status-pill">{s.status}</span></td>
                     <td>{s.creditsUsed} credits</td>
-                    <td><UpgradeButton tenantId={s.tenantId} initialLimit={s.creditsLimit} /></td>
+                    <td><strong>{s.creditsLimit} credits</strong></td>
+                    <td>
+                      {s.withLlm ? (
+                        <span style={{ color: "#34d399", fontWeight: 600 }}>Enabled</span>
+                      ) : (
+                        <span style={{ color: "#f87171", fontWeight: 600 }}>Disabled</span>
+                      )}
+                    </td>
+                    <td>
+                      {s.hostingType === "OURS" && "Our Hosting"}
+                      {s.hostingType === "THEIRS" && "Own Hosting"}
+                      {s.hostingType === "BOTH" && "Both options"}
+                    </td>
+                    <td>
+                      {s.domainType === "SUBDOMAIN" && "Subdomain Only"}
+                      {s.domainType === "CUSTOM" && "Custom Domain"}
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      <PlanEditor
+                        tenantId={s.tenantId}
+                        initialPlanId={s.planId}
+                        initialLimit={s.creditsLimit}
+                        initialWithLlm={s.withLlm}
+                        initialHostingType={s.hostingType}
+                        initialDomainType={s.domainType}
+                        initialStatus={s.status}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
