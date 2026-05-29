@@ -90,6 +90,11 @@ option {
   box-shadow: 0 12px 28px rgba(32, 199, 181, 0.2);
 }
 
+.brand-wrapper {
+  display: flex;
+  align-items: center;
+}
+
 .nav-menu-container {
   display: flex;
   flex: 1;
@@ -634,6 +639,13 @@ option {
 }
 
 @media (max-width: 900px) {
+  .brand-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
   .nav-links, .nav-actions, .app-title, .section-heading-row {
     align-items: stretch;
   }

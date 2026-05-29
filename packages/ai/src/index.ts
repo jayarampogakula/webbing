@@ -149,7 +149,59 @@ export class AIService {
       this.providers.push({
         name: "mock",
         generateText: async () => "Mock generation output",
-        generateJson: async () => ({}) as any
+        generateJson: async <T>() => ({
+          theme: {
+            primary: "#07111b",
+            secondary: "#818cf8",
+            fontFamily: "Inter"
+          },
+          pages: [
+            {
+              slug: "index",
+              title: "Home Page",
+              description: "Mock generated website layout.",
+              sections: [
+                {
+                  type: "HERO",
+                  order: 1,
+                  content: {
+                    heading: "Your Beautiful New Website",
+                    subheading: "This layout was generated using Webbing's offline template system. Configure an AI API key in settings to unlock complete generative builds.",
+                    ctaText: "Contact Us Today",
+                    ctaUrl: "#contact"
+                  }
+                },
+                {
+                  type: "FEATURES",
+                  order: 2,
+                  content: {
+                    items: [
+                      { title: "Fast Launch Time", description: "Your custom website is generated dynamically from simple text prompts in seconds." },
+                      { title: "Responsive Layouts", description: "Designed with a mobile-first philosophy that renders beautifully on all viewports." },
+                      { title: "Direct ZIP Export", description: "Export the clean HTML and CSS to host anywhere, or bind subdomains instantly." }
+                    ]
+                  }
+                },
+                {
+                  type: "ABOUT",
+                  order: 3,
+                  content: {
+                    heading: "About Our Service",
+                    body: "Webbing is an advanced generative SaaS for websites. Build, edit, preview, and host professional landing pages effortlessly."
+                  }
+                },
+                {
+                  type: "CONTACT",
+                  order: 4,
+                  content: {
+                    heading: "Let's Start a Conversation",
+                    email: "support@webbing.in"
+                  }
+                }
+              ]
+            }
+          ]
+        }) as unknown as T
       });
     }
   }

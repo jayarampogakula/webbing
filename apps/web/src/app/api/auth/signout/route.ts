@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-export async function GET() {
+export async function GET(request: Request) {
   const cookieStore = cookies();
   
   // Clear the session cookie
@@ -12,6 +12,6 @@ export async function GET() {
     maxAge: 0,
   });
 
-  // Redirect to landing page
-  return NextResponse.redirect(new URL("/", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"));
+  // Redirect to landing page dynamically using request URL
+  return NextResponse.redirect(new URL("/", request.url));
 }

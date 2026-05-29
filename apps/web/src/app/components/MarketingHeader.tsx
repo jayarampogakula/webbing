@@ -13,7 +13,7 @@ export default function MarketingHeader({ active, user }: MarketingHeaderProps) 
 
   return (
     <header className="site-nav" style={{ position: "relative" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+      <div className="brand-wrapper">
         <a className="brand" href="/">
           <span className="brand-mark"><Sparkles size={18} /></span>
           Webbing
