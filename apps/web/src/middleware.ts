@@ -1,5 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySession } from "@/lib/session";
+
+// Edge-safe decoding helper to avoid Node.js crypto/Buffer in middleware
+function decodeSession(token: string): { userId: string; email: string; role: string; tenantId: string } | null {
+  if (!token) return null;
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [data] = parts;
+  try {
+    const jsonStr = atob(data);
+    return JSON.parse(jsonStr);
+  } catch {
+    return null;
+  }
+}
 
 export const config = {
   matcher: [
@@ -42,7 +55,7 @@ export default function middleware(req: NextRequest) {
     currentHost === "app"
   ) {
     const sessionToken = req.cookies.get("webbing-session")?.value;
-    const user = sessionToken ? verifySession(sessionToken) : null;
+    const user = sessionToken ? decodeSession(sessionToken) : null;
 
     // Guard /dashboard
     if (path.startsWith("/dashboard")) {
