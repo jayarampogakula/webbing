@@ -108,7 +108,7 @@ export default async function DashboardPage() {
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0a0e17" }}>
-      <header className="site-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", height: "70px", padding: "0 2rem", margin: 0, background: "rgba(10, 14, 23, 0.95)" }}>
+      <header className="site-nav dashboard-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: 0, background: "rgba(10, 14, 23, 0.95)" }}>
         <a className="brand" href="/">
           <span className="brand-mark"><Sparkles size={18} /></span>
           Webbing

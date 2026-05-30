@@ -101,7 +101,7 @@ export class GeminiProvider implements AIProvider {
     if (key) {
       this.client = new GoogleGenAI({ apiKey: key });
     }
-    this.modelName = model || "gemini-1.5-flash";
+    this.modelName = model || "gemini-2.5-flash";
   }
 
   async generateText(params: GenerationParams): Promise<string> {
@@ -121,7 +121,7 @@ export class GeminiProvider implements AIProvider {
       throw new Error("Gemini API key is not configured.");
     }
     const response = await this.client.models.generateContent({
-      model: this.modelName.includes("pro") ? this.modelName : "gemini-1.5-pro", // use pro for high quality JSON mapping
+      model: this.modelName.includes("pro") ? this.modelName : "gemini-2.5-pro", // use pro for high quality JSON mapping
       contents: params.prompt,
       config: {
         systemInstruction: params.systemPrompt,

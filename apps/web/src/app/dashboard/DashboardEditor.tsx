@@ -567,10 +567,10 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
         <main style={{ maxWidth: "1200px", margin: "0 auto" }}>
           
           {/* Header row */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3rem" }}>
+          <div className="dashboard-header-row">
             <div>
               <span className="eyebrow" style={{ color: "#818cf8" }}>Dashboard</span>
-              <h1 style={{ fontSize: "2rem", fontWeight: 800, margin: "0.25rem 0", color: "#fff" }}>Welcome back, {user.email}</h1>
+              <h1 style={{ fontSize: "clamp(1.3rem, 4.5vw, 2.25rem)", fontWeight: 850, margin: "0.25rem 0", color: "#fff", wordBreak: "break-word" }}>Welcome back, {user.email}</h1>
               <p style={{ color: "#9ca3af", fontSize: "0.9rem", margin: 0 }}>Create, customize, publish and export your dynamic web sites.</p>
             </div>
             
@@ -709,7 +709,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
 
           {/* Draft vs Published lists */}
           {projects.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
+            <div className="dashboard-columns-grid">
               
               {/* Draft Section */}
               <div>
@@ -793,7 +793,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 70px)", background: "#070b13" }}>
       
       {/* 1. Header Control Bar */}
-      <div style={{ background: "rgba(13, 17, 28, 0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "0.8rem 1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
+      <div className="builder-header-bar">
         
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           <button
@@ -903,10 +903,10 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
       </div>
 
       {/* 2. Main split view screen area */}
-      <div style={{ display: "flex", flexGrow: 1, overflow: "hidden" }}>
+      <div className="builder-split-container">
         
         {/* Left Config Panel sidebar container */}
-        <div style={{ display: "flex", width: "520px", minWidth: "520px", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="builder-sidebar">
           
           {/* Vertical Icon Toolbar */}
           {!isCreatingNew && currentProject && (
@@ -1284,7 +1284,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
         </div>
 
         {/* Right Iframe preview workspace */}
-        <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", background: "#090d16", position: "relative" }}>
+        <div className="builder-preview-container">
           
           {/* Preview address indicator header */}
           <div style={{ padding: "0.5rem 1.5rem", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0b0f19" }}>
