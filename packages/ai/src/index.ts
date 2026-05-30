@@ -108,28 +108,71 @@ export class GeminiProvider implements AIProvider {
     if (!this.client) {
       throw new Error("Gemini API key is not configured.");
     }
-    const response = await this.client.models.generateContent({
-      model: this.modelName,
-      contents: params.prompt,
-      config: params.systemPrompt ? { systemInstruction: params.systemPrompt } : undefined
-    });
-    return response.text || "";
+    try {
+      const response = await this.client.models.generateContent({
+        model: this.modelName,
+        contents: params.prompt,
+        config: params.systemPrompt ? { systemInstruction: params.systemPrompt } : undefined
+      });
+      return response.text || "";
+    } catch (err: any) {
+      const isQuotaOrNotFound = err?.message?.toLowerCase().includes("quota") || 
+                              err?.message?.toLowerCase().includes("not found") || 
+                              err?.message?.toLowerCase().includes("not_found") || 
+                              err?.message?.toLowerCase().includes("limit");
+      if (this.modelName.toLowerCase().includes("pro") && isQuotaOrNotFound) {
+        console.warn(`Gemini Pro model text generation failed. Falling back to gemini-2.5-flash. Error: ${err.message}`);
+        const fallbackResponse = await this.client.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: params.prompt,
+          config: params.systemPrompt ? { systemInstruction: params.systemPrompt } : undefined
+        });
+        return fallbackResponse.text || "";
+      }
+      throw err;
+    }
   }
 
   async generateJson<T>(params: GenerationParams): Promise<T> {
     if (!this.client) {
       throw new Error("Gemini API key is not configured.");
     }
-    const response = await this.client.models.generateContent({
-      model: this.modelName.includes("pro") ? this.modelName : "gemini-2.5-pro", // use pro for high quality JSON mapping
-      contents: params.prompt,
-      config: {
-        systemInstruction: params.systemPrompt,
-        responseMimeType: "application/json",
+    
+    // Default to the requested model. If no pro model was explicitly chosen, use gemini-2.5-flash to preserve quotas.
+    const targetModel = this.modelName.toLowerCase().includes("pro") ? this.modelName : "gemini-2.5-flash";
+    
+    try {
+      const response = await this.client.models.generateContent({
+        model: targetModel,
+        contents: params.prompt,
+        config: {
+          systemInstruction: params.systemPrompt,
+          responseMimeType: "application/json",
+        }
+      });
+      const text = response.text || "{}";
+      return JSON.parse(text) as T;
+    } catch (err: any) {
+      const isQuotaOrNotFound = err?.message?.toLowerCase().includes("quota") || 
+                              err?.message?.toLowerCase().includes("not found") || 
+                              err?.message?.toLowerCase().includes("not_found") || 
+                              err?.message?.toLowerCase().includes("limit");
+      
+      if (isQuotaOrNotFound && targetModel !== "gemini-2.5-flash") {
+        console.warn(`Gemini JSON generation failed on ${targetModel}. Falling back to gemini-2.5-flash. Error: ${err.message}`);
+        const fallbackResponse = await this.client.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: params.prompt,
+          config: {
+            systemInstruction: params.systemPrompt,
+            responseMimeType: "application/json",
+          }
+        });
+        const text = fallbackResponse.text || "{}";
+        return JSON.parse(text) as T;
       }
-    });
-    const text = response.text || "{}";
-    return JSON.parse(text) as T;
+      throw err;
+    }
   }
 }
 
