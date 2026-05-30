@@ -321,7 +321,8 @@ export class AIService {
               ]
             }
           ]
-        }) as unknown as T
+          } as unknown as T;
+        }
       });
     }
   }
