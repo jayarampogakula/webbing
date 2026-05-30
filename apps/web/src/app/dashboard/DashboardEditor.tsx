@@ -23,6 +23,7 @@ interface Page {
 interface Project {
   id: string;
   name: string;
+  description: string | null;
   subdomain: string;
   status: string;
   createdAt: string;
@@ -53,6 +54,52 @@ interface DashboardEditorProps {
   baseDomain: string;
   protocol: string;
 }
+
+const GenerationProgress = ({ createdAt }: { createdAt: string }) => {
+  const steps = [
+    "Analyzing Prompt...",
+    "Generating Content...",
+    "Generating Images...",
+    "Building Layout...",
+    "Creating Preview..."
+  ];
+  
+  const [stepIndex, setStepIndex] = useState(0);
+  
+  useEffect(() => {
+    const elapsed = Date.now() - new Date(createdAt).getTime();
+    const currentStep = Math.min(Math.floor(elapsed / 3000), steps.length - 1);
+    setStepIndex(currentStep);
+
+    const interval = setInterval(() => {
+      setStepIndex((prev) => (prev < steps.length - 1 ? prev + 1 : prev));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [createdAt]);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "center" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem", width: "320px" }}>
+        {steps.map((stepText, idx) => {
+          const isPending = idx > stepIndex;
+          const isRunning = idx === stepIndex;
+          const isDone = idx < stepIndex;
+
+          return (
+            <div key={idx} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.5rem 0.75rem", background: isRunning ? "rgba(99, 102, 241, 0.08)" : "transparent", border: isRunning ? "1px solid rgba(99, 102, 241, 0.2)" : "1px solid transparent", borderRadius: "0.4rem" }}>
+              {isDone && <span style={{ color: "#34d399", fontWeight: "bold" }}>✓</span>}
+              {isRunning && <span className="animate-spin" style={{ color: "#818cf8", display: "inline-block" }}>◌</span>}
+              {isPending && <span style={{ color: "#4b5563" }}>○</span>}
+              <span style={{ fontSize: "0.85rem", color: isDone ? "#9ca3af" : isRunning ? "#fff" : "#4b5563", fontWeight: isRunning ? 700 : 400 }}>
+                {stepText}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 export default function DashboardEditor({ user, tenant, baseDomain, protocol }: DashboardEditorProps) {
   const [projects, setProjects] = useState<Project[]>(tenant.projects);
@@ -163,6 +210,105 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
       setAnalyticsTag(currentProject.theme?.analyticsTag || "");
     }
   }, [selectedProjectId, projects]);
+
+  // Poll for generating projects status updates
+  useEffect(() => {
+    if (!selectedProjectId) return;
+    
+    const p = projects.find(x => x.id === selectedProjectId);
+    if (!p) return;
+    
+    if (p.status === "GENERATING" || p.status === "DRAFT") {
+      const intervalId = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/projects/${p.id}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.project) {
+              const updated = data.project;
+              setProjects((prev) =>
+                prev.map((proj) => (proj.id === updated.id ? updated : proj))
+              );
+              
+              if (updated.status !== "GENERATING" && updated.status !== "DRAFT") {
+                clearInterval(intervalId);
+                setIframeKey((prev) => prev + 1);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Polling project status failed:", err);
+        }
+      }, 2500);
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [selectedProjectId, projects]);
+
+  const handleNewProjectGenerated = async (newProjectId: string) => {
+    try {
+      const response = await fetch(`/api/projects/${newProjectId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.project) {
+          const newProject = data.project;
+          setProjects((prev) => {
+            const exists = prev.find(p => p.id === newProject.id);
+            if (exists) return prev;
+            return [newProject, ...prev];
+          });
+          setSelectedProjectId(newProjectId);
+          setIsCreatingNew(false);
+          setActiveView("builder");
+        }
+      }
+    } catch (err) {
+      console.error("Error loading newly generated project details:", err);
+    }
+  };
+
+  const handleRetryGeneration = async (project: Project) => {
+    try {
+      setLoading(true);
+      setError("");
+      setSuccess("");
+      
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === project.id
+            ? { ...p, status: "GENERATING", theme: { ...p.theme, failureReason: null } }
+            : p
+        )
+      );
+
+      const res = await fetch(`/api/projects/${project.id}/regenerate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: project.description || "Website layout for business",
+          style: project.theme?.style || "Modern Startup",
+          ecommerce: !!project.theme?.ecommerce,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to trigger regeneration.");
+      
+      setSuccess("Website generation restarted successfully!");
+    } catch (err: any) {
+      console.error("Retry generation failed:", err);
+      setError(err.message || "Failed to restart generation.");
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === project.id
+            ? { ...p, status: "FAILED", theme: { ...p.theme, failureReason: err.message } }
+            : p
+        )
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRefreshPreview = () => {
     setIframeKey((prev) => prev + 1);
@@ -525,8 +671,8 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
                             fontWeight: 700,
                             padding: "0.2rem 0.5rem",
                             borderRadius: "0.25rem",
-                            color: p.status === "PUBLISHED" ? "#34d399" : "#f59e0b",
-                            background: p.status === "PUBLISHED" ? "rgba(52,211,153,0.1)" : "rgba(245,158,11,0.1)"
+                            color: p.status === "PUBLISHED" ? "#34d399" : p.status === "FAILED" ? "#f87171" : "#f59e0b",
+                            background: p.status === "PUBLISHED" ? "rgba(52,211,153,0.1)" : p.status === "FAILED" ? "rgba(239, 68, 68, 0.1)" : "rgba(245,158,11,0.1)"
                           }}
                         >
                           {p.status}
@@ -536,6 +682,12 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
                       <code style={{ fontSize: "0.8rem", color: "#9ca3af" }}>
                         {p.subdomain}.{baseDomain}
                       </code>
+
+                      {p.status === "FAILED" && (
+                        <div style={{ color: "#f87171", fontSize: "0.75rem", background: "rgba(239, 68, 68, 0.05)", padding: "0.5rem 0.75rem", borderRadius: "0.4rem", border: "1px solid rgba(239, 68, 68, 0.1)", lineHeight: 1.4 }}>
+                          <strong>Failure:</strong> {p.theme?.failureReason || "AI provider limits/error"}
+                        </div>
+                      )}
 
                       <button
                         onClick={() => {
@@ -564,21 +716,31 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
                 <h3 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: 700, marginBottom: "1rem" }}>Draft Projects ({draftProjects.length})</h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
                   {draftProjects.map(p => (
-                    <div key={p.id} style={{ padding: "1rem", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "0.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div>
-                        <strong style={{ color: "#fff", display: "block", fontSize: "0.9rem" }}>{p.name}</strong>
-                        <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{p.subdomain}.{baseDomain}</span>
+                    <div key={p.id} style={{ padding: "1rem", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "0.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <strong style={{ color: "#fff", display: "inline-flex", gap: "0.5rem", alignItems: "center", fontSize: "0.9rem" }}>
+                            {p.name}
+                            <span style={{ fontSize: "0.65rem", padding: "0.1rem 0.3rem", borderRadius: "0.25rem", fontWeight: 700, color: p.status === "FAILED" ? "#f87171" : "#f59e0b", background: p.status === "FAILED" ? "rgba(239, 68, 68, 0.1)" : "rgba(245,158,11,0.1)" }}>{p.status}</span>
+                          </strong>
+                          <span style={{ fontSize: "0.75rem", color: "#9ca3af", display: "block" }}>{p.subdomain}.{baseDomain}</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedProjectId(p.id);
+                            setIsCreatingNew(false);
+                            setActiveView("builder");
+                          }}
+                          style={{ border: "none", background: "none", color: "#818cf8", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}
+                        >
+                          Edit
+                        </button>
                       </div>
-                      <button
-                        onClick={() => {
-                          setSelectedProjectId(p.id);
-                          setIsCreatingNew(false);
-                          setActiveView("builder");
-                        }}
-                        style={{ border: "none", background: "none", color: "#818cf8", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}
-                      >
-                        Edit
-                      </button>
+                      {p.status === "FAILED" && (
+                        <div style={{ color: "#f87171", fontSize: "0.75rem", padding: "0.4rem 0.6rem", background: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.1)", borderRadius: "0.25rem" }}>
+                          <strong>Reason:</strong> {p.theme?.failureReason || "AI provider limits/error"}
+                        </div>
+                      )}
                     </div>
                   ))}
                   {draftProjects.length === 0 && <span style={{ color: "#9ca3af", fontSize: "0.85rem" }}>No draft projects.</span>}
@@ -771,7 +933,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
           <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", overflowY: "auto", background: "rgba(10, 14, 23, 0.55)", backdropFilter: "blur(20px)" }}>
             {isCreatingNew ? (
               <div style={{ padding: "2rem" }}>
-                <GeneratorForm user={user} />
+                <GeneratorForm user={user} onSuccess={handleNewProjectGenerated} />
               </div>
             ) : !currentProject ? (
               <div style={{ padding: "2rem", color: "#9ca3af", textAlign: "center" }}>
@@ -1166,12 +1328,25 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
           <div style={{ flexGrow: 1, padding: "1.25rem", display: "flex", justifyContent: "center", alignItems: "stretch", overflow: "hidden" }}>
             {currentProject && !isCreatingNew ? (
               currentProject.status === "GENERATING" || currentProject.status === "DRAFT" ? (
-                <div style={{ flexGrow: 1, background: "#0b0f19", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "1rem" }}>
+                <div style={{ flexGrow: 1, background: "#0b0f19", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "1.5rem" }}>
                   <RefreshCw size={32} className="animate-spin" color="#818cf8" />
-                  <strong style={{ fontSize: "1.1rem", color: "#fff" }}>Orchestrating layout generation...</strong>
-                  <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: 0 }}>
-                    AI is writing components, compiling copy, and updating layouts.
-                  </p>
+                  <strong style={{ fontSize: "1.2rem", color: "#fff" }}>Orchestrating layout generation...</strong>
+                  <GenerationProgress createdAt={currentProject.createdAt} />
+                </div>
+              ) : currentProject.status === "FAILED" ? (
+                <div style={{ flexGrow: 1, background: "#0b0f19", border: "1px solid rgba(239, 68, 68, 0.06)", borderRadius: "0.75rem", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "1.5rem", padding: "2rem" }}>
+                  <div style={{ width: "3.5rem", height: "3.5rem", borderRadius: "50%", background: "rgba(239, 68, 68, 0.1)", color: "#f87171", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <AlertTriangle size={32} />
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <h3 style={{ fontSize: "1.25rem", color: "#fff", margin: "0 0 0.5rem 0" }}>Generation Failed</h3>
+                    <p style={{ color: "#f87171", fontSize: "0.9rem", maxWidth: "450px", background: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.15)", padding: "1rem", borderRadius: "0.5rem", wordBreak: "break-word", margin: 0 }}>
+                      <strong>Reason:</strong> {currentProject.theme?.failureReason || "AI generation timeout or provider limits."}
+                    </p>
+                  </div>
+                  <button onClick={() => handleRetryGeneration(currentProject)} className="primary-action" style={{ background: "linear-gradient(to right, #ef4444, #dc2626)", color: "#fff", border: "none" }}>
+                    <RefreshCw size={14} style={{ marginRight: "0.5rem" }} /> Retry Generation
+                  </button>
                 </div>
               ) : (
                 <iframe

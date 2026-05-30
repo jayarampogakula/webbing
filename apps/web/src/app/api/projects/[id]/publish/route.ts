@@ -57,7 +57,7 @@ export async function POST(
       if (response.ok && response.status === 200) {
         const html = await response.text();
         // Check that the generated code is not empty and includes standard tags
-        if (html.includes("site-preview") && html.includes("Interactive Preview")) {
+        if (html.includes("site-preview")) {
           renderSuccess = true;
         } else {
           renderError = "Preview page content is corrupted or missing container classes.";

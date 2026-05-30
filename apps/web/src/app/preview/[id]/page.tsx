@@ -255,10 +255,10 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                       </p>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
                         <div style={{ width: "2.5rem", height: "2.5rem", borderRadius: "50%", background: "linear-gradient(135deg, #6366f1, #a855f7)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: "0.9rem" }}>
-                          {rev.author[0]}
+                          {(rev.author && rev.author.length > 0) ? rev.author[0] : "U"}
                         </div>
                         <div>
-                          <strong style={{ color: "#fff", display: "block", fontSize: "0.9rem" }}>{rev.author}</strong>
+                          <strong style={{ color: "#fff", display: "block", fontSize: "0.9rem" }}>{rev.author || "Anonymous"}</strong>
                           <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>{rev.role}</span>
                         </div>
                       </div>
@@ -293,7 +293,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                       </div>
                       <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0 0 2rem 0", minHeight: "2.5rem" }}>{pl.desc}</p>
                       <ul style={{ listStyle: "none", padding: 0, margin: "0 0 2rem 0", display: "flex", flexDirection: "column", gap: "0.8rem", flexGrow: 1 }}>
-                        {pl.items.map((item: string, j: number) => (
+                        {(pl.items || []).map((item: string, j: number) => (
                           <li key={j} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.9rem", color: "#cbd5e1" }}>
                             <CheckCircle2 size={16} color="#34d399" />
                             {item}

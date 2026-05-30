@@ -6,6 +6,7 @@ import { Globe, Sparkles, ArrowRight, ArrowLeft, Check, ShoppingBag, ShieldCheck
 
 interface GeneratorFormProps {
   user: { userId: string; email: string; role: string; tenantId: string } | null;
+  onSuccess?: (projectId: string) => void;
 }
 
 const stylesList = [
@@ -21,7 +22,7 @@ const stylesList = [
   { id: "Portfolio", label: "Portfolio", desc: "Glassmorphic details, custom bento portfolio blocks" }
 ];
 
-export default function GeneratorForm({ user }: GeneratorFormProps) {
+export default function GeneratorForm({ user, onSuccess }: GeneratorFormProps) {
   const router = useRouter();
   const [step, setStep] = useState(1);
 
@@ -108,6 +109,9 @@ export default function GeneratorForm({ user }: GeneratorFormProps) {
       if (!res.ok) throw new Error(data.error || "Failed to generate website Layout.");
 
       setSuccess({ projectId: data.projectId, subdomain: data.subdomain });
+      if (onSuccess) {
+        onSuccess(data.projectId);
+      }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
       setStep(2); // return to configuration

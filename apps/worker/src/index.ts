@@ -87,7 +87,10 @@ const worker = new Worker<WebsiteGenerationJobData>(
         await tx.project.update({
           where: { id: projectId },
           data: {
-            theme: generationOutput.theme || {}
+            theme: {
+              ...themeObj,
+              ...(generationOutput.theme || {})
+            }
           }
         });
 
@@ -156,14 +159,28 @@ const worker = new Worker<WebsiteGenerationJobData>(
       
       console.log(`Successfully completed generation for project: ${projectId}`);
       return { success: true };
-    } catch (err) {
+    } catch (err: any) {
       console.error(`Failed to generate website for project ${projectId}:`, err);
+      const message = err instanceof Error ? err.message : String(err);
       
-      // Mark project as FAILED
-      await prisma.project.update({
-        where: { id: projectId },
-        data: { status: ProjectStatus.FAILED }
-      });
+      try {
+        const currentProject = await prisma.project.findUnique({ where: { id: projectId } });
+        const currentTheme = (currentProject?.theme as any) || {};
+        
+        // Mark project as FAILED and record failureReason inside theme
+        await prisma.project.update({
+          where: { id: projectId },
+          data: { 
+            status: ProjectStatus.FAILED,
+            theme: {
+              ...currentTheme,
+              failureReason: message
+            }
+          }
+        });
+      } catch (dbErr) {
+        console.error("Failed to write FAILED status back to DB:", dbErr);
+      }
       
       throw err;
     }
