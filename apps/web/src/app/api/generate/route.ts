@@ -7,10 +7,12 @@ import * as z from "zod";
 
 const generationSchema = z.object({
   name: z.string().min(1),
+  businessName: z.string().min(1),
   prompt: z.string().min(5),
-  niche: z.string().min(2),
-  style: z.string().default("modern"),
-  colors: z.string().default("#000000"),
+  keywords: z.string().default(""),
+  niche: z.string().min(2), // Industry
+  targetAudience: z.string().default(""),
+  style: z.string().default("Modern Startup"),
   ecommerce: z.boolean().default(false),
 });
 
@@ -62,8 +64,14 @@ export async function POST(req: Request) {
         subdomain: uniqueSlug,
         status: ProjectStatus.DRAFT,
         theme: {
-          primary: validated.colors,
-          style: validated.style
+          style: validated.style,
+          preferredProvider: "gemini", // Default to user choice of Gemini
+          metadata: {
+            businessName: validated.businessName,
+            keywords: validated.keywords,
+            industry: validated.niche,
+            targetAudience: validated.targetAudience
+          }
         },
         tenantId: tenantId,
       }
@@ -75,8 +83,9 @@ export async function POST(req: Request) {
       prompt: validated.prompt,
       niche: validated.niche,
       style: validated.style,
-      colors: validated.colors,
+      colors: "#000000",
       ecommerce: validated.ecommerce,
+      userId: user.userId,
     });
 
     // 6. Increment Tenant credits count

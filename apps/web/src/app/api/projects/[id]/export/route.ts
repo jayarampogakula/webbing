@@ -17,6 +17,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const format = searchParams.get("format") || "html"; // html | react | nextjs
+
     const projectId = params.id;
     const project = await prisma.project.findFirst({
       where: { id: projectId, tenantId: user.tenantId },
@@ -34,265 +37,379 @@ export async function GET(
     }
 
     const zip = new JSZip();
+    const safeName = project.name.toLowerCase().replace(/[^a-z0-9]/g, "-");
 
-    // 1. Generate CSS file
-    const cssContent = `
-/* Webbing Exported Theme Stylesheet */
+    // Load dynamic CSS stylesheet definitions (glassmorphism, bento grid, animations)
+    const customCssContent = `
+/* Webbing Dynamic Style system */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --background-dark: #07111b;
-  --text-light: #ffffff;
-  --text-muted: #b8c3d4;
-  --accent-purple: #c084fc;
-  --accent-indigo: #818cf8;
-  --accent-green: #34d399;
+  --bg: #060914;
+  --panel: #0d1323;
+  --line: rgba(226, 232, 240, 0.12);
+  --text: #f8fafc;
+  --muted: #9aa7bd;
+  --blue: #4f7cff;
+  --teal: #20c7b5;
+  --indigo: #6366f1;
 }
 
 body {
   margin: 0;
-  padding: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--background-dark);
-  color: var(--text-light);
-  -webkit-font-smoothing: antialiased;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 .site-preview {
   min-height: 100vh;
-  background:
-    linear-gradient(145deg, rgba(246, 184, 75, 0.16), transparent 28%),
-    linear-gradient(315deg, rgba(32, 199, 181, 0.14), transparent 30%),
-    #07111b;
 }
 
-.site-preview main {
-  width: min(1100px, calc(100% - 2rem));
-  margin: 0 auto;
-  padding: 5rem 0;
+/* Glassmorphism */
+.glass-panel {
+  background: rgba(13, 19, 35, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
-.preview-hero {
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-4px);
+}
+
+/* Bento Grid */
+.bento-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 2rem;
-  align-items: center;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.bento-col-2 {
+  grid-column: span 2;
 }
 
 @media (max-width: 900px) {
-  .preview-hero {
+  .bento-grid {
     grid-template-columns: 1fr;
+  }
+  .bento-col-2 {
+    grid-column: span 1;
   }
 }
 
-.preview-hero h1 {
-  margin: 0;
-  font-size: clamp(2.6rem, 6vw, 5rem);
-  line-height: 1.05;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.preview-panel {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 0.75rem;
-  padding: 1.25rem;
-  background: rgba(255, 255, 255, 0.07);
-}
-
-.eyebrow {
-  display: inline-block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--accent-indigo);
-  margin-bottom: 0.75rem;
-}
-
+/* Actions styling */
 .primary-action {
-  display: inline-block;
-  background: linear-gradient(to right, #6366f1, #d946ef);
-  color: white;
-  padding: 0.85rem 2rem;
-  border-radius: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--indigo), var(--teal));
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
   font-weight: 700;
   text-decoration: none;
-  font-size: 0.95rem;
-  transition: opacity 0.2s;
-  margin-top: 1.5rem;
-  box-shadow: 0 4px 15px rgba(217, 70, 239, 0.25);
+  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+  transition: transform 0.2s;
 }
-
 .primary-action:hover {
-  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .secondary-action {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: white;
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  color: var(--text);
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
-  font-weight: 600;
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: background 0.2s;
-}
-
-.secondary-action:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.key-meta {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.key-meta span {
-  font-size: 0.75rem;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.25rem;
-  color: var(--text-muted);
-}
-
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.feature-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1rem;
-  padding: 2rem;
-}
-
-.feature-card h3 {
-  margin: 1rem 0 0.5rem 0;
-  font-size: 1.25rem;
   font-weight: 700;
+  text-decoration: none;
 }
 
-.feature-card p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  line-height: 1.5;
+/* Scroll Animations */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-.icon-box {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.5rem;
-  background: rgba(129, 140, 248, 0.15);
-  color: var(--accent-indigo);
-}
-
-#contact h2 {
-  margin: 0.5rem 0 1rem 0;
-  font-size: 2rem;
-  font-weight: 800;
-}
-
-#contact p {
-  margin-bottom: 1.5rem;
-  font-size: 1rem;
+.reveal-on-scroll.active {
+  opacity: 1;
+  transform: translateY(0);
 }
 `;
-    zip.file("style.css", cssContent);
 
-    // 2. Generate HTML file for each page
-    for (const page of project.pages) {
-      const hero = page.sections.find((section) => section.type === "HERO")?.content as any;
-      const features = page.sections.find((section) => section.type === "FEATURES")?.content as any;
-      const items = Array.isArray(features?.items) ? features.items : [
-        { title: "Fast launch", description: "A polished web presence generated from your business details." },
-        { title: "Clear messaging", description: "Concise sections for value, proof, pricing, and contact." },
-        { title: "Responsive layout", description: "A modern dark-first visual system for desktop and mobile." },
-      ];
+    // ----------------------------------------------------
+    // FORMAT 1: HTML / CSS / JS Static bundle
+    // ----------------------------------------------------
+    if (format === "html") {
+      zip.file("style.css", customCssContent);
+      zip.file("script.js", `
+document.addEventListener('DOMContentLoaded', () => {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+      }
+    });
+  }, { threshold: 0.05 });
+  document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+});
+      `);
 
-      const htmlContent = `<!DOCTYPE html>
+      for (const page of project.pages) {
+        // Generate section HTML blocks based on type
+        const sectionHtmlBlocks = page.sections.map((sec) => {
+          const content = (sec.content as any) || {};
+          const type = sec.type.toUpperCase();
+
+          switch (type) {
+            case "HEADER": {
+              const links = content.links || [
+                { label: "Features", url: "#features" },
+                { label: "Pricing", url: "#pricing" },
+                { label: "Contact", url: "#contact" }
+              ];
+              return `
+  <header class="reveal-on-scroll active" style="display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 2rem; background: rgba(6, 9, 20, 0.4); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.06); position: sticky; top: 0; z-index: 50;">
+    <a href="#" style="font-size: 1.25rem; font-weight: 800; color: #fff; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+      <span style="padding: 0.25rem 0.5rem; border-radius: 0.40rem; background: linear-gradient(to right, #6366f1, #a855f7); color: #fff; font-size: 1rem;">W</span>
+      ${project.name}
+    </a>
+    <nav style="display: flex; gap: 1.5rem;">
+      ${links.map((link: any) => `<a href="${link.url}" style="color: #9ca3af; font-size: 0.9rem; font-weight: 500; text-decoration: none;">${link.label}</a>`).join("")}
+    </nav>
+    <a class="primary-action" href="${content.ctaUrl || "#contact"}" style="padding: 0.4rem 1rem; font-size: 0.85rem; border-radius: 0.4rem;">${content.ctaText || "Get Started"}</a>
+  </header>`;
+            }
+
+            case "HERO": {
+              return `
+  <section class="reveal-on-scroll active" style="padding: 6rem 2rem; display: flex; justify-content: center; align-items: center;">
+    <div style="width: 100%; maxWidth: 1100px; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 3rem; align-items: center; margin: 0 auto;">
+      <div>
+        <h1 style="font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 850; line-height: 1.05; margin: 1rem 0; color: #fff;">
+          ${content.heading || page.title}
+        </h1>
+        <p style="color: #9ca3af; font-size: 1.15rem; line-height: 1.6; margin: 0 0 2rem 0; max-width: 600px;">
+          ${content.subheading || page.description || ""}
+        </p>
+        <div style="display: flex; gap: 1rem;">
+          <a class="primary-action" href="${content.ctaUrl || "#contact"}">${content.ctaText || "Contact Us"}</a>
+        </div>
+      </div>
+      ${content.imageUrl ? `<img src="${content.imageUrl}" style="width: 100%; border-radius: 1rem; box-shadow: 0 20px 40px rgba(0,0,0,0.5);" />` : ""}
+    </div>
+  </section>`;
+            }
+
+            case "FEATURES": {
+              const items = content.items || [];
+              return `
+  <section id="features" class="reveal-on-scroll" style="padding: 5rem 2rem; max-width: 1100px; margin: 0 auto;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+      ${items.map((item: any) => `
+      <article class="glass-card" style="border-radius: 1rem; padding: 2rem; border: 1px solid rgba(255,255,255,0.06);">
+        <h3 style="margin: 0 0 0.5rem 0; color: #fff; font-size: 1.25rem;">${item.title}</h3>
+        <p style="color: #9ca3af; margin: 0; font-size: 0.95rem;">${item.description}</p>
+      </article>`).join("")}
+    </div>
+  </section>`;
+            }
+
+            case "CONTACT": {
+              return `
+  <section id="contact" class="reveal-on-scroll" style="padding: 5rem 2rem; max-width: 1100px; margin: 0 auto;">
+    <div class="glass-panel" style="padding: 3rem; border-radius: 1rem; text-align: center;">
+      <h2 style="font-size: 2rem; color: #fff; margin: 0 0 1rem 0;">${content.heading || "Get In Touch"}</h2>
+      <p style="color: #9ca3af; margin-bottom: 2rem;">Reach out directly to find out more about our plans and services.</p>
+      <a class="primary-action" href="mailto:${content.email || "hello@example.com"}">${content.email || "hello@example.com"}</a>
+    </div>
+  </section>`;
+            }
+
+            default:
+              return "";
+          }
+        }).join("\n");
+
+        const htmlLayout = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${page.title || project.name}</title>
-  <meta name="description" content="${page.description || project.description || ''}">
+  <meta name="description" content="${page.description || ''}">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="site-preview">
-    <main>
-      <section class="preview-hero">
-        <div>
-          <span class="eyebrow">${project.name}</span>
-          <h1>${hero?.heading || page.title || "Welcome"}</h1>
-          <p style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.5; margin-top: 1rem;">
-            ${hero?.subheading || page.description || project.description || ''}
-          </p>
-          <a class="primary-action" href="${hero?.ctaUrl || '#contact'}">${hero?.ctaText || 'Contact us'}</a>
-        </div>
-        <aside class="preview-panel">
-          <strong style="display: block; font-size: 1.1rem; margin-bottom: 0.5rem;">Self-Hosted Site</strong>
-          <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem; line-height: 1.4;">
-            This site is fully exported and running on your own hosting server.
-          </p>
-          <div class="key-meta">
-            <span>Status: Active</span>
-            <span>Version: 1.0.0</span>
-          </div>
-        </aside>
-      </section>
-
-      <section style="padding: 4rem 0;">
-        <div class="feature-grid">
-          ${items.slice(0, 3).map((item: any) => `
-          <article class="feature-card">
-            <span class="icon-box">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-            </span>
-            <h3>${item.title || ''}</h3>
-            <p>${item.description || ''}</p>
-          </article>
-          `).join('\n')}
-        </div>
-      </section>
-
-      <section id="contact" class="preview-panel">
-        <span class="eyebrow">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-          Contact
-        </span>
-        <h2 style="margin-top: 0.5rem;">Let’s talk about your next project.</h2>
-        <p style="color: var(--text-muted);">This generated site includes a contact-ready section and is now fully self-hosted.</p>
-        <a class="secondary-action" href="mailto:hello@example.com">hello@example.com</a>
-      </section>
-    </main>
+    ${sectionHtmlBlocks}
   </div>
+  <script src="script.js"></script>
 </body>
 </html>`;
 
-      const filename = page.slug === "index" ? "index.html" : `${page.slug}.html`;
-      zip.file(filename, htmlContent);
+        const filename = page.slug === "index" ? "index.html" : `${page.slug}.html`;
+        zip.file(filename, htmlLayout);
+      }
     }
 
-    // 3. Generate ZIP binary stream
-    const zipBuffer = await zip.generateAsync({ type: "blob" });
+    // ----------------------------------------------------
+    // FORMAT 2: REACT Folder structure
+    // ----------------------------------------------------
+    else if (format === "react") {
+      zip.file("package.json", JSON.stringify({
+        name: `${safeName}-react`,
+        version: "1.0.0",
+        scripts: {
+          dev: "vite",
+          build: "vite build"
+        },
+        dependencies: {
+          react: "^18.2.0",
+          "react-dom": "^18.2.0",
+          "lucide-react": "^0.331.0"
+        },
+        devDependencies: {
+          "@vitejs/plugin-react": "^4.2.1",
+          vite: "^5.1.0"
+        }
+      }, null, 2));
 
-    const safeName = project.name.toLowerCase().replace(/[^a-z0-9]/g, "-");
+      zip.file("index.html", `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${project.name}</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>`);
+
+      zip.file("src/main.jsx", `import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)`);
+
+      zip.file("src/index.css", customCssContent);
+
+      // Create a single simple App.jsx containing the dynamic render
+      zip.file("src/App.jsx", `import React, { useEffect } from "react";
+import { Star, Shield, Play, Globe, MessageSquare } from "lucide-react";
+
+export default function App() {
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.05 });
+    document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+  }, []);
+
+  return (
+    <div className="site-preview" style={{ minHeight: "100vh" }}>
+      {/* Dynamic Sections rendering from Webbing */}
+      <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "3rem 1.5rem" }}>
+        <section className="reveal-on-scroll active" style={{ padding: "6rem 0", display: "flex", justifyContent: "center" }}>
+          <div>
+            <h1 style={{ fontSize: "3.5rem", fontWeight: 850, color: "#fff" }}>${project.name}</h1>
+            <p style={{ color: "#9ca3af", fontSize: "1.2rem" }}>${project.description || "Self-hosted Vite React application."}</p>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}`);
+    }
+
+    // ----------------------------------------------------
+    // FORMAT 3: NEXT.JS App Router structure
+    // ----------------------------------------------------
+    else if (format === "nextjs") {
+      zip.file("package.json", JSON.stringify({
+        name: `${safeName}-nextjs`,
+        version: "1.0.0",
+        private: true,
+        scripts: {
+          dev: "next dev",
+          build: "next build",
+          start: "next start"
+        },
+        dependencies: {
+          next: "^14.1.0",
+          react: "^18.2.0",
+          "react-dom": "^18.2.0",
+          "lucide-react": "^0.331.0"
+        }
+      }, null, 2));
+
+      zip.file("app/layout.tsx", `import type { Metadata } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "${project.name}",
+  description: "${project.description || ''}",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}`);
+
+      zip.file("app/globals.css", customCssContent);
+
+      zip.file("app/page.tsx", `import React from "react";
+
+export default function Home() {
+  return (
+    <div className="site-preview" style={{ minHeight: "100vh" }}>
+      <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "6rem 1.5rem" }}>
+        <h1 style={{ fontSize: "3rem", fontWeight: 800, color: "#fff" }}>${project.name}</h1>
+        <p style={{ color: "#9ca3af", fontSize: "1.1rem" }}>${project.description || "Next.js website bundle."}</p>
+      </main>
+    </div>
+  );
+}`);
+    }
+
+    const zipBuffer = await zip.generateAsync({ type: "blob" });
     return new Response(zipBuffer, {
       status: 200,
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="${safeName}-export.zip"`,
+        "Content-Disposition": `attachment; filename="${safeName}-${format}-export.zip"`,
       },
     });
   } catch (error: any) {

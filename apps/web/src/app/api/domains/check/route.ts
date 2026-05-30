@@ -10,7 +10,19 @@ export async function GET(req: Request) {
   }
 
   try {
-    // Lookup the domain in the custom domain list
+    // 1. If it's a standard subdomain of webbing.in or webbing.io, approve if the project exists and is published
+    if (domain.endsWith(".webbing.in") || domain.endsWith(".webbing.io")) {
+      const subdomain = domain.replace(/\.webbing\.(in|io)$/, "");
+      const project = await prisma.project.findUnique({
+        where: { subdomain }
+      });
+      if (project && project.status === "PUBLISHED") {
+        console.log(`Caddy TLS Check: Approved certificate issuance for subdomain ${domain}`);
+        return new NextResponse("Approved", { status: 200 });
+      }
+    }
+
+    // 2. Lookup the domain in the custom domain list
     const record = await prisma.customDomain.findUnique({
       where: { hostname: domain },
       include: { project: true }
@@ -18,7 +30,7 @@ export async function GET(req: Request) {
 
     // Verify mapping and DNS verification status
     if (record && record.verified) {
-      console.log(`Caddy TLS Check: Approved certificate issuance for ${domain}`);
+      console.log(`Caddy TLS Check: Approved certificate issuance for custom domain ${domain}`);
       return new NextResponse("Approved", { status: 200 });
     }
 

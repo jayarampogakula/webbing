@@ -9,7 +9,7 @@
 }
 
 # Main SaaS and subdomain router
-*.webbing.io, webbing.io {
+*.webbing.io, webbing.io, *.webbing.in, webbing.in {
     reverse_proxy nextjs:3000
 }
 

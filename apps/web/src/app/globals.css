@@ -714,3 +714,160 @@ option {
     grid-column: auto;
   }
 }
+
+/* ==========================================================================
+   Webbing V2 Premium Design System additions
+   ========================================================================== */
+
+/* Typography */
+.font-gaming {
+  font-family: system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.font-serif-lux {
+  font-family: Georgia, serif;
+}
+
+/* Glassmorphism */
+.glass-panel {
+  background: rgba(13, 19, 35, 0.45) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Bento Grid */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.bento-col-2 {
+  grid-column: span 2;
+}
+
+@media (max-width: 900px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+  }
+  .bento-col-2 {
+    grid-column: span 1;
+  }
+}
+
+/* Gradients and Backgrounds */
+.bg-grad-gaming {
+  background: linear-gradient(135deg, #0f172a, #020617);
+}
+.text-grad-gaming {
+  background: linear-gradient(135deg, #22c55e, #10b981, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-grad-creator {
+  background: linear-gradient(135deg, #180828, #0c0214);
+}
+.text-grad-creator {
+  background: linear-gradient(135deg, #f97316, #ec4899, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-grad-saas {
+  background: linear-gradient(135deg, #050b18, #0a0f1d);
+}
+.text-grad-saas {
+  background: linear-gradient(135deg, #3b82f6, #6366f1, #d946ef);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-grad-luxury {
+  background: linear-gradient(135deg, #080808, #121212);
+}
+.text-grad-luxury {
+  background: linear-gradient(135deg, #d4af37, #f3e5ab, #aa7c11);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-grad-fitness {
+  background: linear-gradient(135deg, #000000, #141414);
+}
+.text-grad-fitness {
+  background: linear-gradient(135deg, #e11d48, #ea580c, #eab308);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Animations */
+.animate-fade-in {
+  animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Reveal Observer Classes */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-on-scroll.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.delay-100 { transition-delay: 100ms; }
+.delay-200 { transition-delay: 200ms; }
+.delay-300 { transition-delay: 300ms; }
+.delay-400 { transition-delay: 400ms; }
+.delay-500 { transition-delay: 500ms; }
+

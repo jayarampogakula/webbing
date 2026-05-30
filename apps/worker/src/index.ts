@@ -1,6 +1,6 @@
 import { Worker, Job } from "bullmq";
 import IORedis from "ioredis";
-import { prisma, ProjectStatus } from "@webbing/db";
+import { prisma, ProjectStatus, LlmKeyScope } from "@webbing/db";
 import { AIService } from "@webbing/ai";
 import * as dotenv from "dotenv";
 
@@ -20,12 +20,13 @@ interface WebsiteGenerationJobData {
   style: string;
   colors: string;
   ecommerce: boolean;
+  userId?: string;
 }
 
 const worker = new Worker<WebsiteGenerationJobData>(
   "website-generation",
   async (job: Job<WebsiteGenerationJobData>) => {
-    const { projectId, prompt, style, ecommerce } = job.data;
+    const { projectId, prompt, style, ecommerce, userId } = job.data;
     console.log(`Processing website generation for project: ${projectId}`);
     
     // 1. Update Project Status to GENERATING
@@ -35,8 +36,46 @@ const worker = new Worker<WebsiteGenerationJobData>(
     });
 
     try {
+      // Fetch active LLM keys for this user/scope
+      const activeKeys = await prisma.llmApiKey.findMany({
+        where: {
+          isActive: true,
+          OR: [
+            { scope: LlmKeyScope.GLOBAL },
+            ...(userId ? [{ scope: LlmKeyScope.USER, ownerUserId: userId }] : [])
+          ]
+        }
+      });
+
+      const customKeys = activeKeys.map(k => ({
+        provider: k.provider.toLowerCase(),
+        secret: k.secret,
+        model: k.model || undefined
+      }));
+
+      const project = await prisma.project.findUnique({
+        where: { id: projectId }
+      });
+
+      const themeObj = (project?.theme as any) || {};
+      const metadata = themeObj.metadata || {};
+      const preferredProvider = themeObj.preferredProvider || undefined;
+
+      const dynamicAiService = new AIService(customKeys);
+
       // 2. Query the AI orchestration pipeline
-      const generationOutput = await aiService.generateWebsiteLayout(prompt, style);
+      const generationOutput = await dynamicAiService.generateWebsiteLayout(
+        prompt,
+        style,
+        preferredProvider,
+        {
+          websiteName: project?.name,
+          businessName: metadata.businessName || project?.name,
+          keywords: metadata.keywords,
+          industry: metadata.industry,
+          targetAudience: metadata.targetAudience
+        }
+      );
       
       // 3. Begin Database Transaction
       await prisma.$transaction(async (tx) => {
