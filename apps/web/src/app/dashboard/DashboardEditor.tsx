@@ -1233,16 +1233,44 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
                           </div>
  
                           {customDomainName.trim() && (
-                            <div style={{ background: "rgba(99, 102, 241, 0.04)", border: "1px solid rgba(99, 102, 241, 0.15)", padding: "1rem", borderRadius: "0.5rem", fontSize: "0.75rem", color: "#cbd5e1" }}>
-                              <strong>Required DNS Configuration:</strong>
-                              <p style={{ margin: "0.25rem 0" }}>Create a <strong>CNAME</strong> record pointing to:</p>
-                              <code style={{ background: "rgba(0,0,0,0.3)", padding: "0.1rem 0.3rem", borderRadius: "0.25rem", color: "#a5b4fc" }}>cname.webbing.in</code>
- 
-                              <div style={{ marginTop: "1rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-                                <button type="button" onClick={handleVerifyDns} className="glow-btn" style={{ background: "linear-gradient(to right, #6366f1, #4f46e5)", color: "#fff", padding: "0.3rem 0.75rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }} disabled={dnsVerifying}>
-                                  {dnsVerifying ? "Verifying..." : "Verify DNS Link"}
+                            <div style={{ background: "rgba(10, 14, 23, 0.4)", border: "1px solid rgba(255,255,255,0.06)", padding: "1.25rem", borderRadius: "0.5rem", fontSize: "0.75rem", color: "#cbd5e1", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                              <strong>Configure DNS Records on your Registrar:</strong>
+                              
+                              {/* Option 1: A Record */}
+                              <div style={{ background: "rgba(255,255,255,0.02)", padding: "0.75rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.04)" }}>
+                                <strong style={{ color: "#fff", display: "block", marginBottom: "0.4rem" }}>Option 1: Root Domain (e.g. brand.com)</strong>
+                                <p style={{ margin: "0 0 0.5rem 0", color: "#9ca3af", fontSize: "0.7rem" }}>
+                                  Add one or both of these <strong>A Records</strong> at your registrar DNS configuration:
+                                </p>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(0,0,0,0.2)", padding: "0.2rem 0.5rem", borderRadius: "0.2rem" }}>
+                                    <span>Type: <strong>A</strong> | Name: <strong>@</strong></span>
+                                    <code style={{ color: "#a5b4fc" }}>187.127.172.170</code>
+                                  </div>
+                                  <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(0,0,0,0.2)", padding: "0.2rem 0.5rem", borderRadius: "0.2rem" }}>
+                                    <span>Type: <strong>A</strong> | Name: <strong>@</strong></span>
+                                    <code style={{ color: "#a5b4fc" }}>2.57.91.91</code>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Option 2: CNAME */}
+                              <div style={{ background: "rgba(255,255,255,0.02)", padding: "0.75rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.04)" }}>
+                                <strong style={{ color: "#fff", display: "block", marginBottom: "0.4rem" }}>Option 2: Subdomain / www (e.g. www.brand.com)</strong>
+                                <p style={{ margin: "0 0 0.5rem 0", color: "#9ca3af", fontSize: "0.7rem" }}>
+                                  Create a <strong>CNAME Record</strong> pointing to our proxy cluster:
+                                </p>
+                                <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(0,0,0,0.2)", padding: "0.2rem 0.5rem", borderRadius: "0.2rem" }}>
+                                  <span>Type: <strong>CNAME</strong> | Name: <strong>www</strong></span>
+                                  <code style={{ color: "#a5b4fc" }}>cname.webbing.in</code>
+                                </div>
+                              </div>
+
+                              <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginTop: "0.5rem" }}>
+                                <button type="button" onClick={handleVerifyDns} className="glow-btn" style={{ background: "linear-gradient(to right, #6366f1, #4f46e5)", color: "#fff", padding: "0.35rem 0.8rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", border: "none" }} disabled={dnsVerifying}>
+                                  {dnsVerifying ? "Verifying..." : "Verify DNS Connection"}
                                 </button>
-                                {dnsStatus && <span style={{ color: dnsStatus.includes("Active") || dnsStatus.includes("connected") ? "#34d399" : "#f87171", fontSize: "0.7rem" }}>{dnsStatus}</span>}
+                                {dnsStatus && <span style={{ color: dnsStatus.includes("Success") || dnsStatus.includes("connected") || dnsStatus.includes("Active") ? "#34d399" : "#f87171", fontSize: "0.7rem", fontWeight: 600 }}>{dnsStatus}</span>}
                               </div>
                             </div>
                           )}

@@ -40,14 +40,27 @@ export async function POST(
           verified = true;
         }
       } catch (dnsErr) {
-        console.warn("CNAME verification lookup failed, trying A record fallback:", dnsErr);
+        console.warn("CNAME verification lookup failed, checking A/ALIAS records mapping:", dnsErr);
+      }
+
+      // A / ALIAS record IP mapping comparison check
+      if (!verified) {
         try {
-          const resolvedA = await dns.promises.resolve4(hostname);
-          if (resolvedA.length > 0) {
+          const [targetIps, systemIps, backupIps] = await Promise.all([
+            dns.promises.resolve4(hostname).catch(() => []),
+            dns.promises.resolve4("cname.webbing.in").catch(() => []),
+            dns.promises.resolve4("webbing.in").catch(() => []),
+          ]);
+
+          const combinedSystemIps = Array.from(
+            new Set([...systemIps, ...backupIps, "187.127.172.170", "2.57.91.91"])
+          );
+
+          if (targetIps.some((ip) => combinedSystemIps.includes(ip))) {
             verified = true;
           }
         } catch (aErr) {
-          console.warn("A record lookup failed:", aErr);
+          console.warn("A/ALIAS IP mapping check failed:", aErr);
         }
       }
     }

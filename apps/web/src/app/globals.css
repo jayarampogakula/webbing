@@ -974,3 +974,27 @@ option {
   }
 }
 
+/* Sleek custom scrollbars for premium look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Hover transitions for static preview link elements */
+.site-preview header nav a:hover {
+  color: #ffffff !important;
+}
+.site-preview footer a:hover {
+  color: #ffffff !important;
+}
+

@@ -146,7 +146,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                     {links.map((link: any, i: number) => {
                       if (!link) return null;
                       return (
-                        <a key={i} href={renderUrl(link.url)} style={{ color: "#9ca3af", fontSize: "0.9rem", fontWeight: 500, transition: "color 0.2s" }} onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")} onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}>
+                        <a key={i} href={renderUrl(link.url)} style={{ color: "#9ca3af", fontSize: "0.9rem", fontWeight: 500, transition: "color 0.2s" }}>
                           {renderText(link.label || "")}
                         </a>
                       );
@@ -448,7 +448,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                       <h2 style={{ fontSize: "2rem", fontWeight: 800, color: "#fff", margin: "0.5rem 0 2rem 0" }}>
                         {renderText(content.heading, "Start a Conversation")}
                       </h2>
-                      <form style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }} onSubmit={(e) => e.preventDefault()}>
+                      <form style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                           <div className="field-group">
                             <label>Full Name</label>
@@ -495,8 +495,8 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                 <footer key={section.id} className="reveal-on-scroll active" style={{ padding: "3rem 2rem", borderTop: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: "1100px", margin: "0 auto", color: "#9ca3af", fontSize: "0.85rem" }}>
                   <span>© {new Date().getFullYear()} {renderText(project.name)}. All rights reserved.</span>
                   <div style={{ display: "flex", gap: "1.5rem" }}>
-                    <a href="#" style={{ transition: "color 0.2s" }} onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")} onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}>Privacy Policy</a>
-                    <a href="#" style={{ transition: "color 0.2s" }} onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")} onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}>Terms of Service</a>
+                    <a href="#" style={{ transition: "color 0.2s" }}>Privacy Policy</a>
+                    <a href="#" style={{ transition: "color 0.2s" }}>Terms of Service</a>
                   </div>
                 </footer>
               );
