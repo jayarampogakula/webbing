@@ -36,6 +36,10 @@ export async function GET(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
+    if (user.role !== "ADMIN" && project.userId && project.userId !== user.userId) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
     const zip = new JSZip();
     const safeName = project.name.toLowerCase().replace(/[^a-z0-9]/g, "-");
 

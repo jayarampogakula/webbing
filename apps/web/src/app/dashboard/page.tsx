@@ -55,6 +55,12 @@ export default async function DashboardPage() {
         include: {
           subscription: true,
           projects: {
+            where: user.role === "ADMIN" ? undefined : {
+              OR: [
+                { userId: user.userId },
+                { userId: null }
+              ]
+            },
             include: {
               customDomain: true,
               pages: {

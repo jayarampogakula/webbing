@@ -137,6 +137,9 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
 
   // --- Settings tab states ---
   const [customDomainName, setCustomDomainName] = useState("");
+  const [projectSubdomain, setProjectSubdomain] = useState("");
+  const [subdomainChecking, setSubdomainChecking] = useState(false);
+  const [subdomainStatus, setSubdomainStatus] = useState("");
   const [dnsVerifying, setDnsVerifying] = useState(false);
   const [dnsStatus, setDnsStatus] = useState("");
   const [seoTitle, setSeoTitle] = useState("");
@@ -203,7 +206,9 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
       }
 
       setCustomDomainName(currentProject.customDomain?.hostname || "");
+      setProjectSubdomain(currentProject.subdomain || "");
       setDnsStatus("");
+      setSubdomainStatus("");
       setError("");
       setSuccess("");
       setPreferredProvider(currentProject.theme?.preferredProvider || "gemini");
@@ -358,6 +363,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customDomain: customDomainName.trim() || "",
+          subdomain: projectSubdomain.trim() || "",
           theme: {
             ...currentProject.theme,
             preferredProvider,
@@ -1179,10 +1185,6 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
                         <>
                           <h4 style={{ color: "#fff", margin: "0 0 0.5rem 0" }}>General Configuration</h4>
                           <div className="field-group">
-                            <label>SaaS Subdomain URL Prefix</label>
-                            <input className="field" value={currentProject.subdomain} disabled style={{ background: "rgba(255,255,255,0.02)", color: "#4b5563" }} />
-                          </div>
-                          <div className="field-group">
                             <label>Preferred LLM Routing Engine</label>
                             <select className="field" value={preferredProvider} onChange={(e) => setPreferredProvider(e.target.value)}>
                               <option value="gemini">Gemini 3.5 Flash / 1.5 Pro</option>
@@ -1196,27 +1198,51 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
                       {/* CUSTOM DOMAIN MANAGEMENT */}
                       {settingsTab === "domains" && (
                         <>
+                          <h4 style={{ color: "#fff", margin: "0 0 0.5rem 0" }}>Website Subdomain</h4>
+                          <p style={{ color: "#9ca3af", fontSize: "0.75rem", margin: 0, lineHeight: 1.4 }}>
+                            Customize the default subdomain address hosted on Webbing's servers.
+                          </p>
+                          
+                          <div className="field-group" style={{ marginBottom: "1.5rem" }}>
+                            <label>Subdomain Prefix</label>
+                            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                              <input 
+                                className="field" 
+                                value={projectSubdomain} 
+                                onChange={(e) => {
+                                  const clean = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                                  setProjectSubdomain(clean);
+                                }} 
+                                placeholder="my-website" 
+                                style={{ flexGrow: 1 }} 
+                              />
+                              <span style={{ fontSize: "0.85rem", color: "#6b7280", fontWeight: 600 }}>.{baseDomain}</span>
+                            </div>
+                          </div>
+
+                          <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: "1.5rem 0" }} />
+
                           <h4 style={{ color: "#fff", margin: "0 0 0.5rem 0" }}>Custom Domain Settings</h4>
                           <p style={{ color: "#9ca3af", fontSize: "0.75rem", margin: 0, lineHeight: 1.4 }}>
-                            Map a verified personal domain directly to your published workspace address.
+                            Map a verified personal domain directly to your published website.
                           </p>
                           
                           <div className="field-group">
                             <label>Domain Name</label>
                             <input className="field" value={customDomainName} onChange={(e) => setCustomDomainName(e.target.value)} placeholder="e.g. brand.com" />
                           </div>
-
+ 
                           {customDomainName.trim() && (
                             <div style={{ background: "rgba(99, 102, 241, 0.04)", border: "1px solid rgba(99, 102, 241, 0.15)", padding: "1rem", borderRadius: "0.5rem", fontSize: "0.75rem", color: "#cbd5e1" }}>
                               <strong>Required DNS Configuration:</strong>
                               <p style={{ margin: "0.25rem 0" }}>Create a <strong>CNAME</strong> record pointing to:</p>
-                              <code style={{ background: "rgba(0,0,0,0.3)", padding: "0.1rem 0.3rem", borderRadius: "0.2rem", color: "#a5b4fc" }}>cname.webbing.in</code>
-
+                              <code style={{ background: "rgba(0,0,0,0.3)", padding: "0.1rem 0.3rem", borderRadius: "0.25rem", color: "#a5b4fc" }}>cname.webbing.in</code>
+ 
                               <div style={{ marginTop: "1rem", display: "flex", alignItems: "center", gap: "1rem" }}>
                                 <button type="button" onClick={handleVerifyDns} className="glow-btn" style={{ background: "linear-gradient(to right, #6366f1, #4f46e5)", color: "#fff", padding: "0.3rem 0.75rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }} disabled={dnsVerifying}>
                                   {dnsVerifying ? "Verifying..." : "Verify DNS Link"}
                                 </button>
-                                {dnsStatus && <span style={{ color: dnsStatus.includes("Active") ? "#34d399" : "#f87171", fontSize: "0.7rem" }}>{dnsStatus}</span>}
+                                {dnsStatus && <span style={{ color: dnsStatus.includes("Active") || dnsStatus.includes("connected") ? "#34d399" : "#f87171", fontSize: "0.7rem" }}>{dnsStatus}</span>}
                               </div>
                             </div>
                           )}

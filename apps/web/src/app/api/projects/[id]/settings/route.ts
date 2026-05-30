@@ -20,14 +20,21 @@ export async function POST(
     const projectId = params.id;
     const project = await prisma.project.findFirst({
       where: { id: projectId, tenantId: user.tenantId },
-      include: { customDomain: true },
+      include: {
+        customDomain: true,
+        pages: true
+      },
     });
 
     if (!project) {
-      return NextResponse.json({ error: "Project not found or access denied" }, { status: 404 });
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    const { customDomain, selfHosted } = await req.json();
+    if (user.role !== "ADMIN" && project.userId && project.userId !== user.userId) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    const { customDomain, selfHosted, subdomain, theme, seo } = await req.json();
 
     // 1. Update selfHosted status
     if (selfHosted !== undefined) {
@@ -37,7 +44,56 @@ export async function POST(
       });
     }
 
-    // 2. Update Custom Domain Mapping
+    // 2. Update subdomain prefix with uniqueness check
+    if (subdomain !== undefined) {
+      const cleanSubdomain = subdomain.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
+      if (!cleanSubdomain) {
+        return NextResponse.json({ error: "Invalid subdomain prefix" }, { status: 400 });
+      }
+      
+      const existingProject = await prisma.project.findFirst({
+        where: {
+          subdomain: cleanSubdomain,
+          id: { not: projectId }
+        }
+      });
+      if (existingProject) {
+        return NextResponse.json({ error: "Subdomain prefix is already taken by another project" }, { status: 400 });
+      }
+
+      await prisma.project.update({
+        where: { id: projectId },
+        data: { subdomain: cleanSubdomain }
+      });
+    }
+
+    // 3. Update theme settings (preferredProvider, analyticsTag, etc.)
+    if (theme !== undefined) {
+      await prisma.project.update({
+        where: { id: projectId },
+        data: { theme }
+      });
+    }
+
+    // 4. Update SEO on page
+    if (seo !== undefined) {
+      const page = project.pages.find((p) => p.slug === "index") || project.pages[0];
+      if (page) {
+        await prisma.page.update({
+          where: { id: page.id },
+          data: {
+            title: seo.title || page.title,
+            description: seo.description || page.description,
+            seoMetadata: {
+              title: seo.title || "",
+              description: seo.description || ""
+            }
+          }
+        });
+      }
+    }
+
+    // 5. Update Custom Domain Mapping
     if (customDomain !== undefined) {
       const hostname = customDomain.trim().toLowerCase();
       if (!hostname) {

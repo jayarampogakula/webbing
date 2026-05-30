@@ -63,6 +63,7 @@ model User {
   tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   memberships   TeamMember[]
   apiKeys       ApiKey[]
+  projects      Project[]
 }
 
 model Tenant {
@@ -129,6 +130,10 @@ model Project {
   // Tenant reference
   tenantId      String
   tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Creator reference
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // Custom Domain Mapping
   customDomain  CustomDomain?

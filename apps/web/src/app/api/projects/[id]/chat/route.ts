@@ -33,6 +33,10 @@ export async function POST(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
+    if (user.role !== "ADMIN" && project.userId && project.userId !== user.userId) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
     const page = project.pages[0];
     if (!page) {
       return NextResponse.json({ error: "No page found for project" }, { status: 400 });

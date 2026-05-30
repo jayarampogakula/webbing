@@ -31,7 +31,11 @@ export async function POST(
     });
 
     if (!project) {
-      return NextResponse.json({ error: "Project not found or access denied." }, { status: 404 });
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    if (user.role !== "ADMIN" && project.userId && project.userId !== user.userId) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     const body = await req.json();

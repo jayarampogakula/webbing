@@ -74,6 +74,7 @@ export async function POST(req: Request) {
           }
         },
         tenantId: tenantId,
+        userId: user.userId,
       }
     });
 
