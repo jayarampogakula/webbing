@@ -87,11 +87,11 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
       {page.sections.map((section, idx) => {
         const content = (section.content as any) || {};
         const styles = (section.styles as any) || {};
-        const type = section.type.toUpperCase();
+        const type = (section.type || "").toUpperCase();
 
         switch (type) {
           case "HEADER": {
-            const links = content.links || [
+            const links = Array.isArray(content.links) ? content.links : [
               { label: "Features", url: "#features" },
               { label: "Pricing", url: "#pricing" },
               { label: "About", url: "#about" },
@@ -104,11 +104,14 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                   {project.name}
                 </a>
                 <nav style={{ display: "flex", gap: "1.5rem" }}>
-                  {links.map((link: any, i: number) => (
-                    <a key={i} href={link.url} style={{ color: "#9ca3af", fontSize: "0.9rem", fontWeight: 500, transition: "color 0.2s" }} onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")} onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}>
-                      {link.label}
-                    </a>
-                  ))}
+                  {links.map((link: any, i: number) => {
+                    if (!link) return null;
+                    return (
+                      <a key={i} href={link.url || "#"} style={{ color: "#9ca3af", fontSize: "0.9rem", fontWeight: 500, transition: "color 0.2s" }} onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")} onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}>
+                        {link.label || ""}
+                      </a>
+                    );
+                  })}
                 </nav>
                 <a className="primary-action" href={content.ctaUrl || "#contact"} style={{ minHeight: "auto", padding: "0.4rem 1rem", fontSize: "0.85rem", borderRadius: "0.4rem" }}>
                   {content.ctaText || "Get Started"}
@@ -168,7 +171,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
           }
 
           case "FEATURES": {
-            const items = content.items || [
+            const items = Array.isArray(content.items) ? content.items : [
               { title: "Smart Generation", description: "Creates sections and copywriting aligned with your niche prompt details." },
               { title: "Vibrant Styling", description: "Glassmorphic interfaces, tailored grid schemes, and custom color presets." },
               { title: "Production Ready", description: "Optimized HTML/CSS structure ready for hosting or custom exports." }
@@ -183,22 +186,25 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                   <p style={{ color: "#9ca3af" }}>Engineered for rich presentation and modern responsive compatibility.</p>
                 </div>
                 <div className="feature-grid">
-                  {items.map((item: any, i: number) => (
-                    <article className="feature-card glass-card" key={i} style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: "1rem", padding: "2rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-                      <span className="icon-box" style={{ background: "rgba(99, 102, 241, 0.1)", color: "#a5b4fc", display: "flex", alignItems: "center", justifyContent: "center", width: "3rem", height: "3rem", borderRadius: "0.5rem" }}>
-                        <CheckCircle2 size={20} />
-                      </span>
-                      <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#fff", fontWeight: 700 }}>{item.title}</h3>
-                      <p style={{ color: "#9ca3af", fontSize: "0.95rem", lineHeight: 1.5, margin: 0 }}>{item.description}</p>
-                    </article>
-                  ))}
+                  {items.map((item: any, i: number) => {
+                    if (!item) return null;
+                    return (
+                      <article className="feature-card glass-card" key={i} style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: "1rem", padding: "2rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                        <span className="icon-box" style={{ background: "rgba(99, 102, 241, 0.1)", color: "#a5b4fc", display: "flex", alignItems: "center", justifyContent: "center", width: "3rem", height: "3rem", borderRadius: "0.5rem" }}>
+                          <CheckCircle2 size={20} />
+                        </span>
+                        <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#fff", fontWeight: 700 }}>{item.title || ""}</h3>
+                        <p style={{ color: "#9ca3af", fontSize: "0.95rem", lineHeight: 1.5, margin: 0 }}>{item.description || ""}</p>
+                      </article>
+                    );
+                  })}
                 </div>
               </section>
             );
           }
 
           case "SERVICES": {
-            const services = content.services || [
+            const services = Array.isArray(content.services) ? content.services : [
               { title: "Core Design", desc: "Premium styling matching your specific target niche.", badge: "Popular" },
               { title: "Subdomain Mapping", desc: "Instant deployment with fully configured system records." },
               { title: "SEO Configurations", desc: "Automated search engine description meta tags." }
@@ -213,24 +219,27 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                   <p style={{ color: "#9ca3af" }}>Highly tailored solutions created dynamically to solve business requirements.</p>
                 </div>
                 <div className="feature-grid">
-                  {services.map((srv: any, i: number) => (
-                    <article className="feature-card glass-card" key={i} style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: "1rem", padding: "2.2rem", position: "relative" }}>
-                      {srv.badge && (
-                        <span style={{ position: "absolute", top: "1rem", right: "1rem", background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", padding: "0.2rem 0.6rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700 }}>
-                          {srv.badge}
-                        </span>
-                      )}
-                      <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.3rem", color: "#fff", fontWeight: 700 }}>{srv.title}</h3>
-                      <p style={{ color: "#9ca3af", fontSize: "0.95rem", lineHeight: 1.5, margin: 0 }}>{srv.desc}</p>
-                    </article>
-                  ))}
+                  {services.map((srv: any, i: number) => {
+                    if (!srv) return null;
+                    return (
+                      <article className="feature-card glass-card" key={i} style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: "1rem", padding: "2.2rem", position: "relative" }}>
+                        {srv.badge && (
+                          <span style={{ position: "absolute", top: "1rem", right: "1rem", background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", padding: "0.2rem 0.6rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700 }}>
+                            {srv.badge}
+                          </span>
+                        )}
+                        <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.3rem", color: "#fff", fontWeight: 700 }}>{srv.title || ""}</h3>
+                        <p style={{ color: "#9ca3af", fontSize: "0.95rem", lineHeight: 1.5, margin: 0 }}>{srv.desc || ""}</p>
+                      </article>
+                    );
+                  })}
                 </div>
               </section>
             );
           }
 
           case "TESTIMONIALS": {
-            const reviews = content.testimonials || [
+            const reviews = Array.isArray(content.testimonials) ? content.testimonials : [
               { quote: "This builder completely changed how we test landing pages. The visual aesthetics are incredible.", author: "Sarah Jenkins", role: "Product Director" },
               { quote: "Instant publishing with automatic SSL and DNS validations means we launch with complete peace of mind.", author: "Marcus Vance", role: "Creative Lead" }
             ];
@@ -242,35 +251,38 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                     Trusted By Builders
                   </h2>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: reviews.length > 2 ? "repeat(3, 1fr)" : "repeat(2, 1fr)", gap: "1.5rem" }}>
-                  {reviews.map((rev: any, i: number) => (
-                    <div className="glass-panel" key={i} style={{ borderRadius: "1rem", padding: "2.5rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                      <div style={{ display: "flex", gap: "0.2rem" }}>
-                        {[...Array(5)].map((_, starIdx) => (
-                          <Star key={starIdx} size={15} fill="#fbbf24" stroke="none" />
-                        ))}
-                      </div>
-                      <p style={{ color: "#e2e8f0", fontSize: "1rem", lineHeight: 1.6, fontStyle: "italic", margin: 0 }}>
-                        "{rev.quote}"
-                      </p>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
-                        <div style={{ width: "2.5rem", height: "2.5rem", borderRadius: "50%", background: "linear-gradient(135deg, #6366f1, #a855f7)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: "0.9rem" }}>
-                          {(rev.author && rev.author.length > 0) ? rev.author[0] : "U"}
+                <div style={{ display: "grid", gridTemplateColumns: (reviews && reviews.length > 2) ? "repeat(3, 1fr)" : "repeat(2, 1fr)", gap: "1.5rem" }}>
+                  {reviews.map((rev: any, i: number) => {
+                    if (!rev) return null;
+                    return (
+                      <div className="glass-panel" key={i} style={{ borderRadius: "1rem", padding: "2.5rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                        <div style={{ display: "flex", gap: "0.2rem" }}>
+                          {[...Array(5)].map((_, starIdx) => (
+                            <Star key={starIdx} size={15} fill="#fbbf24" stroke="none" />
+                          ))}
                         </div>
-                        <div>
-                          <strong style={{ color: "#fff", display: "block", fontSize: "0.9rem" }}>{rev.author || "Anonymous"}</strong>
-                          <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>{rev.role}</span>
+                        <p style={{ color: "#e2e8f0", fontSize: "1rem", lineHeight: 1.6, fontStyle: "italic", margin: 0 }}>
+                          "{rev.quote || ""}"
+                        </p>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
+                          <div style={{ width: "2.5rem", height: "2.5rem", borderRadius: "50%", background: "linear-gradient(135deg, #6366f1, #a855f7)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: "0.9rem" }}>
+                            {(rev.author && rev.author.length > 0) ? rev.author[0] : "U"}
+                          </div>
+                          <div>
+                            <strong style={{ color: "#fff", display: "block", fontSize: "0.9rem" }}>{rev.author || "Anonymous"}</strong>
+                            <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>{rev.role || ""}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             );
           }
 
           case "PRICING": {
-            const plans = content.plans || [
+            const plans = Array.isArray(content.plans) ? content.plans : [
               { name: "Starter", price: "$0", desc: "Ideal for testing layout setups.", items: ["1 Active Site", "Free Subdomain", "Basic Analytics"] },
               { name: "Pro Plan", price: "$29", desc: "Best for teams and content creators.", items: ["10 Sites", "Custom Domain Maps", "Priority Support", "Unlimited AI Updates"], featured: true },
               { name: "Agency", price: "$99", desc: "For scaling client delivery.", items: ["Unlimited Sites", "White-labeled exports", "Dedicated APIs"] }
@@ -284,34 +296,37 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                   </h2>
                 </div>
                 <div className="feature-grid">
-                  {plans.map((pl: any, i: number) => (
-                    <article className={`pricing-card ${pl.featured ? "featured" : "glass-card"}`} key={i} style={{ border: pl.featured ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.06)", borderRadius: "1rem", padding: "2.5rem", display: "flex", flexDirection: "column", justifySelf: "stretch", boxShadow: pl.featured ? "0 10px 30px rgba(99,102,241,0.25)" : "none" }}>
-                      <span className="eyebrow" style={{ fontSize: "0.75rem" }}>{pl.name}</span>
-                      <div style={{ display: "flex", alignItems: "baseline", margin: "1rem 0" }}>
-                        <span style={{ fontSize: "3rem", fontWeight: 850, color: pl.featured ? "#818cf8" : "#fff" }}>{pl.price}</span>
-                        <span style={{ color: "#9ca3af", fontSize: "0.9rem", marginLeft: "0.25rem" }}>/mo</span>
-                      </div>
-                      <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0 0 2rem 0", minHeight: "2.5rem" }}>{pl.desc}</p>
-                      <ul style={{ listStyle: "none", padding: 0, margin: "0 0 2rem 0", display: "flex", flexDirection: "column", gap: "0.8rem", flexGrow: 1 }}>
-                        {(pl.items || []).map((item: string, j: number) => (
-                          <li key={j} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.9rem", color: "#cbd5e1" }}>
-                            <CheckCircle2 size={16} color="#34d399" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                      <a className={pl.featured ? "primary-action" : "secondary-action"} href="#contact" style={{ width: "100%", textAlign: "center", display: "block" }}>
-                        Choose {pl.name}
-                      </a>
-                    </article>
-                  ))}
+                  {plans.map((pl: any, i: number) => {
+                    if (!pl) return null;
+                    return (
+                      <article className={`pricing-card ${pl.featured ? "featured" : "glass-card"}`} key={i} style={{ border: pl.featured ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.06)", borderRadius: "1rem", padding: "2.5rem", display: "flex", flexDirection: "column", justifySelf: "stretch", boxShadow: pl.featured ? "0 10px 30px rgba(99,102,241,0.25)" : "none" }}>
+                        <span className="eyebrow" style={{ fontSize: "0.75rem" }}>{pl.name || ""}</span>
+                        <div style={{ display: "flex", alignItems: "baseline", margin: "1rem 0" }}>
+                          <span style={{ fontSize: "3rem", fontWeight: 850, color: pl.featured ? "#818cf8" : "#fff" }}>{pl.price || ""}</span>
+                          <span style={{ color: "#9ca3af", fontSize: "0.9rem", marginLeft: "0.25rem" }}>/mo</span>
+                        </div>
+                        <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0 0 2rem 0", minHeight: "2.5rem" }}>{pl.desc || ""}</p>
+                        <ul style={{ listStyle: "none", padding: 0, margin: "0 0 2rem 0", display: "flex", flexDirection: "column", gap: "0.8rem", flexGrow: 1 }}>
+                          {Array.isArray(pl.items) && pl.items.map((item: string, j: number) => (
+                            <li key={j} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.9rem", color: "#cbd5e1" }}>
+                              <CheckCircle2 size={16} color="#34d399" />
+                              {item || ""}
+                            </li>
+                          ))}
+                        </ul>
+                        <a className={pl.featured ? "primary-action" : "secondary-action"} href="#contact" style={{ width: "100%", textAlign: "center", display: "block" }}>
+                          Choose {pl.name || ""}
+                        </a>
+                      </article>
+                    );
+                  })}
                 </div>
               </section>
             );
           }
 
           case "FAQS": {
-            const items = content.faqs || [
+            const items = Array.isArray(content.faqs) ? content.faqs : [
               { q: "How do custom domain integrations work?", a: "Save your hostname in dashboard domain settings, configure the matching CNAME/A record on your registrar, and run verification. SSL certificate issuance happens automatically." },
               { q: "Can I download static HTML archives?", a: "Yes. Use the download options menu on the builder control bar to download your website as static code bundles, React components, or Next.js projects." }
             ];
@@ -324,17 +339,20 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                   </h2>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  {items.map((item: any, i: number) => (
-                    <details key={i} className="glass-panel" style={{ borderRadius: "0.75rem", padding: "1.25rem", cursor: "pointer", border: "1px solid rgba(255,255,255,0.06)" }}>
-                      <summary style={{ fontWeight: 700, color: "#fff", fontSize: "1.05rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        {item.q}
-                        <span style={{ fontSize: "1.2rem", color: "#818cf8" }}>+</span>
-                      </summary>
-                      <p style={{ color: "#9ca3af", fontSize: "0.95rem", lineHeight: 1.6, marginTop: "1rem", cursor: "default" }}>
-                        {item.a}
-                      </p>
-                    </details>
-                  ))}
+                  {items.map((item: any, i: number) => {
+                    if (!item) return null;
+                    return (
+                      <details key={i} className="glass-panel" style={{ borderRadius: "0.75rem", padding: "1.25rem", cursor: "pointer", border: "1px solid rgba(255,255,255,0.06)" }}>
+                        <summary style={{ fontWeight: 700, color: "#fff", fontSize: "1.05rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          {item.q || ""}
+                          <span style={{ fontSize: "1.2rem", color: "#818cf8" }}>+</span>
+                        </summary>
+                        <p style={{ color: "#9ca3af", fontSize: "0.95rem", lineHeight: 1.6, marginTop: "1rem", cursor: "default" }}>
+                          {item.a || ""}
+                        </p>
+                      </details>
+                    );
+                  })}
                 </div>
               </section>
             );
@@ -371,7 +389,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                       {content.heading || "Our Story"}
                     </h2>
                     <p style={{ color: "#9ca3af", fontSize: "1.05rem", lineHeight: 1.7, margin: 0 }}>
-                      {content.body}
+                      {content.body || ""}
                     </p>
                   </div>
                 </div>

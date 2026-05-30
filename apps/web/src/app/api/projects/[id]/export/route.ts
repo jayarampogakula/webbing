@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           switch (type) {
             case "HEADER": {
-              const links = content.links || [
+              const links = Array.isArray(content.links) ? content.links : [
                 { label: "Features", url: "#features" },
                 { label: "Pricing", url: "#pricing" },
                 { label: "Contact", url: "#contact" }
@@ -189,7 +189,10 @@ document.addEventListener('DOMContentLoaded', () => {
       ${project.name}
     </a>
     <nav style="display: flex; gap: 1.5rem;">
-      ${links.map((link: any) => `<a href="${link.url}" style="color: #9ca3af; font-size: 0.9rem; font-weight: 500; text-decoration: none;">${link.label}</a>`).join("")}
+      ${links.map((link: any) => {
+        if (!link) return "";
+        return `<a href="${link.url || "#"}" style="color: #9ca3af; font-size: 0.9rem; font-weight: 500; text-decoration: none;">${link.label || ""}</a>`;
+      }).join("")}
     </nav>
     <a class="primary-action" href="${content.ctaUrl || "#contact"}" style="padding: 0.4rem 1rem; font-size: 0.85rem; border-radius: 0.4rem;">${content.ctaText || "Get Started"}</a>
   </header>`;
@@ -216,15 +219,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             case "FEATURES": {
-              const items = content.items || [];
+              const items = Array.isArray(content.items) ? content.items : [];
               return `
   <section id="features" class="reveal-on-scroll" style="padding: 5rem 2rem; max-width: 1100px; margin: 0 auto;">
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
-      ${items.map((item: any) => `
+      ${items.map((item: any) => {
+        if (!item) return "";
+        return `
       <article class="glass-card" style="border-radius: 1rem; padding: 2rem; border: 1px solid rgba(255,255,255,0.06);">
-        <h3 style="margin: 0 0 0.5rem 0; color: #fff; font-size: 1.25rem;">${item.title}</h3>
-        <p style="color: #9ca3af; margin: 0; font-size: 0.95rem;">${item.description}</p>
-      </article>`).join("")}
+        <h3 style="margin: 0 0 0.5rem 0; color: #fff; font-size: 1.25rem;">${item.title || ""}</h3>
+        <p style="color: #9ca3af; margin: 0; font-size: 0.95rem;">${item.description || ""}</p>
+      </article>`;
+      }).join("")}
     </div>
   </section>`;
             }
