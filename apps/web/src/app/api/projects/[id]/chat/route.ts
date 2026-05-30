@@ -98,14 +98,58 @@ Only return the updated sections matching the user's intent. Preserve unmodified
     `;
 
     // 3. Call AI service to update layout JSON mapping
-    const result = await aiService.getProvider(preferredProvider).generateJson<{ sections: any[] }>({
+    const result = await aiService.getProvider(preferredProvider).generateJson<any>({
       prompt: userPrompt,
       systemPrompt
     });
 
-    if (!result || !Array.isArray(result.sections)) {
-      throw new Error("Invalid response format received from LLM.");
+    console.log("AI Edit Chat raw result:", JSON.stringify(result, null, 2));
+
+    let rawSections: any[] | null = null;
+    if (result) {
+      if (Array.isArray(result.sections)) {
+        rawSections = result.sections;
+      } else if (Array.isArray(result)) {
+        rawSections = result;
+      } else if (result.pages && Array.isArray(result.pages[0]?.sections)) {
+        rawSections = result.pages[0].sections;
+      } else if (result.page && Array.isArray(result.page.sections)) {
+        rawSections = result.page.sections;
+      }
     }
+
+    if (!rawSections || !Array.isArray(rawSections) || rawSections.length === 0) {
+      console.error("Invalid response format from LLM. Raw response:", result);
+      throw new Error("Invalid response format received from LLM. No sections array found.");
+    }
+
+    // Filter out invalid items and format them
+    const updatedSections = rawSections
+      .filter((s: any) => s && typeof s === "object" && typeof s.type === "string")
+      .map((s: any) => ({
+        type: s.type.toUpperCase(),
+        order: Number(s.order) || 0,
+        content: s.content || {},
+        styles: s.styles || {}
+      }));
+
+    if (updatedSections.length === 0) {
+      throw new Error("No valid sections found in the LLM response.");
+    }
+
+    // Merge updated sections with existing page sections to protect against partial updates
+    const existingSectionsMap = new Map(page.sections.map(s => [s.type.toUpperCase(), {
+      type: s.type.toUpperCase(),
+      order: s.order,
+      content: s.content as any,
+      styles: s.styles as any
+    }]));
+
+    for (const sec of updatedSections) {
+      existingSectionsMap.set(sec.type, sec);
+    }
+
+    const finalSections = Array.from(existingSectionsMap.values()).sort((a, b) => a.order - b.order);
 
     // 4. Update database transactionally
     await prisma.$transaction(async (tx) => {
@@ -114,13 +158,14 @@ Only return the updated sections matching the user's intent. Preserve unmodified
         where: { pageId: page.id }
       });
 
-      // Insert updated list
-      for (const sec of result.sections) {
+      // Insert updated merged list
+      for (let i = 0; i < finalSections.length; i++) {
+        const sec = finalSections[i];
         await tx.section.create({
           data: {
             pageId: page.id,
-            type: sec.type.toUpperCase(),
-            order: Number(sec.order),
+            type: sec.type,
+            order: sec.order || (i + 1),
             content: sec.content || {},
             styles: sec.styles || {}
           }

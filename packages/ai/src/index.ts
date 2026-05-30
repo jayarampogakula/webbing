@@ -212,14 +212,49 @@ export class AIService {
       this.providers.push({
         name: "mock",
         generateText: async () => "Mock generation output",
-        generateJson: async <T>() => ({
-          theme: {
-            primary: "#6366f1",
-            secondary: "#a855f7",
-            style: "Modern Startup",
-            fontFamily: "Inter"
-          },
-          pages: [
+        generateJson: async <T>(params: GenerationParams) => {
+          // If editing page sections, return mock sections array
+          if (params?.prompt?.includes("Current Page Sections") || params?.systemPrompt?.includes("sections")) {
+            return {
+              sections: [
+                {
+                  type: "HEADER",
+                  order: 1,
+                  content: {
+                    ctaText: "Shop New Arrivals",
+                    ctaUrl: "#collections",
+                    links: [
+                      { label: "New Arrivals", url: "#new-arrivals" },
+                      { label: "Collections", url: "#collections" },
+                      { label: "About Us", url: "#about" },
+                      { label: "Contact", url: "#contact" }
+                    ]
+                  }
+                },
+                {
+                  type: "HERO",
+                  order: 2,
+                  content: {
+                    heading: "Drape Yourself in Elegance: Anu Sarees Collection",
+                    subheading: "Explore our exquisite range of traditional, trending, and luxurious silk sarees, handpicked for the modern woman.",
+                    ctaText: "Shop New Arrivals",
+                    ctaUrl: "#collections",
+                    secondaryCtaText: "Explore Collections",
+                    secondaryCtaUrl: "#about",
+                    imageUrl: "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=1200&q=80"
+                  }
+                }
+              ]
+            } as unknown as T;
+          }
+          return {
+            theme: {
+              primary: "#6366f1",
+              secondary: "#a855f7",
+              style: "Modern Startup",
+              fontFamily: "Inter"
+            },
+            pages: [
             {
               slug: "index",
               title: "Home Page",
