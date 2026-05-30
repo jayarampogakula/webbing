@@ -92,11 +92,6 @@ export default async function DashboardPage() {
             <span className="brand-mark"><Sparkles size={18} /></span>
             Webbing
           </a>
-          <nav className="nav-links">
-            <a href="/">Home</a>
-            <a href="/dashboard">Dashboard</a>
-            {user.role === "ADMIN" && <a href="/admin">Admin</a>}
-          </nav>
           <div className="nav-actions">
             <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>{user.email}</span>
             <a className="danger-action" href="/api/auth/signout">Sign out</a>
@@ -127,9 +122,6 @@ export default async function DashboardPage() {
           <span className="brand-mark"><Sparkles size={18} /></span>
           Webbing
         </a>
-        <nav className="nav-links">
-          {user.role === "ADMIN" && <a href="/admin">Admin</a>}
-        </nav>
         <div className="nav-actions">
           <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>{user.email}</span>
           <a className="danger-action" href="/api/auth/signout">Sign out</a>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Settings, Check, Server, RefreshCw, Sparkles, Globe, Edit2, Play, Download, Layout, ArrowLeft, Plus, MessageSquare, Layers, Sliders, Image, LogOut, CheckCircle, AlertTriangle, ExternalLink, Shield, ArrowRight, Trash2 } from "lucide-react";
+import { Settings, Check, Server, RefreshCw, Sparkles, Globe, Edit2, Play, Download, Layout, ArrowLeft, Plus, MessageSquare, Layers, Sliders, Image, LogOut, CheckCircle, AlertTriangle, ExternalLink, Shield, ArrowRight, Trash2, ChevronLeft, ChevronRight, PlusCircle, Home } from "lucide-react";
 import GeneratorForm from "../GeneratorForm";
 import LlmKeyManager, { LlmKeyView } from "../components/LlmKeyManager";
 
@@ -115,6 +115,8 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [activeView, setActiveView] = useState<"homepage" | "builder">("homepage");
   const [isCreatingNew, setIsCreatingNew] = useState(tenant.projects.length === 0);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [splitLayout, setSplitLayout] = useState<"split" | "editor-focus" | "preview-focus" | "editor-only" | "preview-only">("split");
 
   // Upgrade Plan states
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
@@ -658,7 +660,120 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   // ----------------------------------------------------
   if (activeView === "homepage") {
     return (
-      <div style={{ flexGrow: 1, padding: "2.5rem", background: "#0a0e17", overflowY: "auto" }}>
+      <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "#070b13", overflow: "hidden" }}>
+        {/* PERSISTENT LEFT SIDEBAR */}
+        <div style={{
+          width: sidebarCollapsed ? "64px" : "200px",
+          minWidth: sidebarCollapsed ? "64px" : "200px",
+          background: "rgba(10, 14, 23, 0.95)",
+          borderRight: "1px solid rgba(255,255,255,0.05)",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          padding: "1.5rem 0.5rem 0.5rem 0.5rem",
+          transition: "width 0.2s, min-width 0.2s",
+          flexShrink: 0
+        }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+            <button
+              onClick={() => {
+                setActiveView("homepage");
+                setIsCreatingNew(false);
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                width: "100%",
+                padding: "0.6rem 0.8rem",
+                borderRadius: "0.375rem",
+                background: "rgba(129, 140, 248, 0.08)",
+                border: "none",
+                color: "#818cf8",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                textAlign: "left",
+                transition: "all 0.2s"
+              }}
+            >
+              <Home size={16} />
+              {!sidebarCollapsed && <span>Dashboard</span>}
+            </button>
+
+            <button
+              onClick={() => {
+                setIsCreatingNew(true);
+                setActiveView("builder");
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                width: "100%",
+                padding: "0.6rem 0.8rem",
+                borderRadius: "0.375rem",
+                background: "none",
+                border: "none",
+                color: "#9ca3af",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                textAlign: "left",
+                transition: "all 0.2s"
+              }}
+            >
+              <PlusCircle size={16} />
+              {!sidebarCollapsed && <span>Create New</span>}
+            </button>
+
+            {user.role === "ADMIN" && (
+              <a
+                href="/admin"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  width: "100%",
+                  padding: "0.6rem 0.8rem",
+                  borderRadius: "0.375rem",
+                  color: "#9ca3af",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  transition: "all 0.2s"
+                }}
+              >
+                <Shield size={16} />
+                {!sidebarCollapsed && <span>Admin Console</span>}
+              </a>
+            )}
+          </div>
+
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              width: "100%",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "0.375rem",
+              background: "none",
+              border: "none",
+              color: "#6b7280",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              transition: "all 0.2s"
+            }}
+          >
+            {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            {!sidebarCollapsed && <span>Collapse Sidebar</span>}
+          </button>
+        </div>
+
+        <div style={{ flexGrow: 1, padding: "2.5rem", background: "#0a0e17", overflowY: "auto" }}>
         <main style={{ maxWidth: "1200px", margin: "0 auto" }}>
           
           {/* Header row */}
@@ -898,6 +1013,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
         </main>
       </div>
+      </div>
     );
   }
 
@@ -905,7 +1021,253 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   // UNIFIED BUILDER WORKSPACE VIEW RENDER
   // ----------------------------------------------------
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 70px)", background: "#070b13" }}>
+    <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "#070b13", overflow: "hidden" }}>
+      {/* PERSISTENT LEFT SIDEBAR */}
+      <div style={{
+        width: sidebarCollapsed ? "64px" : "200px",
+        minWidth: sidebarCollapsed ? "64px" : "200px",
+        background: "rgba(10, 14, 23, 0.95)",
+        borderRight: "1px solid rgba(255,255,255,0.05)",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        padding: "1.5rem 0.5rem 0.5rem 0.5rem",
+        transition: "width 0.2s, min-width 0.2s",
+        flexShrink: 0
+      }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveView("homepage");
+              setIsCreatingNew(false);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              width: "100%",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "0.375rem",
+              background: "none",
+              border: "none",
+              color: "#9ca3af",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              textAlign: "left",
+              transition: "all 0.2s"
+            }}
+          >
+            <Home size={16} />
+            {!sidebarCollapsed && <span>Dashboard</span>}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setIsCreatingNew(true);
+              setActiveView("builder");
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              width: "100%",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "0.375rem",
+              background: isCreatingNew ? "rgba(129, 140, 248, 0.08)" : "none",
+              border: "none",
+              color: isCreatingNew ? "#818cf8" : "#9ca3af",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              textAlign: "left",
+              transition: "all 0.2s"
+            }}
+          >
+            <PlusCircle size={16} />
+            {!sidebarCollapsed && <span>Create New</span>}
+          </button>
+
+          {user.role === "ADMIN" && (
+            <a
+              href="/admin"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                width: "100%",
+                padding: "0.6rem 0.8rem",
+                borderRadius: "0.375rem",
+                color: "#9ca3af",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                textDecoration: "none",
+                transition: "all 0.2s"
+              }}
+            >
+              <Shield size={16} />
+              {!sidebarCollapsed && <span>Admin Console</span>}
+            </a>
+          )}
+
+          {!isCreatingNew && currentProject && (
+            <>
+              <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0.5rem 0" }} />
+              <span style={{ fontSize: "0.7rem", color: "#4b5563", fontWeight: 700, paddingLeft: "0.8rem", display: sidebarCollapsed ? "none" : "block" }}>
+                WEBSITE EDITOR
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setBuilderTab("chat")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  width: "100%",
+                  padding: "0.6rem 0.8rem",
+                  borderRadius: "0.375rem",
+                  background: builderTab === "chat" ? "rgba(129, 140, 248, 0.08)" : "none",
+                  border: "none",
+                  color: builderTab === "chat" ? "#818cf8" : "#9ca3af",
+                  cursor: "pointer",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  textAlign: "left",
+                  transition: "all 0.2s"
+                }}
+              >
+                <MessageSquare size={16} />
+                {!sidebarCollapsed && <span>AI Chat</span>}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBuilderTab("layers")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  width: "100%",
+                  padding: "0.6rem 0.8rem",
+                  borderRadius: "0.375rem",
+                  background: builderTab === "layers" ? "rgba(129, 140, 248, 0.08)" : "none",
+                  border: "none",
+                  color: builderTab === "layers" ? "#818cf8" : "#9ca3af",
+                  cursor: "pointer",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  textAlign: "left",
+                  transition: "all 0.2s"
+                }}
+              >
+                <Layers size={16} />
+                {!sidebarCollapsed && <span>Sections</span>}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBuilderTab("properties")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  width: "100%",
+                  padding: "0.6rem 0.8rem",
+                  borderRadius: "0.375rem",
+                  background: builderTab === "properties" ? "rgba(129, 140, 248, 0.08)" : "none",
+                  border: "none",
+                  color: builderTab === "properties" ? "#818cf8" : "#9ca3af",
+                  cursor: "pointer",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  textAlign: "left",
+                  transition: "all 0.2s"
+                }}
+              >
+                <Sliders size={16} />
+                {!sidebarCollapsed && <span>Manual Edit</span>}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBuilderTab("assets")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  width: "100%",
+                  padding: "0.6rem 0.8rem",
+                  borderRadius: "0.375rem",
+                  background: builderTab === "assets" ? "rgba(129, 140, 248, 0.08)" : "none",
+                  border: "none",
+                  color: builderTab === "assets" ? "#818cf8" : "#9ca3af",
+                  cursor: "pointer",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  textAlign: "left",
+                  transition: "all 0.2s"
+                }}
+              >
+                <Image size={16} />
+                {!sidebarCollapsed && <span>Assets</span>}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBuilderTab("settings")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  width: "100%",
+                  padding: "0.6rem 0.8rem",
+                  borderRadius: "0.375rem",
+                  background: builderTab === "settings" ? "rgba(129, 140, 248, 0.08)" : "none",
+                  border: "none",
+                  color: builderTab === "settings" ? "#818cf8" : "#9ca3af",
+                  cursor: "pointer",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  textAlign: "left",
+                  transition: "all 0.2s"
+                }}
+              >
+                <Settings size={16} />
+                {!sidebarCollapsed && <span>Settings</span>}
+              </button>
+            </>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            width: "100%",
+            padding: "0.6rem 0.8rem",
+            borderRadius: "0.375rem",
+            background: "none",
+            border: "none",
+            color: "#6b7280",
+            cursor: "pointer",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            transition: "all 0.2s"
+          }}
+        >
+          {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {!sidebarCollapsed && <span>Collapse Sidebar</span>}
+        </button>
+      </div>
+
+      {/* Main content display container */}
+      <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       
       {/* 1. Header Control Bar */}
       <div className="builder-header-bar">
@@ -957,6 +1319,50 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
         {/* Action controls */}
         {currentProject && !isCreatingNew && (
           <div style={{ display: "flex", gap: "0.8rem", alignItems: "center" }}>
+            
+            {/* Split layout resizer control */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", background: "rgba(255,255,255,0.02)", padding: "0.2rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <button
+                type="button"
+                onClick={() => setSplitLayout("split")}
+                style={{ background: splitLayout === "split" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "split" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                title="Split View (50/50)"
+              >
+                50:50
+              </button>
+              <button
+                type="button"
+                onClick={() => setSplitLayout("editor-focus")}
+                style={{ background: splitLayout === "editor-focus" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "editor-focus" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                title="Focus Editor (70/30)"
+              >
+                Editor Wide
+              </button>
+              <button
+                type="button"
+                onClick={() => setSplitLayout("preview-focus")}
+                style={{ background: splitLayout === "preview-focus" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "preview-focus" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                title="Focus Preview (30/70)"
+              >
+                Preview Wide
+              </button>
+              <button
+                type="button"
+                onClick={() => setSplitLayout("editor-only")}
+                style={{ background: splitLayout === "editor-only" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "editor-only" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                title="Hide Preview"
+              >
+                Hide Preview
+              </button>
+              <button
+                type="button"
+                onClick={() => setSplitLayout("preview-only")}
+                style={{ background: splitLayout === "preview-only" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "preview-only" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                title="Hide Editor"
+              >
+                Hide Editor
+              </button>
+            </div>
             
             {/* AI Credits remaining */}
             <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
@@ -1025,50 +1431,52 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
       </div>
 
-      {/* 2. Main split view screen area */}
-      <div className="builder-split-container">
-        
-        {/* Left Config Panel sidebar container */}
-        <div className="builder-sidebar">
-          
-          {/* Left Sidebar Toolbar with Names */}
-          {!isCreatingNew && currentProject && (
-            <div style={{ width: "160px", background: "rgba(10, 14, 23, 0.95)", borderRight: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", gap: "0.6rem", padding: "1.5rem 0.5rem 0.5rem 0.5rem" }}>
-              <button onClick={() => setBuilderTab("chat")} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.6rem 0.8rem", borderRadius: "0.375rem", background: builderTab === "chat" ? "rgba(129, 140, 248, 0.08)" : "none", border: "none", color: builderTab === "chat" ? "#818cf8" : "#9ca3af", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, textAlign: "left", transition: "all 0.2s" }} title="AI Chat edit">
-                <MessageSquare size={16} />
-                <span>AI Chat</span>
-              </button>
-              <button onClick={() => setBuilderTab("layers")} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.6rem 0.8rem", borderRadius: "0.375rem", background: builderTab === "layers" ? "rgba(129, 140, 248, 0.08)" : "none", border: "none", color: builderTab === "layers" ? "#818cf8" : "#9ca3af", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, textAlign: "left", transition: "all 0.2s" }} title="Section layers">
-                <Layers size={16} />
-                <span>Sections</span>
-              </button>
-              <button onClick={() => setBuilderTab("properties")} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.6rem 0.8rem", borderRadius: "0.375rem", background: builderTab === "properties" ? "rgba(129, 140, 248, 0.08)" : "none", border: "none", color: builderTab === "properties" ? "#818cf8" : "#9ca3af", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, textAlign: "left", transition: "all 0.2s" }} title="Manual Overrides">
-                <Sliders size={16} />
-                <span>Manual Edit</span>
-              </button>
-              <button onClick={() => setBuilderTab("assets")} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.6rem 0.8rem", borderRadius: "0.375rem", background: builderTab === "assets" ? "rgba(129, 140, 248, 0.08)" : "none", border: "none", color: builderTab === "assets" ? "#818cf8" : "#9ca3af", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, textAlign: "left", transition: "all 0.2s" }} title="Assets Manager">
-                <Image size={16} />
-                <span>Assets</span>
-              </button>
-              <button onClick={() => setBuilderTab("settings")} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.6rem 0.8rem", borderRadius: "0.375rem", background: builderTab === "settings" ? "rgba(129, 140, 248, 0.08)" : "none", border: "none", color: builderTab === "settings" ? "#818cf8" : "#9ca3af", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, textAlign: "left", transition: "all 0.2s" }} title="Settings">
-                <Settings size={16} />
-                <span>Settings</span>
+      {isCreatingNew ? (
+        <div style={{ flexGrow: 1, padding: "2.5rem", background: "#0a0e17", overflowY: "auto" }}>
+          <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+              <div>
+                <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#fff", margin: 0 }}>Create a new website with AI</h2>
+                <p style={{ color: "#cbd5e1", fontSize: "0.9rem", margin: "0.25rem 0 0 0" }}>Define parameters below and trigger code generation.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreatingNew(false);
+                  if (projects.length > 0) {
+                    setSelectedProjectId(projects[0].id);
+                  } else {
+                    setActiveView("homepage");
+                  }
+                }}
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.5rem 1.2rem", borderRadius: "0.5rem", fontSize: "0.8rem", cursor: "pointer", fontWeight: 600 }}
+              >
+                Cancel
               </button>
             </div>
-          )}
-
-          {/* Left panel tabs content panel */}
-          <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", overflowY: "auto", background: "rgba(10, 14, 23, 0.55)", backdropFilter: "blur(20px)" }}>
-            {isCreatingNew ? (
-              <div style={{ padding: "2rem" }}>
-                <GeneratorForm user={user} onSuccess={handleNewProjectGenerated} />
-              </div>
-            ) : !currentProject ? (
-              <div style={{ padding: "2rem", color: "#9ca3af", textAlign: "center" }}>
-                No active project selected.
-              </div>
-            ) : (
-              <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", height: "100%" }}>
+            <GeneratorForm user={user} onSuccess={handleNewProjectGenerated} />
+          </div>
+        </div>
+      ) : !currentProject ? (
+        <div style={{ flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#cbd5e1" }}>
+          Select or create a website project.
+        </div>
+      ) : (
+        <div className="builder-split-container">
+          
+          {/* Left Config Panel (Editor pane) */}
+          {splitLayout !== "preview-only" && (
+            <div style={{
+              width: splitLayout === "editor-only" ? "100%" : splitLayout === "editor-focus" ? "70%" : splitLayout === "preview-focus" ? "30%" : "50%",
+              flexGrow: 0,
+              flexShrink: 0,
+              display: "flex",
+              flexDirection: "column",
+              overflowY: "auto",
+              background: "rgba(10, 14, 23, 0.55)",
+              borderRight: "1px solid rgba(255,255,255,0.06)",
+              padding: "1.5rem"
+            }}>
                 
                 {/* Error / Success alert display banner */}
                 {error && <div style={{ background: "rgba(239, 68, 68, 0.08)", borderBottom: "1px solid rgba(239, 68, 68, 0.15)", color: "#f87171", padding: "0.6rem 1rem", borderRadius: "0.4rem", fontSize: "0.8rem", marginBottom: "1rem" }}>{error}</div>}
@@ -1453,14 +1861,17 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                   </div>
                 )}
 
-              </div>
-            )}
-          </div>
-
-        </div>
+            </div>
+          )}
 
         {/* Right Iframe preview workspace */}
-        <div className="builder-preview-container">
+        {splitLayout !== "editor-only" && (
+          <div className="builder-preview-container" style={{
+            width: splitLayout === "preview-only" ? "100%" : splitLayout === "preview-focus" ? "70%" : splitLayout === "editor-focus" ? "30%" : "50%",
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column"
+          }}>
           
           {/* Preview address indicator header */}
           <div style={{ padding: "0.5rem 1.5rem", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0b0f19" }}>
@@ -1544,9 +1955,10 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
               </div>
             )}
           </div>
-
         </div>
-
+      )}
+      </div>
+      )}
       </div>
 
       {/* 3. Publishing Checks overlay modal */}

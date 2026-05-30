@@ -97,7 +97,7 @@ export class GeminiProvider implements AIProvider {
   private modelName: string;
 
   constructor(apiKey?: string, model?: string) {
-    const key = apiKey || process.env.GEMINI_API_KEY;
+    const key = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     if (key) {
       this.client = new GoogleGenAI({ apiKey: key });
     }
@@ -201,7 +201,7 @@ export class AIService {
       if (process.env.ANTHROPIC_API_KEY) {
         this.providers.push(new AnthropicProvider());
       }
-      if (process.env.GEMINI_API_KEY) {
+      if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) {
         this.providers.push(new GeminiProvider());
       }
     }
