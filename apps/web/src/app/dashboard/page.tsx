@@ -47,9 +47,11 @@ export default async function DashboardPage() {
 
   let tenant = null;
   let llmKeys: Awaited<ReturnType<typeof getLlmKeys>> = [];
+  let plans: any[] = [];
+  let upiId = "pogakula@ybl";
 
   try {
-    [tenant, llmKeys] = await Promise.all([
+    const [dbTenant, dbLlmKeys, dbPlans, dbUpiSetting] = await Promise.all([
       prisma.tenant.findUnique({
         where: { id: user.tenantId },
         include: {
@@ -74,7 +76,13 @@ export default async function DashboardPage() {
         },
       }),
       getLlmKeys(user.userId),
+      prisma.plan.findMany({ orderBy: { price: "asc" } }),
+      prisma.systemSetting.findUnique({ where: { key: "upiId" } }),
     ]);
+    tenant = dbTenant;
+    llmKeys = dbLlmKeys;
+    plans = dbPlans;
+    upiId = dbUpiSetting?.value || "pogakula@ybl";
   } catch (error) {
     console.error("Dashboard data load failed:", error);
     return (
@@ -120,8 +128,6 @@ export default async function DashboardPage() {
           Webbing
         </a>
         <nav className="nav-links">
-          <a href="/">Home</a>
-          <a href="/dashboard" className="active">Dashboard</a>
           {user.role === "ADMIN" && <a href="/admin">Admin</a>}
         </nav>
         <div className="nav-actions">
@@ -135,6 +141,8 @@ export default async function DashboardPage() {
         tenant={tenant as any}
         baseDomain={baseDomain}
         protocol={protocol}
+        initialPlans={plans}
+        upiId={upiId}
       />
     </div>
   );

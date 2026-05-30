@@ -117,6 +117,42 @@ async function main() {
   });
 
   console.log(`Ensured Standard User: ${standardUser.email} (Password: User123)`);
+
+  // 7. Seed Default Plans
+  console.log("Seeding default plans...");
+  const defaultPlans = [
+    { name: "Starter", price: 0, creditsLimit: 10, features: "1 Active Site, Free Subdomain, Basic Analytics" },
+    { name: "Pro Plan", price: 299, creditsLimit: 100, features: "10 Sites, Custom Domain Maps, Priority Support, Unlimited AI Updates" },
+    { name: "Agency", price: 999, creditsLimit: 500, features: "Unlimited Sites, White-labeled exports, Dedicated APIs, Priority Support" }
+  ];
+  for (const plan of defaultPlans) {
+    await prisma.plan.upsert({
+      where: { name: plan.name },
+      update: {
+        price: plan.price,
+        creditsLimit: plan.creditsLimit,
+        features: plan.features
+      },
+      create: {
+        name: plan.name,
+        price: plan.price,
+        creditsLimit: plan.creditsLimit,
+        features: plan.features
+      }
+    });
+  }
+
+  // 8. Seed Default UPI ID setting
+  console.log("Seeding default UPI ID...");
+  await prisma.systemSetting.upsert({
+    where: { key: "upiId" },
+    update: {},
+    create: {
+      key: "upiId",
+      value: "pogakula@ybl"
+    }
+  });
+
   console.log("Database seeding/upsert completed successfully! 🎉");
 }
 

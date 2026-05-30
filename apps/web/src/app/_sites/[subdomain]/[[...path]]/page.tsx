@@ -26,6 +26,27 @@ function renderUrl(val: any, fallback: string = "#"): string {
   return fallback;
 }
 
+// Image fallback resolver
+function resolveImageUrl(url: any, style?: string): string {
+  if (typeof url === "string" && url.startsWith("http")) {
+    if (url.includes("Unsplash URL") || url.includes("niche from instructions") || url.includes("[UNSPLASH_ID]")) {
+      // Fallback
+    } else {
+      return url;
+    }
+  }
+
+  const fallbacks: Record<string, string> = {
+    Gaming: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    Fitness: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80",
+    Creator: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1200&q=80",
+    Luxury: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1200&q=80",
+    SaaS: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1200&q=80",
+  };
+
+  return fallbacks[style || "SaaS"] || fallbacks.SaaS;
+}
+
 export default async function GeneratedSitePage({ params }: { params: { subdomain: string; path?: string[] } }) {
   try {
     const slug = params.path?.join("/") || "index";
@@ -74,6 +95,23 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
     }
 
     if (!project) notFound();
+
+    // Enforce publication check (drafts are not visible publicly)
+    if (project.status !== "PUBLISHED") {
+      return (
+        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", background: "#060914", color: "#f8fafc", fontFamily: "system-ui, sans-serif", padding: "2rem", textAlign: "center" }}>
+          <div style={{ background: "rgba(99, 102, 241, 0.08)", border: "1px solid rgba(99, 102, 241, 0.15)", borderRadius: "1rem", padding: "3rem 2rem", maxWidth: "480px", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}>
+            <div style={{ display: "inline-flex", padding: "1rem", borderRadius: "50%", background: "rgba(99, 102, 241, 0.1)", color: "#a5b4fc", marginBottom: "1.5rem" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <h1 style={{ fontSize: "1.75rem", fontWeight: 800, margin: "0 0 0.75rem 0", color: "#fff" }}>Website Under Construction</h1>
+            <p style={{ color: "#9ca3af", fontSize: "0.95rem", lineHeight: 1.6, margin: "0 0 2rem 0" }}>
+              This website is currently in draft mode and has not been published yet by the owner.
+            </p>
+          </div>
+        </div>
+      );
+    }
 
     // Enforce subscription check (unless project is configured as self-hosted)
     if (!project.selfHosted) {
@@ -231,7 +269,7 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
                     </div>
                     {content.imageUrl ? (
                       <div className="animate-float" style={{ position: "relative", display: "flex", justifyContent: "center" }}>
-                        <img src={content.imageUrl} alt="Visual" style={{ width: "100%", maxWidth: "450px", borderRadius: "1rem", boxShadow: "0 20px 40px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.08)", objectFit: "cover", aspectRatio: "4/3" }} />
+                        <img src={resolveImageUrl(content.imageUrl, designStyle)} alt="Visual" style={{ width: "100%", maxWidth: "450px", borderRadius: "1rem", boxShadow: "0 20px 40px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.08)", objectFit: "cover", aspectRatio: "4/3" }} />
                         <div className="glass-panel" style={{ position: "absolute", bottom: "-1.5rem", left: "-1rem", padding: "1rem", borderRadius: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                           <Zap size={16} color="#c084fc" />
                           <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#fff" }}>Ready to Publish</span>
@@ -466,7 +504,7 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
                 <section key={section.id} id="about" className="reveal-on-scroll" style={{ padding: "5rem 2rem", maxWidth: "1100px", margin: "0 auto" }}>
                   <div className="preview-hero" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4rem", alignItems: "center" }}>
                     {content.imageUrl && (
-                      <img src={content.imageUrl} alt="About" style={{ width: "100%", borderRadius: "1rem", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 15px 35px rgba(0,0,0,0.4)", objectFit: "cover", aspectRatio: "16/10" }} />
+                      <img src={resolveImageUrl(content.imageUrl, designStyle)} alt="About" style={{ width: "100%", borderRadius: "1rem", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 15px 35px rgba(0,0,0,0.4)", objectFit: "cover", aspectRatio: "16/10" }} />
                     )}
                     <div>
                       <span className="eyebrow">About Us</span>

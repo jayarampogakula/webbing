@@ -151,10 +151,10 @@ const worker = new Worker<WebsiteGenerationJobData>(
         }
       });
 
-      // 4. Mark Project Status as PUBLISHED
+      // 4. Mark Project Status as DRAFT
       await prisma.project.update({
         where: { id: projectId },
-        data: { status: ProjectStatus.PUBLISHED }
+        data: { status: ProjectStatus.DRAFT }
       });
       
       console.log(`Successfully completed generation for project: ${projectId}`);

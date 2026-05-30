@@ -79,6 +79,7 @@ model Tenant {
   subscription         Subscription?
   usageMetrics         UsageMetric[]
   teamMembers          TeamMember[]
+  paymentRequests      PaymentRequest[]
 }
 
 model TeamMember {
@@ -267,3 +268,31 @@ model LlmApiKey {
   @@index([ownerUserId])
   @@index([provider])
 }
+
+model Plan {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  price        Int      // Price in INR
+  creditsLimit Int      // Credit limit
+  features     String   // Comma-separated list of features
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SystemSetting {
+  key   String @id
+  value String
+}
+
+model PaymentRequest {
+  id         String   @id @default(uuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  planId     String
+  amount     Int
+  utr        String   @unique
+  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+

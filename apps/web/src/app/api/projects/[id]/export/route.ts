@@ -4,6 +4,27 @@ import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
 import JSZip from "jszip";
 
+// Image fallback resolver
+function resolveImageUrl(url: any, style?: string): string {
+  if (typeof url === "string" && url.startsWith("http")) {
+    if (url.includes("Unsplash URL") || url.includes("niche from instructions") || url.includes("[UNSPLASH_ID]")) {
+      // Fallback
+    } else {
+      return url;
+    }
+  }
+
+  const fallbacks: Record<string, string> = {
+    Gaming: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    Fitness: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80",
+    Creator: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1200&q=80",
+    Luxury: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1200&q=80",
+    SaaS: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1200&q=80",
+  };
+
+  return fallbacks[style || "SaaS"] || fallbacks.SaaS;
+}
+
 export async function GET(
   req: Request,
   { params }: { params: { id: string } }
@@ -35,6 +56,9 @@ export async function GET(
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
+
+    const themeConfig = (project.theme as any) || {};
+    const designStyle = themeConfig.style || "Modern Startup";
 
     if (user.role !== "ADMIN" && project.userId && project.userId !== user.userId) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
@@ -217,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <a class="primary-action" href="${content.ctaUrl || "#contact"}">${content.ctaText || "Contact Us"}</a>
         </div>
       </div>
-      ${content.imageUrl ? `<img src="${content.imageUrl}" style="width: 100%; border-radius: 1rem; box-shadow: 0 20px 40px rgba(0,0,0,0.5);" />` : ""}
+      ${content.imageUrl ? `<img src="${resolveImageUrl(content.imageUrl, designStyle)}" style="width: 100%; border-radius: 1rem; box-shadow: 0 20px 40px rgba(0,0,0,0.5);" />` : ""}
     </div>
   </section>`;
             }

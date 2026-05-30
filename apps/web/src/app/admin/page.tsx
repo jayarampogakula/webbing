@@ -5,6 +5,7 @@ import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
 import PlanEditor from "./PlanEditor";
 import LlmKeyManager from "../components/LlmKeyManager";
+import AdminConsole from "./AdminConsole";
 import { Sparkles } from "lucide-react";
 
 async function getLlmKeys() {
@@ -45,15 +46,29 @@ export default async function AdminPage() {
   let subscriptions: any[] = [];
   let totalTenants = 0;
   let llmKeys: Awaited<ReturnType<typeof getLlmKeys>> = [];
+  let plans: any[] = [];
+  let paymentRequests: any[] = [];
+  let upiId = "pogakula@ybl";
 
   try {
-    [users, projects, subscriptions, totalTenants, llmKeys] = await Promise.all([
+    const [dbUsers, dbProjects, dbSubscriptions, dbTotalTenants, dbLlmKeys, dbPlans, dbRequests, dbUpiSetting] = await Promise.all([
       prisma.user.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
       prisma.project.findMany({ include: { tenant: true, customDomain: true }, orderBy: { createdAt: "desc" } }),
       prisma.subscription.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
       prisma.tenant.count(),
       getLlmKeys(),
+      prisma.plan.findMany({ orderBy: { price: "asc" } }),
+      prisma.paymentRequest.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
+      prisma.systemSetting.findUnique({ where: { key: "upiId" } }),
     ]);
+    users = dbUsers;
+    projects = dbProjects;
+    subscriptions = dbSubscriptions;
+    totalTenants = dbTotalTenants;
+    llmKeys = dbLlmKeys;
+    plans = dbPlans;
+    paymentRequests = dbRequests;
+    upiId = dbUpiSetting?.value || "pogakula@ybl";
   } catch (error) {
     console.error("Admin data load failed:", error);
     return (
@@ -275,6 +290,12 @@ export default async function AdminPage() {
             </table>
           </div>
         </section>
+
+        <AdminConsole
+          initialPlans={plans}
+          initialRequests={paymentRequests}
+          initialUpiId={upiId}
+        />
       </main>
     </div>
   );

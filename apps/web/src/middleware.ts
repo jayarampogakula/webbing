@@ -50,6 +50,8 @@ export default function middleware(req: NextRequest) {
     currentHost = hostname.replace(".localhost:3000", "").replace("localhost:3000", "");
   }
 
+  currentHost = currentHost.toLowerCase().replace(/^www\./, "");
+
   const hostClean = hostname.replace("www.", "");
 
   // 1. Root and standard app/dashboard pages

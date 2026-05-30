@@ -1,18 +1,21 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Settings, Check, Server, RefreshCw, Sparkles, Globe, Edit2, Play, Download, Layout, ArrowLeft, Plus, MessageSquare, Layers, Sliders, Image, LogOut, CheckCircle, AlertTriangle, ExternalLink, Shield, ArrowRight } from "lucide-react";
+import { Settings, Check, Server, RefreshCw, Sparkles, Globe, Edit2, Play, Download, Layout, ArrowLeft, Plus, MessageSquare, Layers, Sliders, Image, LogOut, CheckCircle, AlertTriangle, ExternalLink, Shield, ArrowRight, Trash2 } from "lucide-react";
 import GeneratorForm from "../GeneratorForm";
 import LlmKeyManager, { LlmKeyView } from "../components/LlmKeyManager";
 
 interface Section {
   id: string;
   type: string;
+  order: number;
   content: any;
+  styles: any;
 }
 
 interface Page {
   id: string;
+  projectId: string;
   slug: string;
   title: string;
   description: string | null;
@@ -27,9 +30,12 @@ interface Project {
   subdomain: string;
   status: string;
   createdAt: string;
+  updatedAt: string;
   selfHosted: boolean;
   theme: any;
   customDomain: {
+    id: string;
+    projectId: string;
     hostname: string;
     verified: boolean;
     dnsToken: string;
@@ -44,6 +50,7 @@ interface DashboardEditorProps {
     id: string;
     name: string;
     subscription: {
+      planId: string;
       creditsLimit: number;
       creditsUsed: number;
       domainType: string;
@@ -53,6 +60,8 @@ interface DashboardEditorProps {
   };
   baseDomain: string;
   protocol: string;
+  initialPlans?: any[];
+  upiId?: string;
 }
 
 const GenerationProgress = ({ createdAt }: { createdAt: string }) => {
@@ -101,11 +110,19 @@ const GenerationProgress = ({ createdAt }: { createdAt: string }) => {
   );
 };
 
-export default function DashboardEditor({ user, tenant, baseDomain, protocol }: DashboardEditorProps) {
+export default function DashboardEditor({ user, tenant, baseDomain, protocol, initialPlans = [], upiId = "pogakula@ybl" }: DashboardEditorProps) {
   const [projects, setProjects] = useState<Project[]>(tenant.projects);
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [activeView, setActiveView] = useState<"homepage" | "builder">("homepage");
   const [isCreatingNew, setIsCreatingNew] = useState(tenant.projects.length === 0);
+
+  // Upgrade Plan states
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [selectedUpgradePlan, setSelectedUpgradePlan] = useState<any>(null);
+  const [utrCode, setUtrCode] = useState("");
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  const [upgradeMessage, setUpgradeMessage] = useState("");
+  const [upgradeError, setUpgradeError] = useState("");
 
   // Left Panel Sidebar Tabs
   const [builderTab, setBuilderTab] = useState<"chat" | "layers" | "properties" | "assets" | "settings">("chat");
@@ -445,9 +462,28 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
       const data = await res.json();
       setDnsStatus(data.message || (data.success ? "DNS Records Active!" : "Failed to verify CNAME. Please check registrar setup."));
       if (data.success) {
-        setTimeout(() => {
-          window.location.reload();
-        }, 1200);
+        setProjects((prev) =>
+          prev.map((p) => {
+            if (p.id === currentProject.id) {
+              return {
+                ...p,
+                customDomain: p.customDomain
+                  ? { ...p.customDomain, verified: true, sslStatus: "ACTIVE" }
+                  : {
+                      id: "temp",
+                      projectId: p.id,
+                      hostname: customDomainName,
+                      verified: true,
+                      dnsToken: "",
+                      sslStatus: "ACTIVE",
+                      createdAt: new Date().toISOString(),
+                      updatedAt: new Date().toISOString()
+                    }
+              };
+            }
+            return p;
+          })
+        );
       }
     } catch (err: any) {
       setDnsStatus(err.message || "DNS inquiry query failed.");
@@ -546,6 +582,59 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
     window.location.href = `/api/projects/${currentProject.id}/export?format=${format}`;
   };
 
+  // Delete project trigger
+  const handleDeleteProject = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this website project? This action is permanent and cannot be undone.")) return;
+    try {
+      const res = await fetch(`/api/projects/${id}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete project.");
+      
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+      if (selectedProjectId === id) {
+        setSelectedProjectId("");
+        setActiveView("homepage");
+      }
+    } catch (err: any) {
+      alert(err.message || "Delete failed.");
+    }
+  };
+
+  // Submit payment request for upgrade
+  const handleConfirmUpgrade = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUpgradePlan) return;
+    setSubmittingRequest(true);
+    setUpgradeMessage("");
+    setUpgradeError("");
+    try {
+      const res = await fetch("/api/payments/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId: selectedUpgradePlan.name.toLowerCase().replace(/\s+/g, "-"),
+          amount: selectedUpgradePlan.price,
+          utr: utrCode
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to submit request.");
+      setUpgradeMessage("Request submitted! Our team will verify and activate your plan.");
+      setUtrCode("");
+      setTimeout(() => {
+        setUpgradeModalOpen(false);
+        setSelectedUpgradePlan(null);
+        setUpgradeMessage("");
+      }, 3000);
+    } catch (err: any) {
+      setUpgradeError(err.message || "Upgrade request failed.");
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
+
   const subdomainUrl = currentProject
     ? `${protocol}://${currentProject.subdomain}.${baseDomain}`
     : "";
@@ -581,8 +670,14 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
             </div>
             
             <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-              <div style={{ display: "flex", gap: "1rem", background: "rgba(255, 255, 255, 0.02)", padding: "0.4rem 1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.05)", fontSize: "0.85rem" }}>
+              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", background: "rgba(255, 255, 255, 0.02)", padding: "0.4rem 1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.05)", fontSize: "0.85rem" }}>
                 <span style={{ color: "#9ca3af" }}>Credits: <strong style={{ color: "#818cf8" }}>{remainingCredits} left</strong></span>
+                <button
+                  onClick={() => setUpgradeModalOpen(true)}
+                  style={{ background: "rgba(129, 140, 248, 0.15)", border: "1px solid rgba(129, 140, 248, 0.3)", color: "#a5b4fc", padding: "0.2rem 0.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", marginLeft: "0.5rem" }}
+                >
+                  Upgrade
+                </button>
               </div>
               <button
                 onClick={() => {
@@ -731,16 +826,24 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
                           </strong>
                           <span style={{ fontSize: "0.75rem", color: "#9ca3af", display: "block" }}>{p.subdomain}.{baseDomain}</span>
                         </div>
-                        <button
-                          onClick={() => {
-                            setSelectedProjectId(p.id);
-                            setIsCreatingNew(false);
-                            setActiveView("builder");
-                          }}
-                          style={{ border: "none", background: "none", color: "#818cf8", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}
-                        >
-                          Edit
-                        </button>
+                        <div style={{ display: "flex", gap: "0.8rem", alignItems: "center" }}>
+                          <button
+                            onClick={() => {
+                              setSelectedProjectId(p.id);
+                              setIsCreatingNew(false);
+                              setActiveView("builder");
+                            }}
+                            style={{ border: "none", background: "none", color: "#818cf8", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProject(p.id)}
+                            style={{ border: "none", background: "none", color: "#ef4444", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                       {p.status === "FAILED" && (
                         <div style={{ color: "#f87171", fontSize: "0.75rem", padding: "0.4rem 0.6rem", background: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.1)", borderRadius: "0.25rem" }}>
@@ -776,6 +879,12 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
                           style={{ border: "none", background: "none", color: "#818cf8", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}
                         >
                           Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProject(p.id)}
+                          style={{ border: "none", background: "none", color: "#ef4444", fontSize: "0.8rem", cursor: "pointer", fontWeight: 700 }}
+                        >
+                          Delete
                         </button>
                       </div>
                     </div>
@@ -850,8 +959,16 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
           <div style={{ display: "flex", gap: "0.8rem", alignItems: "center" }}>
             
             {/* AI Credits remaining */}
-            <div style={{ fontSize: "0.8rem", color: "#9ca3af", background: "rgba(255, 255, 255, 0.02)", padding: "0.3rem 0.8rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.05)" }}>
-              AI Credits: <strong style={{ color: "#a855f7" }}>{remainingCredits} left</strong>
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <div style={{ fontSize: "0.8rem", color: "#9ca3af", background: "rgba(255, 255, 255, 0.02)", padding: "0.3rem 0.8rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.05)" }}>
+                AI Credits: <strong style={{ color: "#a855f7" }}>{remainingCredits} left</strong>
+              </div>
+              <button
+                onClick={() => setUpgradeModalOpen(true)}
+                style={{ background: "rgba(168, 85, 247, 0.12)", border: "1px solid rgba(168, 85, 247, 0.3)", color: "#d8b4fe", padding: "0.3rem 0.6rem", borderRadius: "0.4rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", height: "26px" }}
+              >
+                Upgrade
+              </button>
             </div>
 
             {/* Export trigger dropdown */}
@@ -914,23 +1031,28 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
         {/* Left Config Panel sidebar container */}
         <div className="builder-sidebar">
           
-          {/* Vertical Icon Toolbar */}
+          {/* Left Sidebar Toolbar with Names */}
           {!isCreatingNew && currentProject && (
-            <div style={{ width: "60px", background: "rgba(10, 14, 23, 0.95)", borderRight: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", alignItems: "center", gap: "1.2rem", paddingTop: "1.5rem" }}>
-              <button onClick={() => setBuilderTab("chat")} style={{ background: "none", border: "none", color: builderTab === "chat" ? "#818cf8" : "#4b5563", cursor: "pointer", padding: "0.4rem" }} title="AI Chat edit">
-                <MessageSquare size={20} />
+            <div style={{ width: "160px", background: "rgba(10, 14, 23, 0.95)", borderRight: "1px solid rgba(255,255,255,0.05)", display: "flex", flexDirection: "column", gap: "0.6rem", padding: "1.5rem 0.5rem 0.5rem 0.5rem" }}>
+              <button onClick={() => setBuilderTab("chat")} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.6rem 0.8rem", borderRadius: "0.375rem", background: builderTab === "chat" ? "rgba(129, 140, 248, 0.08)" : "none", border: "none", color: builderTab === "chat" ? "#818cf8" : "#9ca3af", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, textAlign: "left", transition: "all 0.2s" }} title="AI Chat edit">
+                <MessageSquare size={16} />
+                <span>AI Chat</span>
               </button>
-              <button onClick={() => setBuilderTab("layers")} style={{ background: "none", border: "none", color: builderTab === "layers" ? "#818cf8" : "#4b5563", cursor: "pointer", padding: "0.4rem" }} title="Section layers">
-                <Layers size={20} />
+              <button onClick={() => setBuilderTab("layers")} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.6rem 0.8rem", borderRadius: "0.375rem", background: builderTab === "layers" ? "rgba(129, 140, 248, 0.08)" : "none", border: "none", color: builderTab === "layers" ? "#818cf8" : "#9ca3af", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, textAlign: "left", transition: "all 0.2s" }} title="Section layers">
+                <Layers size={16} />
+                <span>Sections</span>
               </button>
-              <button onClick={() => setBuilderTab("properties")} style={{ background: "none", border: "none", color: builderTab === "properties" ? "#818cf8" : "#4b5563", cursor: "pointer", padding: "0.4rem" }} title="Manual Overrides">
-                <Sliders size={20} />
+              <button onClick={() => setBuilderTab("properties")} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.6rem 0.8rem", borderRadius: "0.375rem", background: builderTab === "properties" ? "rgba(129, 140, 248, 0.08)" : "none", border: "none", color: builderTab === "properties" ? "#818cf8" : "#9ca3af", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, textAlign: "left", transition: "all 0.2s" }} title="Manual Overrides">
+                <Sliders size={16} />
+                <span>Manual Edit</span>
               </button>
-              <button onClick={() => setBuilderTab("assets")} style={{ background: "none", border: "none", color: builderTab === "assets" ? "#818cf8" : "#4b5563", cursor: "pointer", padding: "0.4rem" }} title="Assets Manager">
-                <Image size={20} />
+              <button onClick={() => setBuilderTab("assets")} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.6rem 0.8rem", borderRadius: "0.375rem", background: builderTab === "assets" ? "rgba(129, 140, 248, 0.08)" : "none", border: "none", color: builderTab === "assets" ? "#818cf8" : "#9ca3af", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, textAlign: "left", transition: "all 0.2s" }} title="Assets Manager">
+                <Image size={16} />
+                <span>Assets</span>
               </button>
-              <button onClick={() => setBuilderTab("settings")} style={{ background: "none", border: "none", color: builderTab === "settings" ? "#818cf8" : "#4b5563", cursor: "pointer", padding: "0.4rem" }} title="Settings">
-                <Settings size={20} />
+              <button onClick={() => setBuilderTab("settings")} style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.6rem 0.8rem", borderRadius: "0.375rem", background: builderTab === "settings" ? "rgba(129, 140, 248, 0.08)" : "none", border: "none", color: builderTab === "settings" ? "#818cf8" : "#9ca3af", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, textAlign: "left", transition: "all 0.2s" }} title="Settings">
+                <Settings size={16} />
+                <span>Settings</span>
               </button>
             </div>
           )}
@@ -1381,7 +1503,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
           {/* Iframe Viewport mapping */}
           <div style={{ flexGrow: 1, padding: "1.25rem", display: "flex", justifyContent: "center", alignItems: "stretch", overflow: "hidden" }}>
             {currentProject && !isCreatingNew ? (
-              currentProject.status === "GENERATING" || currentProject.status === "DRAFT" ? (
+              currentProject.status === "GENERATING" || (currentProject.status === "DRAFT" && (!currentProject.pages || currentProject.pages.length === 0)) ? (
                 <div style={{ flexGrow: 1, background: "#0b0f19", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "1.5rem" }}>
                   <RefreshCw size={32} className="animate-spin" color="#818cf8" />
                   <strong style={{ fontSize: "1.2rem", color: "#fff" }}>Orchestrating layout generation...</strong>
@@ -1486,6 +1608,134 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol }: 
               </div>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* 4. Upgrade Subscription plans modal */}
+      {upgradeModalOpen && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(7, 11, 19, 0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: "1.5rem", overflowY: "auto" }}>
+          <div className="glass-panel" style={{ width: "100%", maxWidth: "600px", padding: "2.5rem", borderRadius: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem", maxHeight: "90vh", overflowY: "auto", margin: "auto" }}>
+            <div>
+              <span className="eyebrow" style={{ color: "#c084fc" }}>Billing Portal</span>
+              <h3 style={{ margin: 0, color: "#fff", fontSize: "1.35rem" }}>SaaS Account Upgrade</h3>
+              <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Choose a pricing plan to increase your AI credits quota and connect custom domains.</p>
+            </div>
+
+            {upgradeMessage && (
+              <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem" }}>
+                {upgradeMessage}
+              </div>
+            )}
+
+            {upgradeError && (
+              <div style={{ padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem" }}>
+                {upgradeError}
+              </div>
+            )}
+
+            {!selectedUpgradePlan ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1rem" }}>
+                  {initialPlans.map((plan: any) => {
+                    const isCurrent = tenant.subscription?.planId === plan.name.toLowerCase().replace(/\s+/g, "-");
+                    return (
+                      <div key={plan.id} style={{ padding: "1.25rem", background: "rgba(255,255,255,0.01)", border: isCurrent ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>
+                            {plan.name} {isCurrent && <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.3rem", borderRadius: "0.25rem", background: "rgba(129,140,248,0.15)", color: "#818cf8", marginLeft: "0.5rem" }}>Current Plan</span>}
+                          </strong>
+                          <span style={{ fontSize: "0.85rem", color: "#cbd5e1", display: "block", margin: "0.2rem 0" }}>₹{plan.price}/month • {plan.creditsLimit} monthly credits</span>
+                          <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{plan.features}</span>
+                        </div>
+                        {!isCurrent && (
+                          <button
+                            onClick={() => setSelectedUpgradePlan(plan)}
+                            className="glow-btn"
+                            style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", fontWeight: 700 }}
+                          >
+                            Select Plan
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUpgradeModalOpen(false)}
+                  className="secondary-action"
+                  style={{ width: "100%", justifyContent: "center", marginTop: "0.5rem" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleConfirmUpgrade} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                <div style={{ background: "rgba(255,255,255,0.02)", padding: "1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>SELECTED PLAN</span>
+                  <strong style={{ color: "#fff", display: "block", fontSize: "1.1rem" }}>{selectedUpgradePlan.name}</strong>
+                  <span style={{ fontSize: "0.9rem", color: "#818cf8", display: "block" }}>Amount to Pay: <strong>₹{selectedUpgradePlan.price}</strong></span>
+                </div>
+
+                {selectedUpgradePlan.price > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center" }}>
+                    <span style={{ fontSize: "0.85rem", color: "#cbd5e1", textAlign: "center" }}>
+                      Scan the QR code below using any UPI app (GPay, PhonePe, Paytm, BHIM, etc.) to complete payment:
+                    </span>
+                    
+                    {/* Dynamic QR Code Render */}
+                    <div style={{ background: "#fff", padding: "1rem", borderRadius: "1rem", display: "inline-flex" }}>
+                      <img
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+                          `upi://pay?pa=${upiId}&pn=Webbing&am=${selectedUpgradePlan.price}&cu=INR&tn=Webbing%20Upgrade%20${selectedUpgradePlan.name}`
+                        )}`}
+                        alt="UPI QR Code"
+                        style={{ width: "180px", height: "180px" }}
+                      />
+                    </div>
+                    
+                    <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>UPI ID: <strong>{upiId}</strong></span>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", width: "100%" }}>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>UPI TRANSACTION REFERENCE ID (UTR - 12 DIGITS)</label>
+                      <input
+                        type="text"
+                        className="premium-input"
+                        placeholder="e.g. 625123956841"
+                        value={utrCode}
+                        onChange={(e) => setUtrCode(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                        required
+                        pattern="\d{12}"
+                        style={{ width: "100%" }}
+                        disabled={submittingRequest}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>Are you sure you want to downgrade/switch to the free Starter plan?</p>
+                )}
+
+                <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "1rem" }}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedUpgradePlan(null)}
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.6rem 1.2rem", borderRadius: "0.5rem", fontSize: "0.8rem", cursor: "pointer" }}
+                    disabled={submittingRequest}
+                  >
+                    Back to Plans
+                  </button>
+                  <button
+                    type="submit"
+                    className="glow-btn"
+                    style={{ background: "linear-gradient(to right, #6366f1, #d946ef)", color: "#fff", padding: "0.6rem 1.5rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}
+                    disabled={submittingRequest}
+                  >
+                    {submittingRequest ? "Submitting..." : "Confirm payment"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

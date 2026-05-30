@@ -21,14 +21,42 @@ function renderText(val: any, fallback: string = ""): string {
   return fallback;
 }
 
-// Safe URL renderer helper to avoid invalid href crashes
-function renderUrl(val: any, fallback: string = "#"): string {
-  if (typeof val === "string") return val;
-  if (val && typeof val === "object" && typeof val.url === "string") return val.url;
-  return fallback;
+// Preview-specific URL renderer to route relative clicks inside the iframe preview workspace
+function renderPreviewUrl(val: any, projectId: string, fallback: string = "#"): string {
+  let url = "#";
+  if (typeof val === "string") url = val;
+  else if (val && typeof val === "object" && typeof val.url === "string") url = val.url;
+  else return fallback;
+
+  if (url.startsWith("#")) return url;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+
+  const cleanPath = url.startsWith("/") ? url.slice(1) : url;
+  return `/preview/${projectId}/${cleanPath}`;
 }
 
-export default async function ProjectPreviewPage({ params }: { params: { id: string } }) {
+// Image fallback resolver
+function resolveImageUrl(url: any, style?: string): string {
+  if (typeof url === "string" && url.startsWith("http")) {
+    if (url.includes("Unsplash URL") || url.includes("niche from instructions") || url.includes("[UNSPLASH_ID]")) {
+      // Fallback
+    } else {
+      return url;
+    }
+  }
+
+  const fallbacks: Record<string, string> = {
+    Gaming: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+    Fitness: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80",
+    Creator: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1200&q=80",
+    Luxury: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1200&q=80",
+    SaaS: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1200&q=80",
+  };
+
+  return fallbacks[style || "SaaS"] || fallbacks.SaaS;
+}
+
+export default async function ProjectPreviewPage({ params }: { params: { id: string; path?: string[] } }) {
   try {
     const project = await prisma.project.findUnique({
       where: { id: params.id },
@@ -56,8 +84,9 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
       }
     }
 
-    // Find index page or default to the first page
-    const page = project.pages.find((item) => item.slug === "index") || project.pages[0];
+    // Find requested page or default to index
+    const slug = params.path?.join("/") || "index";
+    const page = project.pages.find((item) => item.slug === slug) || project.pages.find((item) => item.slug === "index") || project.pages[0];
     if (!page) notFound();
 
     const themeConfig = (project.theme as any) || {};
@@ -93,7 +122,6 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
       textGradClass = "text-grad-saas";
       fontClass = "font-gaming";
     } else {
-      // Default to clean dark for others
       bgClass = "bg-grad-saas";
       textGradClass = "text-grad-saas";
       fontClass = "font-gaming";
@@ -146,13 +174,13 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                     {links.map((link: any, i: number) => {
                       if (!link) return null;
                       return (
-                        <a key={i} href={renderUrl(link.url)} style={{ color: "#9ca3af", fontSize: "0.9rem", fontWeight: 500, transition: "color 0.2s" }}>
+                        <a key={i} href={renderPreviewUrl(link.url, project.id)} style={{ color: "#9ca3af", fontSize: "0.9rem", fontWeight: 500, transition: "color 0.2s" }}>
                           {renderText(link.label || "")}
                         </a>
                       );
                     })}
                   </nav>
-                  <a className="primary-action" href={renderUrl(content.ctaUrl, "#contact")} style={{ minHeight: "auto", padding: "0.4rem 1rem", fontSize: "0.85rem", borderRadius: "0.4rem" }}>
+                  <a className="primary-action" href={renderPreviewUrl(content.ctaUrl, project.id, "#contact")} style={{ minHeight: "auto", padding: "0.4rem 1rem", fontSize: "0.85rem", borderRadius: "0.4rem" }}>
                     {renderText(content.ctaText, "Get Started")}
                   </a>
                 </header>
@@ -174,36 +202,23 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                         {renderText(content.subheading, page.description || project.description || "")}
                       </p>
                       <div style={{ display: "flex", gap: "1rem" }}>
-                        <a className="primary-action" href={renderUrl(content.ctaUrl, "#contact")}>
+                        <a className="primary-action" href={renderPreviewUrl(content.ctaUrl, project.id, "#contact")}>
                           {renderText(content.ctaText, "Contact Us")} <ArrowRight size={16} />
                         </a>
                         {content.secondaryCtaText && (
-                          <a className="secondary-action" href={renderUrl(content.secondaryCtaUrl, "#features")}>
+                          <a className="secondary-action" href={renderPreviewUrl(content.secondaryCtaUrl, project.id, "#features")}>
                             {renderText(content.secondaryCtaText)}
                           </a>
                         )}
                       </div>
                     </div>
-                    {content.imageUrl ? (
-                      <div className="animate-float" style={{ position: "relative", display: "flex", justifyContent: "center" }}>
-                        <img src={content.imageUrl} alt="Visual" style={{ width: "100%", maxWidth: "450px", borderRadius: "1rem", boxShadow: "0 20px 40px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.08)", objectFit: "cover", aspectRatio: "4/3" }} />
-                        <div className="glass-panel" style={{ position: "absolute", bottom: "-1.5rem", left: "-1rem", padding: "1rem", borderRadius: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          <Zap size={16} color="#c084fc" />
-                          <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#fff" }}>Ready to Publish</span>
-                        </div>
+                    <div className="animate-float" style={{ position: "relative", display: "flex", justifyContent: "center" }}>
+                      <img src={resolveImageUrl(content.imageUrl, designStyle)} alt="Visual" style={{ width: "100%", maxWidth: "450px", borderRadius: "1rem", boxShadow: "0 20px 40px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.08)", objectFit: "cover", aspectRatio: "4/3" }} />
+                      <div className="glass-panel" style={{ position: "absolute", bottom: "-1.5rem", left: "-1rem", padding: "1rem", borderRadius: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <Zap size={16} color="#c084fc" />
+                        <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#fff" }}>Ready to Publish</span>
                       </div>
-                    ) : (
-                      <aside className="preview-panel animate-float" style={{ padding: "2.5rem" }}>
-                        <strong>AI Website Builder</strong>
-                        <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.5rem 0", lineHeight: 1.5 }}>
-                          This visual mockup runs on Webbing's premium design engine.
-                        </p>
-                        <div className="key-meta" style={{ flexWrap: "wrap", marginTop: "1rem" }}>
-                          <span>{renderText(project.status)}</span>
-                          <span>{renderText(project.subdomain)}</span>
-                        </div>
-                      </aside>
-                    )}
+                    </div>
                   </div>
                 </section>
               );
@@ -354,7 +369,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                               </li>
                             ))}
                           </ul>
-                          <a className={pl.featured ? "primary-action" : "secondary-action"} href="#contact" style={{ width: "100%", textAlign: "center", display: "block" }}>
+                          <a className={pl.featured ? "primary-action" : "secondary-action"} href={renderPreviewUrl("#contact", project.id)} style={{ width: "100%", textAlign: "center", display: "block" }}>
                             Choose {renderText(pl.name || "")}
                           </a>
                         </article>
@@ -408,7 +423,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                     <p style={{ color: "#cbd5e1", fontSize: "1.1rem", maxWidth: "600px", textAlign: "center", margin: 0 }}>
                       {renderText(content.subheading, "Create premium, responsive, animation-driven sites dynamically with Webbing.")}
                     </p>
-                    <a className="primary-action" href={renderUrl(content.ctaUrl, "#contact")} style={{ marginTop: "1rem" }}>
+                    <a className="primary-action" href={renderPreviewUrl(content.ctaUrl, project.id, "#contact")} style={{ marginTop: "1rem" }}>
                       {renderText(content.ctaText, "Get Started Instantly")}
                     </a>
                   </div>
@@ -420,9 +435,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
               return (
                 <section key={section.id} id="about" className="reveal-on-scroll" style={{ padding: "5rem 2rem", maxWidth: "1100px", margin: "0 auto" }}>
                   <div className="preview-hero" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4rem", alignItems: "center" }}>
-                    {content.imageUrl && (
-                      <img src={content.imageUrl} alt="About" style={{ width: "100%", borderRadius: "1rem", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 15px 35px rgba(0,0,0,0.4)", objectFit: "cover", aspectRatio: "16/10" }} />
-                    )}
+                    <img src={resolveImageUrl(content.imageUrl, designStyle)} alt="About" style={{ width: "100%", borderRadius: "1rem", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 15px 35px rgba(0,0,0,0.4)", objectFit: "cover", aspectRatio: "16/10" }} />
                     <div>
                       <span className="eyebrow">About Us</span>
                       <h2 style={{ fontSize: "2.3rem", fontWeight: 800, color: "#fff", margin: "0.5rem 0 1rem 0" }}>
