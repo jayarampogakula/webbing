@@ -103,6 +103,13 @@ export default function AdminConsole({
   const [requests, setRequests] = useState<PaymentRequest[]>(initialRequests);
   const [feedbacks, setFeedbacks] = useState<any[]>(initialFeedbacks);
 
+  // Auto collapse sidebar on mobile screen widths
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth <= 768) {
+      setSidebarCollapsed(true);
+    }
+  }, []);
+
   const totalUsers = users.length;
   const totalSites = projects.length;
   const activeSubs = subscriptions.filter((s) => s.status === "ACTIVE").length;

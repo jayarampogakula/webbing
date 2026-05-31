@@ -1005,6 +1005,9 @@ option {
     left: 50%;
     transform: translateX(-50%);
   }
+  .nav-actions {
+    margin-left: auto;
+  }
 }
 
 

@@ -137,6 +137,13 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const [feedbackSuccessMsg, setFeedbackSuccessMsg] = useState("");
   const [feedbackErrorMsg, setFeedbackErrorMsg] = useState("");
 
+  // Auto collapse sidebar on mobile screen widths
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth <= 768) {
+      setSidebarCollapsed(true);
+    }
+  }, []);
+
   // Left Panel Sidebar Tabs
   const [builderTab, setBuilderTab] = useState<"chat" | "layers" | "properties" | "assets" | "settings">("chat");
   // Settings sub-tab
