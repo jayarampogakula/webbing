@@ -4,6 +4,7 @@ import { cookies, headers } from "next/headers";
 import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
 import { CheckCircle2, Mail, DollarSign, Star, Zap, Layers, Globe, Server, ArrowRight, Video, FileText, Check, Phone, ArrowUpRight } from "lucide-react";
+import EcommerceStore from "@/components/EcommerceStore";
 
 // Safe text renderer helper to avoid React child object crashes
 function renderText(val: any, fallback: string = ""): string {
@@ -85,6 +86,37 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
       if (user.role !== "ADMIN" && project.userId && project.userId !== user.userId) {
         notFound(); // Access denied
       }
+    }
+
+    // eCommerce store lookup
+    const store = await prisma.ecomStore.findUnique({
+      where: { projectId: project.id },
+      include: { products: true }
+    });
+
+    if (store) {
+      const themeObj = (project.theme as any) || {};
+      const settings = themeObj.metadata?.ecommerceSettings || {
+        gateways: { stripe: true, razorpay: true, googlepay: true, upi: true, cod: true },
+        whatsapp: { enabled: true, phoneNumber: "919999999999", supportText: "Hi!", orderNotification: true },
+        shipping: { zones: [{ name: "Domestic", charge: 60, freeShippingMin: 999 }] },
+        coupons: [
+          { code: "WELCOME10", type: "PERCENTAGE", value: 10, minOrder: 499, active: true },
+          { code: "FREESHIP", type: "FREE_SHIPPING", value: 0, minOrder: 999, active: true }
+        ]
+      };
+
+      const pathSlug = params.path?.join("/") || "index";
+
+      return (
+        <EcommerceStore 
+          projectId={project.id}
+          initialProducts={store.products as any}
+          initialSettings={settings}
+          initialPathSlug={pathSlug}
+          projectSubdomain={project.subdomain}
+        />
+      );
     }
 
     // Find requested page or default to index

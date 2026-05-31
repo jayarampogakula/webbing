@@ -73,7 +73,8 @@ const worker = new Worker<WebsiteGenerationJobData>(
           businessName: metadata.businessName || project?.name,
           keywords: metadata.keywords,
           industry: metadata.industry,
-          targetAudience: metadata.targetAudience
+          targetAudience: metadata.targetAudience,
+          ecommerce: ecommerce
         }
       );
       
@@ -89,7 +90,12 @@ const worker = new Worker<WebsiteGenerationJobData>(
           data: {
             theme: {
               ...themeObj,
-              ...(generationOutput.theme || {})
+              ...(generationOutput.theme || {}),
+              metadata: {
+                ...((themeObj.metadata) || {}),
+                ...(generationOutput.theme?.metadata || {}),
+                isEcommerce: ecommerce
+              }
             }
           }
         });
@@ -125,26 +131,53 @@ const worker = new Worker<WebsiteGenerationJobData>(
           }
         }
 
-        // If e-commerce was requested, build a simple EcomStore template
+        // If e-commerce was requested, build EcomStore template using generated items
         if (ecommerce) {
+          const aiProducts = generationOutput.products || [];
+          const productsToCreate = aiProducts.map((p: any) => {
+            const descriptionJson = JSON.stringify({
+              bodyText: p.description || "No description available.",
+              category: p.category || "General",
+              variants: p.variants || [],
+              specifications: p.specifications || {},
+              sku: `SKU-${(p.name || "ITEM").slice(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`
+            });
+
+            return {
+              name: p.name || "Sample Product",
+              description: descriptionJson,
+              price: p.price || 1299,
+              inventory: p.inventory || 100,
+              images: p.imageSearchQuery ? [
+                `https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80` // Resolved dynamically by frontend query search lookup
+              ] : []
+            };
+          });
+
+          if (productsToCreate.length === 0) {
+            productsToCreate.push(
+              {
+                name: "Premium Niche Item A",
+                description: JSON.stringify({ bodyText: "Handcrafted high-quality item.", category: "General", variants: [], specifications: {}, sku: "SKU-A" }),
+                price: 1999,
+                inventory: 100,
+                images: []
+              },
+              {
+                name: "Premium Niche Item B",
+                description: JSON.stringify({ bodyText: "Designed for premium durability and styling.", category: "General", variants: [], specifications: {}, sku: "SKU-B" }),
+                price: 2499,
+                inventory: 50,
+                images: []
+              }
+            );
+          }
+
           await tx.ecomStore.create({
             data: {
               projectId,
               products: {
-                create: [
-                  {
-                    name: "Sample Product A",
-                    description: "High quality sample item generated for your store.",
-                    price: 29.99,
-                    inventory: 100
-                  },
-                  {
-                    name: "Sample Product B",
-                    description: "High quality sample item generated for your store.",
-                    price: 49.99,
-                    inventory: 50
-                  }
-                ]
+                create: productsToCreate
               }
             }
           });

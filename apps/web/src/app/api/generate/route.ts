@@ -68,11 +68,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Tenant/Workspace not found" }, { status: 404 });
     }
 
+    const requiredCredits = validated.ecommerce ? 25 : 1;
+
     if (tenant.subscription) {
       const { creditsLimit, creditsUsed } = tenant.subscription;
-      if (creditsUsed >= creditsLimit) {
+      if (creditsUsed + requiredCredits > creditsLimit) {
         return NextResponse.json(
-          { error: "Insufficient AI credits quota. Please upgrade your plan." },
+          { error: `Insufficient AI credits quota. This action requires ${requiredCredits} credits, but you only have ${creditsLimit - creditsUsed} left.` },
           { status: 403 }
         );
       }
@@ -119,7 +121,7 @@ export async function POST(req: Request) {
     if (tenant.subscription) {
       await prisma.subscription.update({
         where: { tenantId: tenantId },
-        data: { creditsUsed: { increment: 1 } }
+        data: { creditsUsed: { increment: requiredCredits } }
       });
     }
 

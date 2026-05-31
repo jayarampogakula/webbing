@@ -215,9 +215,12 @@ export default function GeneratorForm({ user, onSuccess }: GeneratorFormProps) {
           </div>
 
           <div className="field-group">
-            <label className="secondary-action" style={{ justifyContent: "flex-start", width: "100%", padding: "0.8rem", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.5rem", cursor: "pointer" }}>
+            <label className="secondary-action" style={{ justifyContent: "flex-start", width: "100%", padding: "0.8rem", border: ecommerce ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.06)", background: ecommerce ? "rgba(99,102,241,0.05)" : "transparent", borderRadius: "0.5rem", cursor: "pointer", transition: "all 0.2s" }}>
               <input type="checkbox" checked={ecommerce} onChange={(e) => setEcommerce(e.target.checked)} style={{ marginRight: "0.5rem" }} />
-              Include e-commerce ready shop components
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: ecommerce ? "#818cf8" : "#fff" }}>Include e-commerce ready shop components</span>
+                <span style={{ fontSize: "0.75rem", color: ecommerce ? "#a5b4fc" : "#9ca3af", marginTop: "0.1rem" }}>Requires 25 credits. Creates products catalog, cart, checkout, customer accounts, and order settings.</span>
+              </div>
             </label>
           </div>
 

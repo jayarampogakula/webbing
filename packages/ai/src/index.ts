@@ -345,6 +345,7 @@ export class AIService {
       keywords?: string;
       industry?: string;
       targetAudience?: string;
+      ecommerce?: boolean;
     }
   ): Promise<any> {
     const provider = this.getProvider(preferredProvider || "gemini");
@@ -366,7 +367,7 @@ Choose an appropriate ID based on the niche:
 - Travel/Adventure: '1507525428034-b723cf961d3e', '1469854523086-cc02fe5d8800'
 - Portfolio/Creative Agency: '1507238691740-187a5b1d37b8', '1513542789411-b6a5d4f31634'`;
 
-    const userPrompt = `
+    let userPrompt = `
       Create a complete dynamic website layout mapping for this business niche:
       Website Name: ${metadata?.websiteName || "My Site"}
       Business Name: ${metadata?.businessName || "My Brand"}
@@ -509,6 +510,28 @@ Choose an appropriate ID based on the niche:
         ]
       }
     `;
+
+    if (metadata?.ecommerce) {
+      userPrompt += `
+      
+      CRITICAL REQUIREMENT (E-COMMERCE SITE):
+      Because this is an e-commerce website, you MUST also add a top-level "products" array in your JSON output (sibling to "theme" and "pages").
+      Generate exactly 6 niche-specific products matching this business niche. Do NOT make them generic.
+      
+      Format the "products" array as follows:
+      "products": [
+        {
+          "name": "Niche-specific product name (e.g., 'Retro Mechanical Gaming Keyboard')",
+          "description": "Engaging description showing key features, sizing, and details",
+          "price": 2499, // price in INR as an integer (e.g. 599 to 15000)
+          "inventory": 100, // starting stock integer
+          "category": "Niche category (e.g., 'Keyboards')",
+          "variants": ["Red Switch", "Blue Switch"], // string array of product options/variants
+          "specifications": { "Brand": "KeyBrand", "Warranty": "1 Year" } // key-value metadata record
+        }
+      ]
+      `;
+    }
 
     return provider.generateJson<any>({
       prompt: userPrompt,
