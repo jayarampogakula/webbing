@@ -135,7 +135,14 @@ export async function POST(
 
     const updatedProject = await prisma.project.findFirst({
       where: { id: projectId },
-      include: { customDomain: true },
+      include: {
+        customDomain: true,
+        pages: {
+          include: {
+            sections: { orderBy: { order: "asc" } }
+          }
+        }
+      },
     });
 
     return NextResponse.json({

@@ -118,6 +118,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [splitLayout, setSplitLayout] = useState<"split" | "editor-focus" | "preview-focus" | "editor-only" | "preview-only">("split");
   const [isMobile, setIsMobile] = useState(false);
+  const prevProjectIdRef = useRef(selectedProjectId);
 
   useEffect(() => {
     const handleResize = () => {
@@ -331,8 +332,14 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
       setProjectSubdomain(currentProject.subdomain || "");
       setDnsStatus("");
       setSubdomainStatus("");
-      setError("");
-      setSuccess("");
+
+      // Only clear messages when switching to a different project
+      if (prevProjectIdRef.current !== selectedProjectId) {
+        setError("");
+        setSuccess("");
+        prevProjectIdRef.current = selectedProjectId;
+      }
+
       setPreferredProvider(currentProject.theme?.preferredProvider || "gemini");
       setAnalyticsTag(currentProject.theme?.analyticsTag || "");
     }
@@ -499,6 +506,14 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update project settings.");
+
+      if (data.project) {
+        setProjects((prev) =>
+          prev.map((p) => (p.id === data.project.id ? { ...p, ...data.project } : p))
+        );
+        setCustomDomainName(data.project.customDomain?.hostname || "");
+        setProjectSubdomain(data.project.subdomain || "");
+      }
 
       setSuccess("Settings applied successfully!");
       handleRefreshPreview();
