@@ -330,13 +330,12 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
       setCustomDomainName(currentProject.customDomain?.hostname || "");
       setProjectSubdomain(currentProject.subdomain || "");
-      setDnsStatus("");
-      setSubdomainStatus("");
-
       // Only clear messages when switching to a different project
       if (prevProjectIdRef.current !== selectedProjectId) {
         setError("");
         setSuccess("");
+        setDnsStatus("");
+        setSubdomainStatus("");
         prevProjectIdRef.current = selectedProjectId;
       }
 
@@ -2442,7 +2441,14 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                           </p>
                           
                           <div className="field-group">
-                            <label>Domain Name</label>
+                            <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <span>Domain Name</span>
+                              {currentProject.customDomain?.verified && (
+                                <span style={{ color: "#34d399", fontSize: "0.75rem", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
+                                  ✓ Connected & Active
+                                </span>
+                              )}
+                            </label>
                             <input className="field" value={customDomainName} onChange={(e) => setCustomDomainName(e.target.value)} placeholder="e.g. brand.com" />
                           </div>
  
