@@ -86,10 +86,7 @@ export async function POST(
       try {
         await dns.promises.lookup(domainToCheck);
       } catch (err: any) {
-        return NextResponse.json({
-          success: false,
-          error: `DNS Resolution Failed: Subdomain route ${domainToCheck} is not active yet.`
-        }, { status: 400 });
+        console.warn(`DNS Resolution Warning for ${domainToCheck}: ${err.message}. Proceeding with publication.`);
       }
     }
 

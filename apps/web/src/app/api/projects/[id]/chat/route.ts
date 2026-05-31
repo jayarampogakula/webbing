@@ -82,7 +82,24 @@ Your response MUST match this structure:
   ]
 }
 
-Only return the updated sections matching the user's intent. Preserve unmodified sections. If the user asks to add a section, create a new section object with the appropriate structure and values.`;
+Only return the updated sections matching the user's intent. Preserve unmodified sections. If the user asks to add a section, create a new section object with the appropriate structure and values.
+
+IMPORTANT FOR IMAGES:
+If the user requests to add, edit, or modify images, or for any new section that requires an image, choose a highly relevant high-resolution image URL from Unsplash. Use this format: \`https://images.unsplash.com/photo-[UNSPLASH_ID]?auto=format&fit=crop&w=1200&q=80\`.
+Choose an appropriate ID based on the niche:
+- Gaming/Esports: '1542751371-adc38448a05e', '1511512578047-dfb367046420', '1612287230202-1bf1d85d1bdf', '1538481199705-c710c4e965fc'
+- Fitness/Sports/Gym: '1517838277536-f5f99be501cd', '1518310383802-640c2de311b2', '1540555700478-4be289fbecef'
+- SaaS/Technology/App: '1551434678-e076c223a692', '1486406146926-c627a92ad1ab', '1460925895917-afdab827c52f'
+- Creator/Studio/Vlogger: '1478737270239-2f02b77fc618', '1590602847861-f357a9332bbc', '1516035069371-29a1b244cc32'
+- Luxury/Fashion/Hotel: '1564507592333-c60657eea523', '1488161628813-04466f872be2', '1441986300917-64674bd600d8'
+- Corporate/Finance/Business/Consulting: '1497366216548-37526070297c', '1454165804012-6e4a6a38b02b', '1486406146926-c627a92ad1ab'
+- Education/Learning: '1523050854058-8df90110c9f1', '1427504494785-3a9ca7044f45'
+- Store/Shop/Retail: '1472851294608-062f824d29cc', '1441986300917-64674bd600d8'
+- Restaurant/Food/Cafe: '1517248135467-4c7edcad34c4', '1554118811-1e0d58224f24', '1504674900247-0877df9cc836'
+- Real Estate/Home/Interior: '1564013799919-ab600027ffc6', '1580587771525-78b9dba3b914'
+- Medical/Health: '1505751172876-fa1923c5c528', '1530026405186-ed1ea0ac7a63'
+- Travel/Adventure: '1507525428034-b723cf961d3e', '1469854523086-cc02fe5d8800'
+- Portfolio/Creative Agency: '1507238691740-187a5b1d37b8', '1513542789411-b6a5d4f31634'`;
 
     const userPrompt = `
       Niche Details:

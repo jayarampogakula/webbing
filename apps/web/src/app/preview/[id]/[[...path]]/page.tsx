@@ -140,10 +140,95 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
           }, { threshold: 0.05 });
           document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
         }
+        
+        function replaceImage(img) {
+          const isGaming = document.querySelector('.bg-grad-gaming') || document.querySelector('.font-gaming') || document.body.classList.contains('bg-grad-gaming');
+          const isFitness = document.querySelector('.bg-grad-fitness') || document.body.classList.contains('bg-grad-fitness');
+          const isCreator = document.querySelector('.bg-grad-creator') || document.body.classList.contains('bg-grad-creator');
+          const isLuxury = document.querySelector('.bg-grad-luxury') || document.querySelector('.font-serif-lux') || document.body.classList.contains('bg-grad-luxury');
+          
+          let style = 'SaaS';
+          if (isGaming) style = 'Gaming';
+          else if (isFitness) style = 'Fitness';
+          else if (isCreator) style = 'Creator';
+          else if (isLuxury) style = 'Luxury';
+          
+          const fallbacks = {
+            Gaming: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
+            Fitness: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80",
+            Creator: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1200&q=80",
+            Luxury: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1200&q=80",
+            SaaS: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1200&q=80"
+          };
+          
+          const fallbackUrl = fallbacks[style] || fallbacks.SaaS;
+          if (img.src !== fallbackUrl) {
+            img.src = fallbackUrl;
+          }
+        }
+
+        function initBrokenImageFixer() {
+          document.querySelectorAll('img').forEach(img => {
+            if (img.naturalWidth === 0 || (img.complete && img.naturalWidth === 0)) {
+              replaceImage(img);
+            }
+            img.addEventListener('error', function() {
+              replaceImage(this);
+            });
+          });
+        }
+
+        function initLinkScrollFixer() {
+          document.body.addEventListener('click', function(e) {
+            const anchor = e.target.closest('a');
+            if (!anchor) return;
+            
+            let href = anchor.getAttribute('href');
+            if (!href) return;
+            
+            let targetId = '';
+            if (href.startsWith('#')) {
+              targetId = href.substring(1);
+            } else if (href.includes('/preview/')) {
+              const parts = href.split('/');
+              targetId = parts[parts.length - 1];
+            } else if (!href.startsWith('http') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
+              targetId = href.replace(/^\//, '');
+            }
+            
+            if (!targetId || targetId === 'index' || targetId === '#') return;
+            
+            const cleanTargetId = targetId.toLowerCase().trim();
+            const targetEl = document.getElementById(cleanTargetId) || 
+                             document.querySelector('[id*="' + cleanTargetId + '"]') ||
+                             document.querySelector('.' + cleanTargetId);
+                             
+            if (targetEl) {
+              e.preventDefault();
+              targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              try {
+                history.pushState(null, '', '#' + cleanTargetId);
+              } catch (err) {}
+            } else if (href.startsWith('#') || href.includes('/preview/')) {
+              const contactSection = document.getElementById('contact');
+              if (contactSection) {
+                e.preventDefault();
+                contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }
+          });
+        }
+        
         if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', initObserver);
+          document.addEventListener('DOMContentLoaded', () => {
+            initObserver();
+            initBrokenImageFixer();
+            initLinkScrollFixer();
+          });
         } else {
           initObserver();
+          initBrokenImageFixer();
+          initLinkScrollFixer();
         }
       })();
     `;
@@ -165,7 +250,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                 { label: "Contact", url: "#contact" }
               ];
               return (
-                <header key={section.id} className="reveal-on-scroll active" style={{ position: "sticky", top: 0, zIndex: 50, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.2rem 2rem", background: "rgba(6, 9, 20, 0.4)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                <header key={section.id} id="header" className="reveal-on-scroll active" style={{ position: "sticky", top: 0, zIndex: 50, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.2rem 2rem", background: "rgba(6, 9, 20, 0.4)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
                   <a href="#" style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                     <span style={{ padding: "0.25rem 0.5rem", borderRadius: "0.40rem", background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", fontSize: "1rem" }}>W</span>
                     {renderText(project.name)}
@@ -189,7 +274,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
 
             case "HERO": {
               return (
-                <section key={section.id} className="reveal-on-scroll active" style={{ padding: "6rem 2rem", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                <section key={section.id} id="hero" className="reveal-on-scroll active" style={{ padding: "6rem 2rem", display: "flex", justifyContent: "center", alignItems: "center" }}>
                   <div className="preview-hero" style={{ width: "100%", maxWidth: "1100px", display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "3rem", alignItems: "center" }}>
                     <div>
                       <span className="eyebrow" style={{ background: "rgba(99, 102, 241, 0.1)", padding: "0.3rem 0.8rem", borderRadius: "999px", color: "#a5b4fc", fontSize: "0.75rem" }}>
@@ -415,7 +500,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
 
             case "CTA": {
               return (
-                <section key={section.id} className="reveal-on-scroll" style={{ padding: "4rem 2rem", maxWidth: "1100px", margin: "0 auto" }}>
+                <section key={section.id} id="cta" className="reveal-on-scroll" style={{ padding: "4rem 2rem", maxWidth: "1100px", margin: "0 auto" }}>
                   <div className="glass-panel" style={{ borderRadius: "1.5rem", padding: "4rem 2rem", textAlign: "center", background: "linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(217, 70, 239, 0.15))", display: "flex", flexDirection: "column", alignItems: "center", gap: "1.5rem" }}>
                     <h2 style={{ fontSize: "2.5rem", fontWeight: 850, color: "#fff", margin: 0, textAlign: "center" }}>
                       {renderText(content.heading, "Ready to build your presence?")}
@@ -505,7 +590,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
 
             case "FOOTER": {
               return (
-                <footer key={section.id} className="reveal-on-scroll active" style={{ padding: "3rem 2rem", borderTop: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: "1100px", margin: "0 auto", color: "#9ca3af", fontSize: "0.85rem" }}>
+                <footer key={section.id} id="footer" className="reveal-on-scroll active" style={{ padding: "3rem 2rem", borderTop: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: "1100px", margin: "0 auto", color: "#9ca3af", fontSize: "0.85rem" }}>
                   <span>© {new Date().getFullYear()} {renderText(project.name)}. All rights reserved.</span>
                   <div style={{ display: "flex", gap: "1.5rem" }}>
                     <a href="#" style={{ transition: "color 0.2s" }}>Privacy Policy</a>
