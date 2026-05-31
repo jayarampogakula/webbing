@@ -5,6 +5,7 @@ import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
 import { CheckCircle2, Mail, DollarSign, Star, Zap, Layers, Globe, Server, ArrowRight, Video, FileText, Check, Phone, ArrowUpRight } from "lucide-react";
 import EcommerceStore from "@/components/EcommerceStore";
+import ClientEffects from "@/components/ClientEffects";
 
 // Safe text renderer helper to avoid React child object crashes
 function renderText(val: any, fallback: string = ""): string {
@@ -162,111 +163,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
       fontClass = "font-gaming";
     }
 
-    // Animation observer JS script injection
-    const animationScript = `
-      (function() {
-        function initObserver() {
-          const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                entry.target.classList.add('active');
-              }
-            });
-          }, { threshold: 0.05 });
-          document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
-        }
-        
-        function replaceImage(img) {
-          const isGaming = document.querySelector('.bg-grad-gaming') || document.querySelector('.font-gaming') || document.body.classList.contains('bg-grad-gaming');
-          const isFitness = document.querySelector('.bg-grad-fitness') || document.body.classList.contains('bg-grad-fitness');
-          const isCreator = document.querySelector('.bg-grad-creator') || document.body.classList.contains('bg-grad-creator');
-          const isLuxury = document.querySelector('.bg-grad-luxury') || document.querySelector('.font-serif-lux') || document.body.classList.contains('bg-grad-luxury');
-          
-          let style = 'SaaS';
-          if (isGaming) style = 'Gaming';
-          else if (isFitness) style = 'Fitness';
-          else if (isCreator) style = 'Creator';
-          else if (isLuxury) style = 'Luxury';
-          
-          const fallbacks = {
-            Gaming: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-            Fitness: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80",
-            Creator: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=1200&q=80",
-            Luxury: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=1200&q=80",
-            SaaS: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1200&q=80"
-          };
-          
-          const fallbackUrl = fallbacks[style] || fallbacks.SaaS;
-          if (img.src !== fallbackUrl) {
-            img.src = fallbackUrl;
-          }
-        }
-
-        function initBrokenImageFixer() {
-          document.querySelectorAll('img').forEach(img => {
-            if (img.naturalWidth === 0 || (img.complete && img.naturalWidth === 0)) {
-              replaceImage(img);
-            }
-            img.addEventListener('error', function() {
-              replaceImage(this);
-            });
-          });
-        }
-
-        function initLinkScrollFixer() {
-          document.body.addEventListener('click', function(e) {
-            const anchor = e.target.closest('a');
-            if (!anchor) return;
-            
-            let href = anchor.getAttribute('href');
-            if (!href) return;
-            
-            let targetId = '';
-            if (href.startsWith('#')) {
-              targetId = href.substring(1);
-            } else if (href.includes('/preview/')) {
-              const parts = href.split('/');
-              targetId = parts[parts.length - 1];
-            } else if (!href.startsWith('http') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
-              targetId = href.replace(/^\//, '');
-            }
-            
-            if (!targetId || targetId === 'index' || targetId === '#') return;
-            
-            const cleanTargetId = targetId.toLowerCase().trim();
-            const targetEl = document.getElementById(cleanTargetId) || 
-                             document.querySelector('[id*="' + cleanTargetId + '"]') ||
-                             document.querySelector('.' + cleanTargetId);
-                             
-            if (targetEl) {
-              e.preventDefault();
-              targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              try {
-                history.pushState(null, '', '#' + cleanTargetId);
-              } catch (err) {}
-            } else if (href.startsWith('#') || href.includes('/preview/')) {
-              const contactSection = document.getElementById('contact');
-              if (contactSection) {
-                e.preventDefault();
-                contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }
-            }
-          });
-        }
-        
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', () => {
-            initObserver();
-            initBrokenImageFixer();
-            initLinkScrollFixer();
-          });
-        } else {
-          initObserver();
-          initBrokenImageFixer();
-          initLinkScrollFixer();
-        }
-      })();
-    `;
+    // Client side effects initialized below in JSX
 
     return (
       <div className={`site-preview ${bgClass} ${fontClass}`} style={{ minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
@@ -654,7 +551,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
         })}
 
         {/* Animation Engine Trigger script */}
-        <script dangerouslySetInnerHTML={{ __html: animationScript }} />
+        <ClientEffects designStyle={designStyle} />
       </div>
     );
   } catch (err: any) {

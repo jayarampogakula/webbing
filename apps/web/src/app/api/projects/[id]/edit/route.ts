@@ -17,6 +17,8 @@ const editSchema = z.object({
     body: z.string().min(1).optional(),
   }).optional(),
   contactEmail: z.string().email().optional(),
+  sectionId: z.string().optional(),
+  sectionContent: z.any().optional(),
 });
 
 export async function POST(
@@ -118,6 +120,23 @@ export async function POST(
             content: {
               ...currentContent,
               email: validated.contactEmail,
+            }
+          }
+        });
+      }
+    // 5. Perform generic overrides on any section by sectionId
+    if (validated.sectionId && validated.sectionContent) {
+      const section = await prisma.section.findUnique({
+        where: { id: validated.sectionId }
+      });
+      if (section) {
+        const currentContent = (section.content as any) || {};
+        await prisma.section.update({
+          where: { id: section.id },
+          data: {
+            content: {
+              ...currentContent,
+              ...validated.sectionContent
             }
           }
         });

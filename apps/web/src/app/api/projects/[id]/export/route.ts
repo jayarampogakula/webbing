@@ -258,6 +258,9 @@ document.addEventListener('DOMContentLoaded', () => {
               const items = Array.isArray(content.items) ? content.items : [];
               return `
   <section id="features" class="reveal-on-scroll" style="padding: 5rem 2rem; max-width: 1100px; margin: 0 auto;">
+    <div style="text-align: center; margin-bottom: 3rem;">
+      <h2 style="font-size: 2.5rem; font-weight: 800; color: #fff; margin: 0.5rem 0;">Designed to Perform</h2>
+    </div>
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
       ${items.map((item: any) => {
         if (!item) return "";
@@ -271,6 +274,136 @@ document.addEventListener('DOMContentLoaded', () => {
   </section>`;
             }
 
+            case "SERVICES": {
+              const services = Array.isArray(content.services) ? content.services : [];
+              return `
+  <section id="services" class="reveal-on-scroll" style="padding: 5rem 2rem; max-width: 1100px; margin: 0 auto;">
+    <div style="text-align: center; margin-bottom: 3rem;">
+      <h2 style="font-size: 2.5rem; font-weight: 800; color: #fff; margin: 0.5rem 0;">Our Services</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+      ${services.map((srv: any) => {
+        if (!srv) return "";
+        return `
+      <article class="glass-card" style="border-radius: 1rem; padding: 2.2rem; border: 1px solid rgba(255,255,255,0.06); position: relative;">
+        <h3 style="margin: 0 0 1rem 0; font-size: 1.3rem; color: #fff; font-weight: 700;">${srv.title || ""}</h3>
+        <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.5; margin: 0;">${srv.desc || ""}</p>
+      </article>`;
+      }).join("")}
+    </div>
+  </section>`;
+            }
+
+            case "TESTIMONIALS": {
+              const reviews = Array.isArray(content.testimonials) ? content.testimonials : [];
+              return `
+  <section id="testimonials" class="reveal-on-scroll" style="padding: 5rem 2rem; max-width: 1100px; margin: 0 auto;">
+    <div style="text-align: center; margin-bottom: 3.5rem;">
+      <h2 style="font-size: 2.5rem; font-weight: 800; color: #fff; margin: 0.5rem 0;">Testimonials</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+      ${reviews.map((rev: any) => {
+        if (!rev) return "";
+        return `
+      <div class="glass-panel" style="border-radius: 1rem; padding: 2.5rem; border: 1px solid rgba(255,255,255,0.06);">
+        <p style="color: #e2e8f0; font-size: 1rem; line-height: 1.6; font-style: italic; margin: 0 0 1.5rem 0;">
+          "${rev.quote || ""}"
+        </p>
+        <div style="display: flex; align-items: center; gap: 0.8rem;">
+          <div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #a855f7); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700;">
+            ${rev.author ? rev.author[0] : "U"}
+          </div>
+          <div>
+            <strong style="color: #fff; display: block; font-size: 0.9rem;">${rev.author || "Anonymous"}</strong>
+            <span style="color: #9ca3af; font-size: 0.8rem;">${rev.role || ""}</span>
+          </div>
+        </div>
+      </div>`;
+      }).join("")}
+    </div>
+  </section>`;
+            }
+
+            case "PRICING": {
+              const plans = Array.isArray(content.plans) ? content.plans : [];
+              return `
+  <section id="pricing" class="reveal-on-scroll" style="padding: 5rem 2rem; max-width: 1100px; margin: 0 auto;">
+    <div style="text-align: center; margin-bottom: 3.5rem;">
+      <h2 style="font-size: 2.5rem; font-weight: 800; color: #fff; margin: 0.5rem 0;">Pricing Plans</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+      ${plans.map((pl: any) => {
+        if (!pl) return "";
+        return `
+      <article class="pricing-card ${pl.featured ? "featured" : "glass-card"}" style="border: ${pl.featured ? "2px solid #818cf8" : "1px solid rgba(255, 255, 255, 0.06)"}; border-radius: 1rem; padding: 2.5rem; display: flex; flex-direction: column;">
+        <span style="font-size: 0.75rem; color: #818cf8; text-transform: uppercase;">${pl.name || ""}</span>
+        <div style="display: flex; align-items: baseline; margin: 1rem 0;">
+          <span style="font-size: 3rem; font-weight: 850; color: #fff;">${pl.price || ""}</span>
+          <span style="color: #9ca3af; font-size: 0.9rem; margin-left: 0.25rem;">/mo</span>
+        </div>
+        <p style="color: #9ca3af; font-size: 0.85rem; margin: 0 0 2rem 0;">${pl.desc || ""}</p>
+        <ul style="list-style: none; padding: 0; margin: 0 0 2rem 0; display: flex; flex-direction: column; gap: 0.8rem; flex-grow: 1;">
+          ${Array.isArray(pl.items) ? pl.items.map((item: string) => `
+          <li style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #cbd5e1;">
+            ✓ ${item}
+          </li>`).join("") : ""}
+        </ul>
+        <a class="primary-action" href="#contact" style="width: 100%; text-align: center; display: block;">Choose ${pl.name || ""}</a>
+      </article>`;
+      }).join("")}
+    </div>
+  </section>`;
+            }
+
+            case "FAQS": {
+              const faqsItems = Array.isArray(content.faqs) ? content.faqs : [];
+              return `
+  <section id="faqs" class="reveal-on-scroll" style="padding: 5rem 2rem; max-width: 800px; margin: 0 auto;">
+    <div style="text-align: center; margin-bottom: 3rem;">
+      <h2 style="font-size: 2.5rem; font-weight: 800; color: #fff; margin: 0.5rem 0;">Frequently Asked Questions</h2>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+      ${faqsItems.map((item: any) => {
+        if (!item) return "";
+        return `
+      <details class="glass-panel" style="border-radius: 0.75rem; padding: 1.25rem; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.06);">
+        <summary style="font-weight: 700; color: #fff; font-size: 1.05rem; display: flex; justify-content: space-between; align-items: center;">
+          ${item.q || ""}
+          <span style="font-size: 1.2rem; color: #818cf8;">+</span>
+        </summary>
+        <p style="color: #9ca3af; font-size: 0.95rem; line-height: 1.6; margin-top: 1rem; cursor: default;">
+          ${item.a || ""}
+        </p>
+      </details>`;
+      }).join("")}
+    </div>
+  </section>`;
+            }
+
+            case "CTA": {
+              return `
+  <section id="cta" class="reveal-on-scroll" style="padding: 4rem 2rem; max-width: 1100px; margin: 0 auto;">
+    <div class="glass-panel" style="border-radius: 1.5rem; padding: 4rem 2rem; text-align: center; background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(217, 70, 239, 0.15)); display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
+      <h2 style="font-size: 2.5rem; font-weight: 850; color: #fff; margin: 0;">${content.heading || "Ready to build your presence?"}</h2>
+      <p style="color: #cbd5e1; font-size: 1.1rem; max-width: 600px; margin: 0;">${content.subheading || ""}</p>
+      <a class="primary-action" href="${content.ctaUrl || "#contact"}" style="margin-top: 1rem;">${content.ctaText || "Get Started"}</a>
+    </div>
+  </section>`;
+            }
+
+            case "ABOUT": {
+              return `
+  <section id="about" class="reveal-on-scroll" style="padding: 5rem 2rem; max-width: 1100px; margin: 0 auto;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
+      ${content.imageUrl ? `<img src="${resolveImageUrl(content.imageUrl, designStyle)}" style="width: 100%; border-radius: 1rem; border: 1px solid rgba(255,255,255,0.06);" />` : ""}
+      <div>
+        <h2 style="font-size: 2.3rem; font-weight: 800; color: #fff; margin: 0.5rem 0 1rem 0;">${content.heading || "Our Story"}</h2>
+        <p style="color: #9ca3af; font-size: 1.05rem; line-height: 1.7; margin: 0;">${content.body || ""}</p>
+      </div>
+    </div>
+  </section>`;
+            }
+
             case "CONTACT": {
               return `
   <section id="contact" class="reveal-on-scroll" style="padding: 5rem 2rem; max-width: 1100px; margin: 0 auto;">
@@ -280,6 +413,15 @@ document.addEventListener('DOMContentLoaded', () => {
       <a class="primary-action" href="mailto:${content.email || "hello@example.com"}">${content.email || "hello@example.com"}</a>
     </div>
   </section>`;
+            }
+
+            case "FOOTER": {
+              return `
+  <footer id="footer" class="reveal-on-scroll active" style="padding: 3rem 2rem; border-top: 1px solid rgba(255, 255, 255, 0.06); display: flex; flex-direction: column; gap: 1.5rem; align-items: center; max-width: 1100px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; color: #9ca3af; font-size: 0.85rem; flex-wrap: wrap; gap: 1rem;">
+      <span>© ${new Date().getFullYear()} ${project.name}. All rights reserved.</span>
+    </div>
+  </footer>`;
             }
 
             default:

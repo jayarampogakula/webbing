@@ -171,6 +171,16 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const [aboutHeading, setAboutHeading] = useState("");
   const [aboutBody, setAboutBody] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  const [selectedSection, setSelectedSection] = useState<any>(null);
+  const [selectedSectionContent, setSelectedSectionContent] = useState<any>({});
+
+  useEffect(() => {
+    if (selectedSection) {
+      setSelectedSectionContent(selectedSection.content || {});
+    } else {
+      setSelectedSectionContent({});
+    }
+  }, [selectedSection]);
 
   // --- Settings tab states ---
   const [customDomainName, setCustomDomainName] = useState("");
@@ -278,6 +288,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   useEffect(() => {
     if (currentProject) {
       setManualName(currentProject.name);
+      setSelectedSection(null);
       
       const page = currentProject.pages.find((p) => p.slug === "index") || currentProject.pages[0];
       if (page) {
@@ -481,6 +492,25 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
     }
   };
 
+  const handleFieldChange = (key: string, value: any) => {
+    setSelectedSectionContent((prev: any) => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleArrayFieldChange = (arrayKey: string, index: number, fieldKey: string, value: any) => {
+    setSelectedSectionContent((prev: any) => {
+      const arr = Array.isArray(prev[arrayKey]) ? [...prev[arrayKey]] : [];
+      if (!arr[index]) arr[index] = {};
+      arr[index] = { ...arr[index], [fieldKey]: value };
+      return {
+        ...prev,
+        [arrayKey]: arr
+      };
+    });
+  };
+
   // Submit Manual Properties overrides
   const handleManualSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -491,23 +521,31 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
     setSuccess("");
 
     try {
+      const payload: any = {
+        name: manualName,
+      };
+
+      if (selectedSection) {
+        payload.sectionId = selectedSection.id;
+        payload.sectionContent = selectedSectionContent;
+      } else {
+        payload.hero = {
+          heading: heroHeading,
+          subheading: heroSubheading,
+          ctaText: heroCtaText,
+          ctaUrl: heroCtaUrl,
+        };
+        payload.about = {
+          heading: aboutHeading,
+          body: aboutBody,
+        };
+        payload.contactEmail = contactEmail;
+      }
+
       const res = await fetch(`/api/projects/${currentProject.id}/edit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: manualName,
-          hero: {
-            heading: heroHeading,
-            subheading: heroSubheading,
-            ctaText: heroCtaText,
-            ctaUrl: heroCtaUrl,
-          },
-          about: {
-            heading: aboutHeading,
-            body: aboutBody,
-          },
-          contactEmail,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -515,9 +553,50 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
       setSuccess("Manual content applied!");
       handleRefreshPreview();
+      
       setProjects((prev) =>
-        prev.map((p) => (p.id === currentProject.id ? { ...p, name: manualName } : p))
+        prev.map((p) => {
+          if (p.id !== currentProject.id) return p;
+
+          let updatedPages = p.pages;
+          if (selectedSection) {
+            // Update the specific section in client state
+            updatedPages = p.pages.map((page) => {
+              const updatedSections = page.sections.map((sec) => {
+                if (sec.id === selectedSection.id) {
+                  return { ...sec, content: selectedSectionContent };
+                }
+                return sec;
+              });
+              return { ...page, sections: updatedSections };
+            });
+          } else {
+            // Update hero, about, and contact in client state
+            updatedPages = p.pages.map((page) => {
+              const updatedSections = page.sections.map((sec) => {
+                if (sec.type === "HERO") {
+                  return { ...sec, content: { ...sec.content, heading: heroHeading, subheading: heroSubheading, ctaText: heroCtaText, ctaUrl: heroCtaUrl } };
+                }
+                if (sec.type === "ABOUT") {
+                  return { ...sec, content: { ...sec.content, heading: aboutHeading, body: aboutBody } };
+                }
+                if (sec.type === "CONTACT") {
+                  return { ...sec, content: { ...sec.content, email: contactEmail } };
+                }
+                return sec;
+              });
+              return { ...page, sections: updatedSections };
+            });
+          }
+
+          return { ...p, name: manualName, pages: updatedPages };
+        })
       );
+
+      if (selectedSection) {
+        setSelectedSection((prev: any) => prev ? { ...prev, content: selectedSectionContent } : null);
+      }
+
       setTimeout(() => setSuccess(""), 1500);
     } catch (err: any) {
       setError(err.message || "Update failed.");
@@ -1696,7 +1775,10 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                       {(currentProject.pages[0]?.sections || []).map((sec, i) => (
                         <div
                           key={sec.id}
-                          onClick={() => setBuilderTab("properties")}
+                          onClick={() => {
+                            setSelectedSection(sec);
+                            setBuilderTab("properties");
+                          }}
                           style={{
                             padding: "0.75rem 1rem",
                             background: "rgba(255,255,255,0.02)",
@@ -1728,58 +1810,347 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                       </p>
                     </div>
 
-                    <div className="field-group">
-                      <label>Website Name</label>
-                      <input className="field" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="Acme Studio" disabled={loading} />
+                    <div className="field-group" style={{ marginBottom: "1rem" }}>
+                      <label style={{ fontSize: "0.8rem", color: "#9ca3af", fontWeight: 600 }}>Active Section to Override</label>
+                      <select
+                        className="field"
+                        value={selectedSection?.id || ""}
+                        onChange={(e) => {
+                          const secId = e.target.value;
+                          const found = currentProject.pages[0]?.sections.find((s) => s.id === secId);
+                          setSelectedSection(found || null);
+                        }}
+                        style={{
+                          background: "rgba(10, 14, 23, 0.8)",
+                          color: "#fff",
+                          border: "1px solid rgba(255, 255, 255, 0.08)",
+                          width: "100%",
+                          padding: "0.55rem 0.75rem",
+                          borderRadius: "0.375rem"
+                        }}
+                      >
+                        <option value="">-- General Settings / All Sections --</option>
+                        {(currentProject.pages[0]?.sections || []).map((sec: any) => (
+                          <option key={sec.id} value={sec.id}>
+                            {sec.type} Section
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
-                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "0.25rem 0", paddingTop: "0.5rem" }}>
-                      <span style={{ fontSize: "0.75rem", color: "#818cf8", fontWeight: 700 }}>HERO SECTION</span>
-                    </div>
+                    {selectedSection ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "0.5rem" }}>
+                          <span style={{ fontSize: "0.75rem", color: "#818cf8", fontWeight: 700 }}>
+                            MANUALLY OVERRIDING {selectedSection.type}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedSection(null)}
+                            style={{ background: "transparent", border: "none", color: "#f87171", cursor: "pointer", fontSize: "0.75rem" }}
+                          >
+                            Back to General
+                          </button>
+                        </div>
 
-                    <div className="field-group">
-                      <label>Hero Heading</label>
-                      <input className="field" value={heroHeading} onChange={(e) => setHeroHeading(e.target.value)} placeholder="Main Title" disabled={loading} />
-                    </div>
+                        {selectedSection.type === "HEADER" && (
+                          <>
+                            <div className="field-group">
+                              <label>CTA Button Text</label>
+                              <input className="field" value={selectedSectionContent.ctaText || ""} onChange={(e) => handleFieldChange("ctaText", e.target.value)} placeholder="Get Started" />
+                            </div>
+                            <div className="field-group">
+                              <label>CTA Button Link</label>
+                              <input className="field" value={selectedSectionContent.ctaUrl || ""} onChange={(e) => handleFieldChange("ctaUrl", e.target.value)} placeholder="#contact" />
+                            </div>
+                          </>
+                        )}
 
-                    <div className="field-group">
-                      <label>Hero Subheading</label>
-                      <textarea className="field" value={heroSubheading} onChange={(e) => setHeroSubheading(e.target.value)} placeholder="Subheading details" rows={3} disabled={loading} />
-                    </div>
+                        {selectedSection.type === "HERO" && (
+                          <>
+                            <div className="field-group">
+                              <label>Headline</label>
+                              <input className="field" value={selectedSectionContent.heading || ""} onChange={(e) => handleFieldChange("heading", e.target.value)} placeholder="Headline Title" />
+                            </div>
+                            <div className="field-group">
+                              <label>Subheading Description</label>
+                              <textarea className="field" value={selectedSectionContent.subheading || ""} onChange={(e) => handleFieldChange("subheading", e.target.value)} placeholder="Value proposition details" rows={3} />
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                              <div className="field-group">
+                                <label>CTA Button Text</label>
+                                <input className="field" value={selectedSectionContent.ctaText || ""} onChange={(e) => handleFieldChange("ctaText", e.target.value)} placeholder="Contact Us" />
+                              </div>
+                              <div className="field-group">
+                                <label>CTA Button Link</label>
+                                <input className="field" value={selectedSectionContent.ctaUrl || ""} onChange={(e) => handleFieldChange("ctaUrl", e.target.value)} placeholder="#contact" />
+                              </div>
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                              <div className="field-group">
+                                <label>Secondary CTA Text</label>
+                                <input className="field" value={selectedSectionContent.secondaryCtaText || ""} onChange={(e) => handleFieldChange("secondaryCtaText", e.target.value)} placeholder="Learn More" />
+                              </div>
+                              <div className="field-group">
+                                <label>Secondary CTA Link</label>
+                                <input className="field" value={selectedSectionContent.secondaryCtaUrl || ""} onChange={(e) => handleFieldChange("secondaryCtaUrl", e.target.value)} placeholder="#features" />
+                              </div>
+                            </div>
+                            <div className="field-group">
+                              <label>Visual Image URL</label>
+                              <input className="field" value={selectedSectionContent.imageUrl || ""} onChange={(e) => handleFieldChange("imageUrl", e.target.value)} placeholder="Unsplash image URL" />
+                            </div>
+                          </>
+                        )}
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                      <div className="field-group">
-                        <label>CTA Button Text</label>
-                        <input className="field" value={heroCtaText} onChange={(e) => setHeroCtaText(e.target.value)} placeholder="Contact Us" disabled={loading} />
+                        {selectedSection.type === "FEATURES" && (
+                          <>
+                            <span style={{ fontSize: "0.8rem", color: "#9ca3af", fontWeight: 600 }}>Feature Items List</span>
+                            {(Array.isArray(selectedSectionContent.items) ? selectedSectionContent.items : [
+                              { title: "Smart Generation", description: "Creates sections and copywriting aligned with your niche prompt details." },
+                              { title: "Vibrant Styling", description: "Glassmorphic interfaces, tailored grid schemes, and custom color presets." },
+                              { title: "Production Ready", description: "Optimized HTML/CSS structure ready for hosting or custom exports." }
+                            ]).map((item: any, idx: number) => (
+                              <div key={idx} style={{ padding: "0.75rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.4rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                <strong style={{ fontSize: "0.75rem", color: "#818cf8" }}>Feature Card {idx + 1}</strong>
+                                <div className="field-group">
+                                  <label>Title</label>
+                                  <input className="field" value={item?.title || ""} onChange={(e) => handleArrayFieldChange("items", idx, "title", e.target.value)} placeholder="Feature title" />
+                                </div>
+                                <div className="field-group">
+                                  <label>Description</label>
+                                  <textarea className="field" value={item?.description || ""} onChange={(e) => handleArrayFieldChange("items", idx, "description", e.target.value)} placeholder="Feature description" rows={2} />
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {selectedSection.type === "SERVICES" && (
+                          <>
+                            <span style={{ fontSize: "0.8rem", color: "#9ca3af", fontWeight: 600 }}>Services List</span>
+                            {(Array.isArray(selectedSectionContent.services) ? selectedSectionContent.services : [
+                              { title: "Core Design", desc: "Premium styling matching your specific target niche.", badge: "Popular" },
+                              { title: "Subdomain Mapping", desc: "Instant deployment with fully configured system records." },
+                              { title: "SEO Configurations", desc: "Automated search engine description meta tags." }
+                            ]).map((srv: any, idx: number) => (
+                              <div key={idx} style={{ padding: "0.75rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.4rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                <strong style={{ fontSize: "0.75rem", color: "#818cf8" }}>Service {idx + 1}</strong>
+                                <div className="field-group">
+                                  <label>Title</label>
+                                  <input className="field" value={srv?.title || ""} onChange={(e) => handleArrayFieldChange("services", idx, "title", e.target.value)} placeholder="Service Title" />
+                                </div>
+                                <div className="field-group">
+                                  <label>Description</label>
+                                  <textarea className="field" value={srv?.desc || ""} onChange={(e) => handleArrayFieldChange("services", idx, "desc", e.target.value)} placeholder="Service description" rows={2} />
+                                </div>
+                                <div className="field-group">
+                                  <label>Badge (Optional)</label>
+                                  <input className="field" value={srv?.badge || ""} onChange={(e) => handleArrayFieldChange("services", idx, "badge", e.target.value)} placeholder="Popular / New" />
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {selectedSection.type === "TESTIMONIALS" && (
+                          <>
+                            <span style={{ fontSize: "0.8rem", color: "#9ca3af", fontWeight: 600 }}>Testimonials List</span>
+                            {(Array.isArray(selectedSectionContent.testimonials) ? selectedSectionContent.testimonials : [
+                              { quote: "This builder completely changed how we test landing pages. The visual aesthetics are incredible.", author: "Sarah Jenkins", role: "Product Director" },
+                              { quote: "Instant publishing with automatic SSL and DNS validations means we launch with complete peace of mind.", author: "Marcus Vance", role: "Creative Lead" }
+                            ]).map((rev: any, idx: number) => (
+                              <div key={idx} style={{ padding: "0.75rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.4rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                <strong style={{ fontSize: "0.75rem", color: "#818cf8" }}>Review {idx + 1}</strong>
+                                <div className="field-group">
+                                  <label>Quote</label>
+                                  <textarea className="field" value={rev?.quote || ""} onChange={(e) => handleArrayFieldChange("testimonials", idx, "quote", e.target.value)} placeholder="Quote text" rows={2} />
+                                </div>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                                  <div className="field-group">
+                                    <label>Author Name</label>
+                                    <input className="field" value={rev?.author || ""} onChange={(e) => handleArrayFieldChange("testimonials", idx, "author", e.target.value)} placeholder="Author" />
+                                  </div>
+                                  <div className="field-group">
+                                    <label>Role/Company</label>
+                                    <input className="field" value={rev?.role || ""} onChange={(e) => handleArrayFieldChange("testimonials", idx, "role", e.target.value)} placeholder="CEO at Acme" />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {selectedSection.type === "PRICING" && (
+                          <>
+                            <span style={{ fontSize: "0.8rem", color: "#9ca3af", fontWeight: 600 }}>Pricing Plans</span>
+                            {(Array.isArray(selectedSectionContent.plans) ? selectedSectionContent.plans : [
+                              { name: "Starter", price: "$0", desc: "Ideal for testing layout setups." },
+                              { name: "Pro Plan", price: "$29", desc: "Best for teams and content creators." },
+                              { name: "Agency", price: "$99", desc: "For scaling client delivery." }
+                            ]).map((pl: any, idx: number) => (
+                              <div key={idx} style={{ padding: "0.75rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.4rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                <strong style={{ fontSize: "0.75rem", color: "#818cf8" }}>Plan {idx + 1}</strong>
+                                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "1rem" }}>
+                                  <div className="field-group">
+                                    <label>Plan Name</label>
+                                    <input className="field" value={pl?.name || ""} onChange={(e) => handleArrayFieldChange("plans", idx, "name", e.target.value)} placeholder="Name" />
+                                  </div>
+                                  <div className="field-group">
+                                    <label>Price</label>
+                                    <input className="field" value={pl?.price || ""} onChange={(e) => handleArrayFieldChange("plans", idx, "price", e.target.value)} placeholder="$29" />
+                                  </div>
+                                </div>
+                                <div className="field-group">
+                                  <label>Short Description</label>
+                                  <input className="field" value={pl?.desc || ""} onChange={(e) => handleArrayFieldChange("plans", idx, "desc", e.target.value)} placeholder="Starter details..." />
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {selectedSection.type === "FAQS" && (
+                          <>
+                            <span style={{ fontSize: "0.8rem", color: "#9ca3af", fontWeight: 600 }}>FAQ Items</span>
+                            {(Array.isArray(selectedSectionContent.faqs) ? selectedSectionContent.faqs : [
+                              { q: "How do custom domain integrations work?", a: "Save your hostname in settings, configure DNS records, and verify." },
+                              { q: "Can I download static HTML archives?", a: "Yes. Use the download options menu on the control bar." }
+                            ]).map((faq: any, idx: number) => (
+                              <div key={idx} style={{ padding: "0.75rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.4rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                <strong style={{ fontSize: "0.75rem", color: "#818cf8" }}>FAQ Question {idx + 1}</strong>
+                                <div className="field-group">
+                                  <label>Question</label>
+                                  <input className="field" value={faq?.q || ""} onChange={(e) => handleArrayFieldChange("faqs", idx, "q", e.target.value)} placeholder="Question" />
+                                </div>
+                                <div className="field-group">
+                                  <label>Answer</label>
+                                  <textarea className="field" value={faq?.a || ""} onChange={(e) => handleArrayFieldChange("faqs", idx, "a", e.target.value)} placeholder="Answer explanation" rows={2} />
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {selectedSection.type === "CTA" && (
+                          <>
+                            <div className="field-group">
+                              <label>Call to Action Title</label>
+                              <input className="field" value={selectedSectionContent.heading || ""} onChange={(e) => handleFieldChange("heading", e.target.value)} placeholder="Ready to build your presence?" />
+                            </div>
+                            <div className="field-group">
+                              <label>Subtitle Description</label>
+                              <textarea className="field" value={selectedSectionContent.subheading || ""} onChange={(e) => handleFieldChange("subheading", e.target.value)} placeholder="Convert text detail" rows={2} />
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                              <div className="field-group">
+                                <label>CTA Button Text</label>
+                                <input className="field" value={selectedSectionContent.ctaText || ""} onChange={(e) => handleFieldChange("ctaText", e.target.value)} placeholder="Get Started" />
+                              </div>
+                              <div className="field-group">
+                                <label>CTA Button Link</label>
+                                <input className="field" value={selectedSectionContent.ctaUrl || ""} onChange={(e) => handleFieldChange("ctaUrl", e.target.value)} placeholder="#contact" />
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {selectedSection.type === "ABOUT" && (
+                          <>
+                            <div className="field-group">
+                              <label>Headline</label>
+                              <input className="field" value={selectedSectionContent.heading || ""} onChange={(e) => handleFieldChange("heading", e.target.value)} placeholder="Our Story" />
+                            </div>
+                            <div className="field-group">
+                              <label>About Us Description Text</label>
+                              <textarea className="field" value={selectedSectionContent.body || ""} onChange={(e) => handleFieldChange("body", e.target.value)} placeholder="Who we are details..." rows={4} />
+                            </div>
+                            <div className="field-group">
+                              <label>Image URL</label>
+                              <input className="field" value={selectedSectionContent.imageUrl || ""} onChange={(e) => handleFieldChange("imageUrl", e.target.value)} placeholder="Unsplash image URL" />
+                            </div>
+                          </>
+                        )}
+
+                        {selectedSection.type === "CONTACT" && (
+                          <>
+                            <div className="field-group">
+                              <label>Headline Title</label>
+                              <input className="field" value={selectedSectionContent.heading || ""} onChange={(e) => handleFieldChange("heading", e.target.value)} placeholder="Start a Conversation" />
+                            </div>
+                            <div className="field-group">
+                              <label>Contact Email Address</label>
+                              <input className="field" type="email" value={selectedSectionContent.email || ""} onChange={(e) => handleFieldChange("email", e.target.value)} placeholder="hello@company.com" />
+                            </div>
+                            <div className="field-group">
+                              <label>Contact Phone Number (Optional)</label>
+                              <input className="field" value={selectedSectionContent.phone || ""} onChange={(e) => handleFieldChange("phone", e.target.value)} placeholder="+1 (555) 123-4567" />
+                            </div>
+                          </>
+                        )}
+
+                        {selectedSection.type === "FOOTER" && (
+                          <div className="field-group">
+                            <span style={{ fontSize: "0.85rem", color: "#9ca3af" }}>Footer automatically renders copyright information matching the main website name.</span>
+                          </div>
+                        )}
                       </div>
-                      <div className="field-group">
-                        <label>CTA Button Link</label>
-                        <input className="field" value={heroCtaUrl} onChange={(e) => setHeroCtaUrl(e.target.value)} placeholder="#contact" disabled={loading} />
-                      </div>
-                    </div>
+                    ) : (
+                      <>
+                        <div className="field-group">
+                          <label>Website Name</label>
+                          <input className="field" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="Acme Studio" disabled={loading} />
+                        </div>
 
-                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "0.25rem 0", paddingTop: "0.5rem" }}>
-                      <span style={{ fontSize: "0.75rem", color: "#818cf8", fontWeight: 700 }}>ABOUT SECTION</span>
-                    </div>
+                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "0.25rem 0", paddingTop: "0.5rem" }}>
+                          <span style={{ fontSize: "0.75rem", color: "#818cf8", fontWeight: 700 }}>HERO SECTION</span>
+                        </div>
 
-                    <div className="field-group">
-                      <label>About Us Heading</label>
-                      <input className="field" value={aboutHeading} onChange={(e) => setAboutHeading(e.target.value)} placeholder="Our Story" disabled={loading} />
-                    </div>
+                        <div className="field-group">
+                          <label>Hero Heading</label>
+                          <input className="field" value={heroHeading} onChange={(e) => setHeroHeading(e.target.value)} placeholder="Main Title" disabled={loading} />
+                        </div>
 
-                    <div className="field-group">
-                      <label>About Us Body</label>
-                      <textarea className="field" value={aboutBody} onChange={(e) => setAboutBody(e.target.value)} placeholder="Business details" rows={3} disabled={loading} />
-                    </div>
+                        <div className="field-group">
+                          <label>Hero Subheading</label>
+                          <textarea className="field" value={heroSubheading} onChange={(e) => setHeroSubheading(e.target.value)} placeholder="Subheading details" rows={3} disabled={loading} />
+                        </div>
 
-                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "0.25rem 0", paddingTop: "0.5rem" }}>
-                      <span style={{ fontSize: "0.75rem", color: "#818cf8", fontWeight: 700 }}>CONTACT SECTION</span>
-                    </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                          <div className="field-group">
+                            <label>CTA Button Text</label>
+                            <input className="field" value={heroCtaText} onChange={(e) => setHeroCtaText(e.target.value)} placeholder="Contact Us" disabled={loading} />
+                          </div>
+                          <div className="field-group">
+                            <label>CTA Button Link</label>
+                            <input className="field" value={heroCtaUrl} onChange={(e) => setHeroCtaUrl(e.target.value)} placeholder="#contact" disabled={loading} />
+                          </div>
+                        </div>
 
-                    <div className="field-group">
-                      <label>Contact Email Address</label>
-                      <input className="field" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="hello@company.com" disabled={loading} />
-                    </div>
+                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "0.25rem 0", paddingTop: "0.5rem" }}>
+                          <span style={{ fontSize: "0.75rem", color: "#818cf8", fontWeight: 700 }}>ABOUT SECTION</span>
+                        </div>
+
+                        <div className="field-group">
+                          <label>About Us Heading</label>
+                          <input className="field" value={aboutHeading} onChange={(e) => setAboutHeading(e.target.value)} placeholder="Our Story" disabled={loading} />
+                        </div>
+
+                        <div className="field-group">
+                          <label>About Us Body</label>
+                          <textarea className="field" value={aboutBody} onChange={(e) => setAboutBody(e.target.value)} placeholder="Business details" rows={3} disabled={loading} />
+                        </div>
+
+                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "0.25rem 0", paddingTop: "0.5rem" }}>
+                          <span style={{ fontSize: "0.75rem", color: "#818cf8", fontWeight: 700 }}>CONTACT SECTION</span>
+                        </div>
+
+                        <div className="field-group">
+                          <label>Contact Email Address</label>
+                          <input className="field" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="hello@company.com" disabled={loading} />
+                        </div>
+                      </>
+                    )}
 
                     <button type="submit" className="primary-action" style={{ width: "100%", justifyContent: "center", marginTop: "0.5rem" }} disabled={loading}>
                       Apply Overwrite Changes
