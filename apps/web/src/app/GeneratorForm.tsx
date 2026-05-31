@@ -147,11 +147,11 @@ export default function GeneratorForm({ user, onSuccess }: GeneratorFormProps) {
           <div className="form-grid">
             <div className="field-group">
               <label>Website Name</label>
-              <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Thanush Gaming World" />
+              <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Nova Tech Solutions" />
             </div>
             <div className="field-group">
               <label>Business Name</label>
-              <input className="field" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="e.g. Thanush World" />
+              <input className="field" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="e.g. Nova Tech" />
             </div>
           </div>
 
