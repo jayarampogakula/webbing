@@ -125,6 +125,8 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const [submittingRequest, setSubmittingRequest] = useState(false);
   const [upgradeMessage, setUpgradeMessage] = useState("");
   const [upgradeError, setUpgradeError] = useState("");
+  const [buyCreditsView, setBuyCreditsView] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annually">("monthly");
 
   // Left Panel Sidebar Tabs
   const [builderTab, setBuilderTab] = useState<"chat" | "layers" | "properties" | "assets" | "settings">("chat");
@@ -672,7 +674,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          planId: selectedUpgradePlan.name.toLowerCase().replace(/\s+/g, "-"),
+          planId: selectedUpgradePlan.id || selectedUpgradePlan.name.toLowerCase().replace(/\s+/g, "-"),
           amount: selectedUpgradePlan.price,
           utr: utrCode
         })
@@ -706,6 +708,10 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const totalCredits = tenant.subscription?.creditsLimit || 10;
   const usedCredits = tenant.subscription?.creditsUsed || 0;
   const remainingCredits = Math.max(0, totalCredits - usedCredits);
+
+  const currentPlan = tenant.subscription?.planId || "starter";
+  const isAgency = currentPlan === "agency";
+  const canBuyCredits = currentPlan === "pro-plan" || currentPlan === "agency";
 
   // Homepage categories
   const draftProjects = projects.filter(p => p.status === "DRAFT" || p.status === "GENERATING" || p.status === "FAILED");
@@ -844,10 +850,13 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", background: "rgba(255, 255, 255, 0.02)", padding: "0.4rem 1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.05)", fontSize: "0.85rem" }}>
                 <span style={{ color: "#9ca3af" }}>Credits: <strong style={{ color: "#818cf8" }}>{remainingCredits} left</strong></span>
                 <button
-                  onClick={() => setUpgradeModalOpen(true)}
-                  style={{ background: "rgba(129, 140, 248, 0.15)", border: "1px solid rgba(129, 140, 248, 0.3)", color: "#a5b4fc", padding: "0.2rem 0.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", marginLeft: "0.5rem" }}
+                  onClick={() => {
+                    setUpgradeModalOpen(true);
+                    setBuyCreditsView(isAgency);
+                  }}
+                  style={{ background: isAgency ? "rgba(168, 85, 247, 0.15)" : "rgba(129, 140, 248, 0.15)", border: isAgency ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(129, 140, 248, 0.3)", color: isAgency ? "#d8b4fe" : "#a5b4fc", padding: "0.2rem 0.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", marginLeft: "0.5rem" }}
                 >
-                  Upgrade
+                  {isAgency ? "Buy Credits" : "Upgrade"}
                 </button>
               </div>
               <button
@@ -1422,14 +1431,17 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             
             {/* AI Credits remaining */}
             <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-              <div style={{ fontSize: "0.8rem", color: "#9ca3af", background: "rgba(255, 255, 255, 0.02)", padding: "0.3rem 0.8rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ fontSize: "0.8rem", color: "#9ca3af", background: "rgba(255, 255, 255, 0.02)", padding: "0.3rem 0.8rem", borderRadius: "0.4rem", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
                 AI Credits: <strong style={{ color: "#a855f7" }}>{remainingCredits} left</strong>
               </div>
               <button
-                onClick={() => setUpgradeModalOpen(true)}
-                style={{ background: "rgba(168, 85, 247, 0.12)", border: "1px solid rgba(168, 85, 247, 0.3)", color: "#d8b4fe", padding: "0.3rem 0.6rem", borderRadius: "0.4rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", height: "26px" }}
+                onClick={() => {
+                  setUpgradeModalOpen(true);
+                  setBuyCreditsView(isAgency);
+                }}
+                style={{ background: isAgency ? "rgba(168, 85, 247, 0.15)" : "rgba(129, 140, 248, 0.15)", border: isAgency ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(129, 140, 248, 0.3)", color: isAgency ? "#d8b4fe" : "#a5b4fc", padding: "0.3rem 0.6rem", borderRadius: "0.4rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", height: "26px" }}
               >
-                Upgrade
+                {isAgency ? "Buy Credits" : "Upgrade"}
               </button>
             </div>
 
@@ -2138,13 +2150,20 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
       )}
 
       {/* 4. Upgrade Subscription plans modal */}
+      {/* 4. Upgrade Subscription plans modal */}
       {upgradeModalOpen && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(7, 11, 19, 0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: "1.5rem", overflowY: "auto" }}>
           <div className="glass-panel" style={{ width: "100%", maxWidth: "600px", padding: "2.5rem", borderRadius: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem", maxHeight: "90vh", overflowY: "auto", margin: "auto" }}>
             <div>
               <span className="eyebrow" style={{ color: "#c084fc" }}>Billing Portal</span>
-              <h3 style={{ margin: 0, color: "#fff", fontSize: "1.35rem" }}>SaaS Account Upgrade</h3>
-              <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Choose a pricing plan to increase your AI credits quota and connect custom domains.</p>
+              <h3 style={{ margin: 0, color: "#fff", fontSize: "1.35rem" }}>
+                {isAgency ? "Buy Extra Credits" : "SaaS Account Upgrade & Billing"}
+              </h3>
+              <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>
+                {isAgency 
+                  ? "Purchase extra credit packs to keep generating websites on your Agency plan." 
+                  : "Choose a pricing plan to increase your AI credits quota or purchase extra credits."}
+              </p>
             </div>
 
             {upgradeMessage && (
@@ -2160,32 +2179,203 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             )}
 
             {!selectedUpgradePlan ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1rem" }}>
-                  {initialPlans.map((plan: any) => {
-                    const isCurrent = tenant.subscription?.planId === plan.name.toLowerCase().replace(/\s+/g, "-");
-                    return (
-                      <div key={plan.id} style={{ padding: "1.25rem", background: "rgba(255,255,255,0.01)", border: isCurrent ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div>
-                          <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>
-                            {plan.name} {isCurrent && <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.3rem", borderRadius: "0.25rem", background: "rgba(129,140,248,0.15)", color: "#818cf8", marginLeft: "0.5rem" }}>Current Plan</span>}
-                          </strong>
-                          <span style={{ fontSize: "0.85rem", color: "#cbd5e1", display: "block", margin: "0.2rem 0" }}>₹{plan.price}/month • {plan.creditsLimit} monthly credits</span>
-                          <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{plan.features}</span>
-                        </div>
-                        {!isCurrent && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                
+                {/* Tab Selector: Only show if user can buy credits and is NOT on agency plan (since Agency has only credits purchase anyway) */}
+                {canBuyCredits && !isAgency && (
+                  <div style={{ display: "flex", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "0.5rem", padding: "0.25rem" }}>
+                    <button 
+                      type="button"
+                      onClick={() => setBuyCreditsView(false)}
+                      style={{
+                        flex: 1,
+                        padding: "0.5rem",
+                        background: !buyCreditsView ? "rgba(129, 140, 248, 0.15)" : "transparent",
+                        border: "none",
+                        color: !buyCreditsView ? "#fff" : "#9ca3af",
+                        borderRadius: "0.35rem",
+                        fontSize: "0.85rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        transition: "all 0.2s"
+                      }}
+                    >
+                      Subscription Plans
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setBuyCreditsView(true)}
+                      style={{
+                        flex: 1,
+                        padding: "0.5rem",
+                        background: buyCreditsView ? "rgba(168, 85, 247, 0.15)" : "transparent",
+                        border: "none",
+                        color: buyCreditsView ? "#fff" : "#9ca3af",
+                        borderRadius: "0.35rem",
+                        fontSize: "0.85rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        transition: "all 0.2s"
+                      }}
+                    >
+                      Buy Extra Credits
+                    </button>
+                  </div>
+                )}
+
+                {/* Billing Cycle Switcher: Only show when looking at Subscription Plans and NOT in buy credits view */}
+                {!buyCreditsView && (
+                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.75rem" }}>
+                    <span style={{ fontSize: "0.85rem", color: billingCycle === "monthly" ? "#fff" : "#9ca3af" }}>Monthly</span>
+                    <button
+                      type="button"
+                      onClick={() => setBillingCycle(billingCycle === "monthly" ? "annually" : "monthly")}
+                      style={{
+                        width: "48px",
+                        height: "24px",
+                        borderRadius: "12px",
+                        background: billingCycle === "annually" ? "#818cf8" : "rgba(255,255,255,0.15)",
+                        border: "none",
+                        position: "relative",
+                        cursor: "pointer",
+                        padding: 0,
+                        transition: "background 0.2s"
+                      }}
+                    >
+                      <div style={{
+                        width: "18px",
+                        height: "18px",
+                        borderRadius: "50%",
+                        background: "#fff",
+                        position: "absolute",
+                        top: "3px",
+                        left: billingCycle === "annually" ? "27px" : "3px",
+                        transition: "left 0.2s"
+                      }} />
+                    </button>
+                    <span style={{ fontSize: "0.85rem", color: billingCycle === "annually" ? "#fff" : "#9ca3af", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+                      Annually <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.35rem", borderRadius: "10px", background: "rgba(34, 197, 94, 0.15)", color: "#4ade80", fontWeight: 700 }}>Save up to 15%</span>
+                    </span>
+                  </div>
+                )}
+
+                {/* Cards Display List */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {buyCreditsView ? (
+                    // Display Extra Credit Packs
+                    <>
+                      {[
+                        { id: "credits-10", name: "10 Credits Pack", creditsLimit: 10, price: 99, features: "Adds 10 AI generation credits to your account immediately" },
+                        { id: "credits-50", name: "50 Credits Pack", creditsLimit: 50, price: 399, features: "Adds 50 AI generation credits to your account immediately" },
+                        { id: "credits-100", name: "100 Credits Pack", creditsLimit: 100, price: 699, features: "Adds 100 AI generation credits to your account immediately" },
+                      ].map((pack) => (
+                        <div key={pack.id} style={{ padding: "1.25rem", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>
+                              {pack.name}
+                            </strong>
+                            <span style={{ fontSize: "0.85rem", color: "#cbd5e1", display: "block", margin: "0.2rem 0" }}>₹{pack.price} • {pack.creditsLimit} Credits</span>
+                            <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{pack.features}</span>
+                          </div>
                           <button
-                            onClick={() => setSelectedUpgradePlan(plan)}
+                            type="button"
+                            onClick={() => setSelectedUpgradePlan(pack)}
                             className="glow-btn"
                             style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", fontWeight: 700 }}
                           >
-                            Select Plan
+                            Buy Pack
                           </button>
-                        )}
-                      </div>
-                    );
-                  })}
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    // Display Subscription Plans
+                    initialPlans.map((plan: any) => {
+                      const planKey = plan.name.toLowerCase().replace(/\s+/g, "-");
+                      const isCurrent = tenant.subscription?.planId === planKey;
+
+                      // Starter has no annual version or discount
+                      if (planKey === "starter") {
+                        if (billingCycle === "annually") return null; // hide starter on annual view
+                        return (
+                          <div key={plan.id} style={{ padding: "1.25rem", background: "rgba(255,255,255,0.01)", border: isCurrent ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div>
+                              <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>
+                                {plan.name} {isCurrent && <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.3rem", borderRadius: "0.25rem", background: "rgba(129,140,248,0.15)", color: "#818cf8", marginLeft: "0.5rem" }}>Current Plan</span>}
+                              </strong>
+                              <span style={{ fontSize: "0.85rem", color: "#cbd5e1", display: "block", margin: "0.2rem 0" }}>Free • {plan.creditsLimit} monthly credits</span>
+                              <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{plan.features}</span>
+                            </div>
+                            {!isCurrent && (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedUpgradePlan({ ...plan, id: planKey })}
+                                className="glow-btn"
+                                style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", fontWeight: 700 }}
+                              >
+                                Select Plan
+                              </button>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      // Adjust name, pricing, and note for billing cycle
+                      let displayPrice = `₹${plan.price}/month`;
+                      let amount = plan.price;
+                      let planName = plan.name;
+                      let discountBadge = null;
+                      let customId = planKey;
+
+                      if (billingCycle === "annually") {
+                        if (planKey === "pro-plan") {
+                          displayPrice = "₹6,468/year";
+                          amount = 6468;
+                          planName = "Pro Plan (Annually)";
+                          discountBadge = "10% Discount Applied";
+                          customId = "pro-plan-annual";
+                        } else if (planKey === "agency") {
+                          displayPrice = "₹25,488/year";
+                          amount = 25488;
+                          planName = "Agency (Annually)";
+                          discountBadge = "15% Discount Applied";
+                          customId = "agency-annual";
+                        }
+                      }
+
+                      return (
+                        <div key={plan.id} style={{ padding: "1.25rem", background: "rgba(255,255,255,0.01)", border: isCurrent ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>
+                              {planName} {isCurrent && <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.3rem", borderRadius: "0.25rem", background: "rgba(129,140,248,0.15)", color: "#818cf8", marginLeft: "0.5rem" }}>Current Plan</span>}
+                              {discountBadge && <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.4rem", borderRadius: "0.25rem", background: "rgba(34,197,94,0.15)", color: "#4ade80", marginLeft: "0.5rem", fontWeight: 700 }}>{discountBadge}</span>}
+                            </strong>
+                            <span style={{ fontSize: "0.85rem", color: "#cbd5e1", display: "block", margin: "0.2rem 0" }}>
+                              {displayPrice} • {plan.creditsLimit} monthly credits
+                              {billingCycle === "annually" && (
+                                <span style={{ color: "#9ca3af", display: "block", fontSize: "0.75rem", marginTop: "0.1rem" }}>
+                                  Equivalent to ₹{planKey === "pro-plan" ? "539" : "2124"}/month
+                                </span>
+                              )}
+                            </span>
+                            <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{plan.features}</span>
+                          </div>
+                          {!isCurrent && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedUpgradePlan({ ...plan, id: customId, price: amount, name: planName })}
+                              className="glow-btn"
+                              style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", fontWeight: 700 }}
+                            >
+                              Select Plan
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
+
                 <button
                   type="button"
                   onClick={() => setUpgradeModalOpen(false)}
@@ -2213,7 +2403,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                     <div style={{ background: "#fff", padding: "1rem", borderRadius: "1rem", display: "inline-flex" }}>
                       <img
                         src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                          `upi://pay?pa=${upiId}&pn=Webbing&am=${selectedUpgradePlan.price}&cu=INR&tn=Webbing%20Upgrade%20${selectedUpgradePlan.name}`
+                          `upi://pay?pa=${upiId}&pn=Webbing&am=${selectedUpgradePlan.price}&cu=INR&tn=Webbing%20Upgrade%20${selectedUpgradePlan.id || selectedUpgradePlan.name}`
                         )}`}
                         alt="UPI QR Code"
                         style={{ width: "180px", height: "180px" }}
