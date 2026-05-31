@@ -1,0 +1,211 @@
+import nodemailer from "nodemailer";
+
+// Retrieve configuration from environment variables, defaulting to Hostinger SMTP configurations
+const host = process.env.SMTP_HOST || "smtp.hostinger.com";
+const port = parseInt(process.env.SMTP_PORT || "465", 10);
+const secure = port === 465; // Use SSL for 465
+const user = process.env.SMTP_USER || "support@webbing.in";
+const pass = process.env.SMTP_PASS || ""; // User must set this in env
+const from = process.env.SMTP_FROM || `"Webbing Support" <support@webbing.in>`;
+
+// Create SMTP Transporter
+const transporter = pass
+  ? nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: {
+        user,
+        pass,
+      },
+    })
+  : null;
+
+// Generic helper to send email safely without crashing the main application thread if SMTP is unconfigured or fails
+async function sendMailSafe(to: string, subject: string, html: string) {
+  if (!transporter) {
+    console.warn(`[Mail Service] SMTP is not configured (missing SMTP_PASS). Email to ${to} was not sent. Subject: "${subject}"`);
+    return false;
+  }
+  try {
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject,
+      html,
+    });
+    console.log(`[Mail Service] Email sent successfully to ${to}. MessageId: ${info.messageId}`);
+    return true;
+  } catch (error) {
+    console.error(`[Mail Service] Error sending email to ${to}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Send Welcome Email on Signup
+ */
+export async function sendWelcomeEmail(toEmail: string, name: string) {
+  const subject = "Welcome to Webbing! ✨";
+  const html = `
+<div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">✨ Webbing</span>
+    </div>
+    <h1 style="font-size: 22px; font-weight: 700; color: #ffffff; margin-bottom: 20px;">Welcome to Webbing, ${name}!</h1>
+    <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
+      We're thrilled to have you join Webbing. Your account has been successfully created. You can now build, manage, and launch modern AI-powered websites in seconds.
+    </p>
+    <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 30px;">
+      Your registered email address is: <strong style="color: #ffffff;">${toEmail}</strong>
+    </p>
+    <div style="text-align: center; margin-bottom: 30px;">
+      <a href="https://webbing.in/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Dashboard</a>
+    </div>
+    <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
+    <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
+      If you did not sign up for this account, please contact us at support@webbing.in.
+    </p>
+  </div>
+</div>
+  `;
+  return sendMailSafe(toEmail, subject, html);
+}
+
+/**
+ * Send Bill Payment / Payment verification request received email
+ */
+export async function sendPaymentRequestEmail(
+  toEmail: string,
+  name: string,
+  planId: string,
+  amount: number,
+  utr: string
+) {
+  const subject = "Payment Verification Request Received - Webbing 💳";
+  const displayPlanName = planId.startsWith("credits-")
+    ? `Extra Credits (${planId.split("-")[1]} credits)`
+    : planId === "pro-plan"
+    ? "Pro Plan"
+    : planId === "agency"
+    ? "Agency Plan"
+    : planId.replace("-annual", " (Annual)");
+
+  const html = `
+<div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">💳 Webbing Payments</span>
+    </div>
+    <h1 style="font-size: 22px; font-weight: 700; color: #ffffff; margin-bottom: 20px;">Payment Verification Under Review</h1>
+    <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
+      Hello ${name}, we have received your payment submission. Our billing team is currently verifying the transaction. Once verified, your upgrade/credits will be activated immediately.
+    </p>
+    <div style="background-color: #1f2937; border-radius: 8px; padding: 20px; margin-bottom: 30px; border: 1px solid #374151;">
+      <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #ffffff; border-bottom: 1px solid #374151; padding-bottom: 8px;">Transaction Summary</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #d1d5db;">
+        <tr>
+          <td style="padding: 6px 0; color: #9ca3af;">Item/Plan:</td>
+          <td style="padding: 6px 0; font-weight: 600; text-align: right; color: #ffffff;">${displayPlanName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #9ca3af;">Amount Paid:</td>
+          <td style="padding: 6px 0; font-weight: 600; text-align: right; color: #ffffff;">INR ${amount}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #9ca3af;">UTR Transaction ID:</td>
+          <td style="padding: 6px 0; font-family: monospace; font-weight: 600; text-align: right; color: #f59e0b;">${utr}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #9ca3af;">Status:</td>
+          <td style="padding: 6px 0; font-weight: 600; text-align: right; color: #f59e0b;">PENDING VERIFICATION</td>
+        </tr>
+      </table>
+    </div>
+    <p style="font-size: 14px; color: #9ca3af; line-height: 1.6;">
+      This verification process typically takes from 15 minutes to a few hours depending on banking hours. We will email you immediately once your account is activated.
+    </p>
+    <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
+    <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
+      If you have any questions or need urgent activation, email support@webbing.in.
+    </p>
+  </div>
+</div>
+  `;
+  return sendMailSafe(toEmail, subject, html);
+}
+
+/**
+ * Send Account Activation / Plan Upgrade Confirmation Email
+ */
+export async function sendPlanActivationEmail(toEmail: string, name: string, planName: string) {
+  const subject = "Your Webbing Account Plan is Activated! 🚀";
+  const html = `
+<div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">🚀 Webbing Plan Activated</span>
+    </div>
+    <h1 style="font-size: 22px; font-weight: 700; color: #34d399; margin-bottom: 20px;">Your Account is Activated!</h1>
+    <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
+      Hello ${name}, great news! Your payment has been verified, and your premium subscription has been successfully activated.
+    </p>
+    <div style="background-color: rgba(52, 211, 153, 0.05); border-radius: 8px; padding: 20px; margin-bottom: 30px; border: 1px solid rgba(52, 211, 153, 0.2);">
+      <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 16px; color: #34d399;">Active Plan: ${planName}</h3>
+      <p style="margin: 0; font-size: 14px; color: #d1d5db; line-height: 1.5;">
+        You now have access to all premium features corresponding to your plan, including custom domains, priority AI generations, and expanded limits.
+      </p>
+    </div>
+    <div style="text-align: center; margin-bottom: 30px;">
+      <a href="https://webbing.in/signin" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Start Building Now</a>
+    </div>
+    <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
+    <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
+      Thank you for choosing Webbing. Let's make something amazing!
+    </p>
+  </div>
+</div>
+  `;
+  return sendMailSafe(toEmail, subject, html);
+}
+
+/**
+ * Send Credits Purchase Confirmation Email
+ */
+export async function sendCreditsPurchaseEmail(
+  toEmail: string,
+  name: string,
+  creditCount: number,
+  amount: number
+) {
+  const subject = "Webbing Credits Purchased Successfully! ⚡";
+  const html = `
+<div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">⚡ Webbing Credits</span>
+    </div>
+    <h1 style="font-size: 22px; font-weight: 700; color: #818cf8; margin-bottom: 20px;">Credits Added Successfully!</h1>
+    <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
+      Hello ${name}, your payment for extra credits has been approved. We have credited your account with your purchase.
+    </p>
+    <div style="background-color: rgba(129, 140, 248, 0.05); border-radius: 8px; padding: 20px; margin-bottom: 30px; border: 1px solid rgba(129, 140, 248, 0.2); text-align: center;">
+      <div style="font-size: 36px; font-weight: 850; color: #ffffff; margin-bottom: 5px;">+${creditCount}</div>
+      <div style="font-size: 14px; color: #818cf8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Credits Added</div>
+    </div>
+    <p style="font-size: 14px; color: #9ca3af; line-height: 1.6; margin-bottom: 30px;">
+      These credits are now available for website generations, AI copy writes, or image updates inside your workspace.
+    </p>
+    <div style="text-align: center; margin-bottom: 30px;">
+      <a href="https://webbing.in/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Workspace</a>
+    </div>
+    <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
+    <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
+      If you have any questions or concerns, email support@webbing.in.
+    </p>
+  </div>
+</div>
+  `;
+  return sendMailSafe(toEmail, subject, html);
+}

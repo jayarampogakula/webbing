@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
+import { sendPaymentRequestEmail } from "@/lib/mail";
+
 
 // GET: List payment requests
 export async function GET(req: Request) {
@@ -70,11 +72,24 @@ export async function POST(req: Request) {
       }
     });
 
+    // Fetch user details to get their name
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { name: true }
+    });
+    const userName = dbUser?.name || "User";
+
+    // Send payment submission notification email asynchronously
+    sendPaymentRequestEmail(user.email, userName, planId, request.amount, utr).catch((err) => {
+      console.error("Failed to send payment request notification email:", err);
+    });
+
     return NextResponse.json({
       success: true,
       message: "Payment request submitted successfully! Admin will verify and activate your plan.",
       request
     });
+
   } catch (error: any) {
     console.error("POST Payment Request Exception:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

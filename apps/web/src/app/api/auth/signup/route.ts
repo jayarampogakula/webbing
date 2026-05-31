@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma, hashPassword, Role, SubscriptionStatus } from "@webbing/db";
 import { signSession } from "@/lib/session";
+import { sendWelcomeEmail } from "@/lib/mail";
+
 
 export async function POST(req: Request) {
   try {
@@ -63,6 +65,12 @@ export async function POST(req: Request) {
         tenantId: tenant.id,
       },
     });
+
+    // Send welcome email asynchronously
+    sendWelcomeEmail(user.email, user.name || "User").catch((err) => {
+      console.error("Failed to send welcome email during signup:", err);
+    });
+
 
     // 4. Create Free tier Subscription
     await prisma.subscription.create({

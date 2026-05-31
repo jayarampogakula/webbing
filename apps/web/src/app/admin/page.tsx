@@ -54,7 +54,7 @@ export default async function AdminPage() {
   try {
     const [dbUsers, dbProjects, dbSubscriptions, dbTotalTenants, dbLlmKeys, dbPlans, dbRequests, dbUpiSetting, dbFeedbacks] = await Promise.all([
       prisma.user.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
-      prisma.project.findMany({ include: { tenant: true, customDomain: true }, orderBy: { createdAt: "desc" } }),
+      prisma.project.findMany({ include: { tenant: true, customDomain: true, user: true }, orderBy: { createdAt: "desc" } }),
       prisma.subscription.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
       prisma.tenant.count(),
       getLlmKeys(),

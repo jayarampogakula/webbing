@@ -49,6 +49,10 @@ interface AdminProject {
     hostname: string;
     verified: boolean;
   } | null;
+  user?: {
+    name: string | null;
+    email: string;
+  } | null;
 }
 
 interface AdminSubscription {
@@ -528,7 +532,7 @@ export default function AdminConsole({
               <div className="table-wrap">
                 <table className="data-table">
                   <thead>
-                    <tr><th>Site</th><th>Subdomain</th><th>Status</th><th>Workspace</th></tr>
+                    <tr><th>Site</th><th>Subdomain</th><th>Owner</th><th>Status</th><th>Workspace</th></tr>
                   </thead>
                   <tbody>
                     {projects.map((p) => {
@@ -564,6 +568,16 @@ export default function AdminConsole({
                             </div>
                           </td>
                           <td>
+                            {p.user ? (
+                              <div style={{ display: "flex", flexDirection: "column" }}>
+                                <span style={{ fontWeight: 600 }}>{p.user.name || "N/A"}</span>
+                                <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{p.user.email}</span>
+                              </div>
+                            ) : (
+                              <span style={{ color: "#4b5563" }}>N/A</span>
+                            )}
+                          </td>
+                          <td>
                             <span
                               style={{
                                 fontSize: "0.7rem",
@@ -583,7 +597,7 @@ export default function AdminConsole({
                     })}
                     {projects.length === 0 && (
                       <tr>
-                        <td colSpan={4} style={{ textAlign: "center", color: "#9ca3af", padding: "2rem" }}>No generated websites on the platform.</td>
+                        <td colSpan={5} style={{ textAlign: "center", color: "#9ca3af", padding: "2rem" }}>No generated websites on the platform.</td>
                       </tr>
                     )}
                   </tbody>

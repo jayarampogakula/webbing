@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma, SubscriptionStatus } from "@webbing/db";
 import { verifySession } from "@/lib/session";
+import { sendPlanActivationEmail, sendCreditsPurchaseEmail } from "@/lib/mail";
+
 
 export async function POST(req: Request) {
   try {
@@ -30,6 +32,13 @@ export async function POST(req: Request) {
     if (request.status !== "PENDING") {
       return NextResponse.json({ error: "This request has already been processed." }, { status: 400 });
     }
+
+    // Fetch the primary user of this tenant to notify
+    const tenantUser = await prisma.user.findFirst({
+      where: { tenantId: request.tenantId },
+      orderBy: { createdAt: "asc" }
+    });
+
 
     if (action === "REJECT") {
       const updated = await prisma.paymentRequest.update({
@@ -71,6 +80,13 @@ export async function POST(req: Request) {
 
           return { request: updatedReq, subscription: updatedSub };
         });
+
+        // Send credit purchase confirmation email asynchronously
+        if (tenantUser) {
+          sendCreditsPurchaseEmail(tenantUser.email, tenantUser.name || "User", creditCount, request.amount).catch((err) => {
+            console.error("Failed to send credit purchase success email:", err);
+          });
+        }
 
         return NextResponse.json({
           success: true,
@@ -130,6 +146,13 @@ export async function POST(req: Request) {
 
         return { request: updatedReq, subscription: sub };
       });
+
+      // Send plan activation confirmation email asynchronously
+      if (tenantUser) {
+        sendPlanActivationEmail(tenantUser.email, tenantUser.name || "User", plan.name).catch((err) => {
+          console.error("Failed to send plan activation success email:", err);
+        });
+      }
 
       return NextResponse.json({
         success: true,
