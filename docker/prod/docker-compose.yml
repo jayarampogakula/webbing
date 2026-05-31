@@ -42,7 +42,7 @@ services:
       - "3000:3000"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.webbing-wildcard.rule=HostRegexp('^.+\\.webbing\\.in$$')"
+      - "traefik.http.routers.webbing-wildcard.rule=HostRegexp('{subdomain:.+}.webbing.in') || HostRegexp('{subdomain:.+}.webbing.io')"
       - "traefik.http.routers.webbing-wildcard.entrypoints=web"
       - "traefik.http.services.webbing-wildcard.loadbalancer.server.port=3000"
 
