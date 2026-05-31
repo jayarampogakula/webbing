@@ -72,7 +72,7 @@ export async function POST(req: Request) {
         status: SubscriptionStatus.ACTIVE,
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
-        creditsLimit: 10,
+        creditsLimit: 3,
         creditsUsed: 0,
       },
     });

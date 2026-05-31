@@ -121,9 +121,9 @@ async function main() {
   // 7. Seed Default Plans
   console.log("Seeding default plans...");
   const defaultPlans = [
-    { name: "Starter", price: 0, creditsLimit: 10, features: "1 Active Site, Free Subdomain, Basic Analytics" },
-    { name: "Pro Plan", price: 299, creditsLimit: 100, features: "10 Sites, Custom Domain Maps, Priority Support, Unlimited AI Updates" },
-    { name: "Agency", price: 999, creditsLimit: 500, features: "Unlimited Sites, White-labeled exports, Dedicated APIs, Priority Support" }
+    { name: "Starter", price: 0, creditsLimit: 3, features: "1 Active Site, Webbing Subdomain only, Webbing Branding Footer" },
+    { name: "Pro Plan", price: 599, creditsLimit: 100, features: "10 Sites, Custom Domain, White-labeled, Priority Support" },
+    { name: "Agency", price: 2499, creditsLimit: 500, features: "Unlimited Sites, White-labeled, Dedicated APIs, Priority Support" }
   ];
   for (const plan of defaultPlans) {
     await prisma.plan.upsert({

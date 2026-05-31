@@ -22,7 +22,10 @@ export async function POST(
       where: { id: projectId, tenantId: user.tenantId },
       include: {
         customDomain: true,
-        pages: true
+        pages: true,
+        tenant: {
+          include: { subscription: true }
+        }
       },
     });
 
@@ -96,6 +99,12 @@ export async function POST(
     // 5. Update Custom Domain Mapping
     if (customDomain !== undefined) {
       const hostname = customDomain.trim().toLowerCase();
+      if (hostname) {
+        const planId = project.tenant?.subscription?.planId || "free-plan";
+        if (planId === "free-plan" || planId === "starter") {
+          return NextResponse.json({ error: "Custom domain mapping is only available on Pro and Agency plans. Please upgrade." }, { status: 400 });
+        }
+      }
       if (!hostname) {
         // Remove existing mapping if any
         if (project.customDomain) {

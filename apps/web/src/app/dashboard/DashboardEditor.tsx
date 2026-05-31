@@ -129,7 +129,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   // Left Panel Sidebar Tabs
   const [builderTab, setBuilderTab] = useState<"chat" | "layers" | "properties" | "assets" | "settings">("chat");
   // Settings sub-tab
-  const [settingsTab, setSettingsTab] = useState<"general" | "domains" | "seo" | "analytics" | "keys">("general");
+  const [settingsTab, setSettingsTab] = useState<"general" | "domains" | "seo" | "analytics" | "keys" | "devkeys">("general");
 
   // Selected Project
   const currentProject = projects.find((p) => p.id === selectedProjectId);
@@ -170,6 +170,52 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const [llmKeys, setLlmKeys] = useState<LlmKeyView[]>([]);
   const [keysLoading, setKeysLoading] = useState(false);
 
+  // Developer API keys management
+  const [devKeys, setDevKeys] = useState<any[]>([]);
+  const [devKeysLoading, setDevKeysLoading] = useState(false);
+
+  const isAgencyOrAdmin = user.role === "ADMIN" || tenant.subscription?.planId === "agency" || tenant.subscription?.planId === "agency-plan";
+
+  const handleGenerateDevKey = async () => {
+    try {
+      const res = await fetch("/api/developer/keys", {
+        method: "POST"
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDevKeys(prev => [data.key, ...prev]);
+        setSuccess("Developer API key generated successfully!");
+        setTimeout(() => setSuccess(""), 2000);
+      } else {
+        setError(data.error || "Failed to generate key.");
+        setTimeout(() => setError(""), 3000);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to generate developer key.");
+      setTimeout(() => setError(""), 3000);
+    }
+  };
+
+  const handleRevokeDevKey = async (id: string) => {
+    try {
+      const res = await fetch(`/api/developer/keys?id=${id}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDevKeys(prev => prev.filter(k => k.id !== id));
+        setSuccess("Developer API key revoked.");
+        setTimeout(() => setSuccess(""), 2000);
+      } else {
+        setError(data.error || "Failed to revoke key.");
+        setTimeout(() => setError(""), 3000);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to revoke developer key.");
+      setTimeout(() => setError(""), 3000);
+    }
+  };
+
   // --- Publishing checks states ---
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [publishProgress, setPublishProgress] = useState<Array<{ name: string; status: "pending" | "running" | "success" | "error"; error?: string }>>([
@@ -197,6 +243,16 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
           setKeysLoading(false);
         })
         .catch(() => setKeysLoading(false));
+    }
+    if (activeView === "builder" && builderTab === "settings" && settingsTab === "devkeys") {
+      setDevKeysLoading(true);
+      fetch("/api/developer/keys")
+        .then((res) => res.json())
+        .then((data) => {
+          setDevKeys(data.keys || []);
+          setDevKeysLoading(false);
+        })
+        .catch(() => setDevKeysLoading(false));
     }
   }, [activeView, builderTab, settingsTab]);
 
@@ -1705,6 +1761,9 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                       <button onClick={() => setSettingsTab("seo")} style={{ background: "none", border: "none", color: settingsTab === "seo" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>SEO</button>
                       <button onClick={() => setSettingsTab("analytics")} style={{ background: "none", border: "none", color: settingsTab === "analytics" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>Analytics</button>
                       <button onClick={() => setSettingsTab("keys")} style={{ background: "none", border: "none", color: settingsTab === "keys" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>AI Keys</button>
+                      {isAgencyOrAdmin && (
+                        <button onClick={() => setSettingsTab("devkeys")} type="button" style={{ background: "none", border: "none", color: settingsTab === "devkeys" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>Developer Keys</button>
+                      )}
                     </div>
 
                     {/* Settings Form Container */}
@@ -1851,7 +1910,61 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                         </div>
                       )}
 
-                      {settingsTab !== "keys" && (
+                      {/* DEVELOPER API KEYS MANAGEMENT */}
+                      {settingsTab === "devkeys" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <h4 style={{ color: "#fff", margin: 0 }}>Developer API Keys</h4>
+                            <button
+                              type="button"
+                              onClick={handleGenerateDevKey}
+                              className="glow-btn"
+                              style={{ background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", border: "none", padding: "0.4rem 0.8rem", borderRadius: "0.4rem", fontSize: "0.75rem", cursor: "pointer", fontWeight: 700 }}
+                            >
+                              + Generate New Key
+                            </button>
+                          </div>
+                          
+                          <p style={{ color: "#9ca3af", fontSize: "0.75rem", margin: "0 0 1rem 0", lineHeight: 1.4 }}>
+                            Use developer keys to trigger site generation and editing programmatically. Authenticate your requests using:
+                            <code style={{ display: "block", background: "rgba(0,0,0,0.3)", padding: "0.4rem", borderRadius: "0.25rem", color: "#a5b4fc", marginTop: "0.25rem", fontFamily: "monospace" }}>
+                              Authorization: Bearer YOUR_API_KEY
+                            </code>
+                          </p>
+
+                          {devKeysLoading ? (
+                            <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>Loading developer keys...</span>
+                          ) : devKeys.length === 0 ? (
+                            <div style={{ padding: "1.5rem", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: "0.5rem", textAlign: "center", color: "#6b7280", fontSize: "0.8rem" }}>
+                              No active developer keys. Generate one above to get started.
+                            </div>
+                          ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                              {devKeys.map((k) => (
+                                <div key={k.id} className="glass-panel" style={{ padding: "1rem", borderRadius: "0.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid rgba(255,255,255,0.06)" }}>
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                    <code style={{ fontSize: "0.8rem", color: "#fff", fontFamily: "monospace" }}>
+                                      {k.key}
+                                    </code>
+                                    <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                                      Created: {new Date(k.createdAt).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRevokeDevKey(k.id)}
+                                    style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#f87171", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.7rem", cursor: "pointer", fontWeight: 700 }}
+                                  >
+                                    Revoke
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {settingsTab !== "keys" && settingsTab !== "devkeys" && (
                         <button type="submit" className="primary-action" style={{ width: "100%", justifyContent: "center", marginTop: "0.5rem" }} disabled={loading}>
                           {loading ? "Applying Settings..." : "Save Settings Configuration"}
                         </button>

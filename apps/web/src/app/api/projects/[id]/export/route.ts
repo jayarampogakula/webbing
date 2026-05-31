@@ -49,12 +49,20 @@ export async function GET(
           include: {
             sections: { orderBy: { order: "asc" } }
           }
+        },
+        tenant: {
+          include: { subscription: true }
         }
       }
     });
 
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    const planId = project.tenant?.subscription?.planId || "free-plan";
+    if (planId === "free-plan" || planId === "starter") {
+      return NextResponse.json({ error: "Website code export is only available on Pro and Agency plans. Please upgrade." }, { status: 403 });
     }
 
     const themeConfig = (project.theme as any) || {};

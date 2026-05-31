@@ -11,10 +11,36 @@ export async function POST(
   try {
     const cookieStore = cookies();
     const sessionToken = cookieStore.get("webbing-session")?.value;
-    const user = sessionToken ? verifySession(sessionToken) : null;
+    let user = sessionToken ? verifySession(sessionToken) : null;
+
+    const authHeader = req.headers.get("Authorization");
+    if (!user && authHeader && authHeader.startsWith("Bearer ")) {
+      const apiKeyString = authHeader.replace("Bearer ", "").trim();
+      const dbKey = await prisma.apiKey.findUnique({
+        where: { key: apiKeyString },
+        include: { user: true }
+      });
+      if (dbKey && dbKey.user) {
+        const tenant = await prisma.tenant.findUnique({
+          where: { id: dbKey.user.tenantId },
+          include: { subscription: true }
+        });
+        const planId = tenant?.subscription?.planId || "free-plan";
+        if (planId !== "agency" && planId !== "agency-plan" && dbKey.user.role !== "ADMIN") {
+          return NextResponse.json({ error: "Developer API access is only available on the Agency plan. Please upgrade." }, { status: 403 });
+        }
+        
+        user = {
+          userId: dbKey.user.id,
+          email: dbKey.user.email,
+          role: dbKey.user.role,
+          tenantId: dbKey.user.tenantId
+        };
+      }
+    }
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized. Please sign in or provide a valid API Key." }, { status: 401 });
     }
 
     const projectId = params.id;

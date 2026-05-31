@@ -65,6 +65,9 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
           include: {
             sections: { orderBy: { order: "asc" } }
           }
+        },
+        tenant: {
+          include: { subscription: true }
         }
       },
     });
@@ -589,13 +592,26 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
             }
 
             case "FOOTER": {
+              const planId = project.tenant?.subscription?.planId || "free-plan";
+              const isFree = planId === "free-plan" || planId === "starter";
               return (
-                <footer key={section.id} id="footer" className="reveal-on-scroll active" style={{ padding: "3rem 2rem", borderTop: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: "1100px", margin: "0 auto", color: "#9ca3af", fontSize: "0.85rem" }}>
-                  <span>© {new Date().getFullYear()} {renderText(project.name)}. All rights reserved.</span>
-                  <div style={{ display: "flex", gap: "1.5rem" }}>
-                    <a href="#" style={{ transition: "color 0.2s" }}>Privacy Policy</a>
-                    <a href="#" style={{ transition: "color 0.2s" }}>Terms of Service</a>
+                <footer key={section.id} id="footer" className="reveal-on-scroll active" style={{ padding: "3rem 2rem", borderTop: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", flexDirection: "column", gap: "1.5rem", alignItems: "center", maxWidth: "1100px", margin: "0 auto" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", color: "#9ca3af", fontSize: "0.85rem", flexWrap: "wrap", gap: "1rem" }}>
+                    <span>© {new Date().getFullYear()} {renderText(project.name)}. All rights reserved.</span>
+                    <div style={{ display: "flex", gap: "1.5rem" }}>
+                      <a href="#" style={{ transition: "color 0.2s" }}>Privacy Policy</a>
+                      <a href="#" style={{ transition: "color 0.2s" }}>Terms of Service</a>
+                    </div>
                   </div>
+                  {isFree && (
+                    <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.06)", paddingTop: "1.5rem", width: "100%", display: "flex", justifyContent: "center" }}>
+                      <a href="https://webbing.in" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", color: "#cbd5e1", textDecoration: "none", fontSize: "0.8rem", fontWeight: 600, padding: "0.4rem 0.8rem", borderRadius: "0.4rem", background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                        <span>Powered by</span>
+                        <span style={{ padding: "0.15rem 0.35rem", borderRadius: "0.25rem", background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", fontSize: "0.75rem", fontWeight: 800 }}>W</span>
+                        <strong>Webbing AI</strong>
+                      </a>
+                    </div>
+                  )}
                 </footer>
               );
             }
