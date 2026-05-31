@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Check, X, Shield, Plus, Trash2, Edit2, Sparkles, DollarSign, Layers, Users, Key, ChevronLeft, ChevronRight, Home, MessageSquare } from "lucide-react";
+import { Check, X, Shield, Plus, Trash2, Edit2, Sparkles, DollarSign, Layers, Users, Key, ChevronLeft, ChevronRight, Home, MessageSquare, Mail } from "lucide-react";
 import PlanEditor from "./PlanEditor";
 import LlmKeyManager from "../components/LlmKeyManager";
 
@@ -85,6 +85,146 @@ interface AdminConsoleProps {
   protocol: string;
 }
 
+const emailTemplates = {
+  welcome: {
+    title: "Welcome Email (on Signup)",
+    description: "Sent automatically to users when they successfully create their account.",
+    subject: "Welcome to Webbing! ✨",
+    getHtml: () => `
+<div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center; height: 100%;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">✨ Webbing</span>
+    </div>
+    <h1 style="font-size: 22px; font-weight: 700; color: #ffffff; margin-bottom: 20px;">Welcome to Webbing, John Doe!</h1>
+    <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
+      We're thrilled to have you join Webbing. Your account has been successfully created. You can now build, manage, and launch modern AI-powered websites in seconds.
+    </p>
+    <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 30px;">
+      Your registered email address is: <strong style="color: #ffffff;">johndoe@example.com</strong>
+    </p>
+    <div style="text-align: center; margin-bottom: 30px;">
+      <a href="https://webbing.in/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Dashboard</a>
+    </div>
+    <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
+    <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
+      If you did not sign up for this account, please contact us at support@webbing.in.
+    </p>
+  </div>
+</div>
+`
+  },
+  payment_request: {
+    title: "Payment Under Review (on UTR Submission)",
+    description: "Sent to the user confirming their payment submission is received and is currently under review by admin.",
+    subject: "Payment Verification Request Received - Webbing 💳",
+    getHtml: () => `
+<div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center; height: 100%;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">💳 Webbing Payments</span>
+    </div>
+    <h1 style="font-size: 22px; font-weight: 700; color: #ffffff; margin-bottom: 20px;">Payment Verification Under Review</h1>
+    <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
+      Hello John Doe, we have received your payment submission. Our billing team is currently verifying the transaction. Once verified, your upgrade/credits will be activated immediately.
+    </p>
+    <div style="background-color: #1f2937; border-radius: 8px; padding: 20px; margin-bottom: 30px; border: 1px solid #374151;">
+      <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; color: #ffffff; border-bottom: 1px solid #374151; padding-bottom: 8px;">Transaction Summary</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #d1d5db;">
+        <tr>
+          <td style="padding: 6px 0; color: #9ca3af;">Item/Plan:</td>
+          <td style="padding: 6px 0; font-weight: 600; text-align: right; color: #ffffff;">Pro Plan</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #9ca3af;">Amount Paid:</td>
+          <td style="padding: 6px 0; font-weight: 600; text-align: right; color: #ffffff;">INR 599</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #9ca3af;">UTR Transaction ID:</td>
+          <td style="padding: 6px 0; font-family: monospace; font-weight: 600; text-align: right; color: #f59e0b;">UTR-TEST-123456</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #9ca3af;">Status:</td>
+          <td style="padding: 6px 0; font-weight: 600; text-align: right; color: #f59e0b;">PENDING VERIFICATION</td>
+        </tr>
+      </table>
+    </div>
+    <p style="font-size: 14px; color: #9ca3af; line-height: 1.6;">
+      This verification process typically takes from 15 minutes to a few hours depending on banking hours. We will email you immediately once your account is activated.
+    </p>
+    <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
+    <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
+      If you have any questions or need urgent activation, email support@webbing.in.
+    </p>
+  </div>
+</div>
+`
+  },
+  activation: {
+    title: "Account Activated (on Payment Approval)",
+    description: "Sent to the user when the admin verifies their payment and activates their premium subscription.",
+    subject: "Your Webbing Account Plan is Activated! 🚀",
+    getHtml: () => `
+<div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center; height: 100%;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">🚀 Webbing Plan Activated</span>
+    </div>
+    <h1 style="font-size: 22px; font-weight: 700; color: #34d399; margin-bottom: 20px;">Your Account is Activated!</h1>
+    <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
+      Hello John Doe, great news! Your payment has been verified, and your premium subscription has been successfully activated.
+    </p>
+    <div style="background-color: rgba(52, 211, 153, 0.05); border-radius: 8px; padding: 20px; margin-bottom: 30px; border: 1px solid rgba(52, 211, 153, 0.2);">
+      <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 16px; color: #34d399;">Active Plan: Pro Plan</h3>
+      <p style="margin: 0; font-size: 14px; color: #d1d5db; line-height: 1.5;">
+        You now have access to all premium features corresponding to your plan, including custom domains, priority AI generations, and expanded limits.
+      </p>
+    </div>
+    <div style="text-align: center; margin-bottom: 30px;">
+      <a href="https://webbing.in/signin" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Start Building Now</a>
+    </div>
+    <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
+    <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
+      Thank you for choosing Webbing. Let's make something amazing!
+    </p>
+  </div>
+</div>
+`
+  },
+  credits: {
+    title: "Credits Purchased (on Credit Approval)",
+    description: "Sent to the user when the admin approves their payment for extra credit packs.",
+    subject: "Webbing Credits Purchased Successfully! ⚡",
+    getHtml: () => `
+<div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center; height: 100%;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">⚡ Webbing Credits</span>
+    </div>
+    <h1 style="font-size: 22px; font-weight: 700; color: #818cf8; margin-bottom: 20px;">Credits Added Successfully!</h1>
+    <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
+      Hello John Doe, your payment for extra credits has been approved. We have credited your account with your purchase.
+    </p>
+    <div style="background-color: rgba(129, 140, 248, 0.05); border-radius: 8px; padding: 20px; margin-bottom: 30px; border: 1px solid rgba(129, 140, 248, 0.2); text-align: center;">
+      <div style="font-size: 36px; font-weight: 850; color: #ffffff; margin-bottom: 5px;">+50</div>
+      <div style="font-size: 14px; color: #818cf8; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Credits Added</div>
+    </div>
+    <p style="font-size: 14px; color: #9ca3af; line-height: 1.6; margin-bottom: 30px;">
+      These credits are now available for website generations, AI copy writes, or image updates inside your workspace.
+    </p>
+    <div style="text-align: center; margin-bottom: 30px;">
+      <a href="https://webbing.in/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Workspace</a>
+    </div>
+    <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
+    <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
+      If you have any questions or concerns, email support@webbing.in.
+    </p>
+  </div>
+</div>
+`
+  }
+};
+
 export default function AdminConsole({
   user,
   users,
@@ -101,11 +241,16 @@ export default function AdminConsole({
 }: AdminConsoleProps) {
   // States
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "keys" | "plans" | "payments" | "feedback">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "keys" | "plans" | "payments" | "feedback" | "emails">("dashboard");
   const [upiId, setUpiId] = useState(initialUpiId);
   const [plans, setPlans] = useState<Plan[]>(initialPlans);
   const [requests, setRequests] = useState<PaymentRequest[]>(initialRequests);
   const [feedbacks, setFeedbacks] = useState<any[]>(initialFeedbacks);
+
+  const [selectedTemplateId, setSelectedTemplateId] = useState<"welcome" | "payment_request" | "activation" | "credits">("welcome");
+  const [testEmailAddress, setTestEmailAddress] = useState(user.email);
+  const [sendingTest, setSendingTest] = useState(false);
+  const [emailStatus, setEmailStatus] = useState({ success: false, message: "", error: "" });
 
   // Auto collapse sidebar on mobile screen widths
   useEffect(() => {
@@ -438,6 +583,34 @@ export default function AdminConsole({
           >
             <MessageSquare size={16} />
             {!sidebarCollapsed && <span>Feedbacks / Bugs</span>}
+          </button>
+
+          {/* Email Templates Item */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("emails");
+              setEmailStatus({ success: false, message: "", error: "" });
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              width: "100%",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "0.375rem",
+              background: activeTab === "emails" ? "rgba(129, 140, 248, 0.08)" : "none",
+              border: "none",
+              color: activeTab === "emails" ? "#818cf8" : "#9ca3af",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              textAlign: "left",
+              transition: "all 0.2s"
+            }}
+          >
+            <Mail size={16} />
+            {!sidebarCollapsed && <span>Email Templates</span>}
           </button>
 
           <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0.5rem 0" }} />
@@ -1091,6 +1264,134 @@ export default function AdminConsole({
                 </table>
               </div>
             </section>
+          </div>
+        )}
+
+        {/* TAB 7: EMAIL TEMPLATES PREVIEW & TESTING */}
+        {activeTab === "emails" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+            <div className="app-title" style={{ marginBottom: "1rem" }}>
+              <div>
+                <span className="eyebrow">Communications</span>
+                <h1 style={{ color: "#fff", margin: "0.25rem 0 0.5rem 0", fontSize: "1.75rem", fontWeight: 850 }}>Email Templates</h1>
+                <p style={{ color: "#9ca3af", fontSize: "0.9rem", margin: 0 }}>Preview transactional system emails sent from support@webbing.in and dispatch test sends.</p>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "2rem", minHeight: "600px" }}>
+              {/* Left sidebar: list templates */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {Object.entries(emailTemplates).map(([id, t]) => (
+                  <button
+                    key={id}
+                    onClick={() => {
+                      setSelectedTemplateId(id as any);
+                      setEmailStatus({ success: false, message: "", error: "" });
+                    }}
+                    style={{
+                      padding: "1.25rem",
+                      borderRadius: "0.75rem",
+                      background: selectedTemplateId === id ? "rgba(129, 140, 248, 0.08)" : "#111827",
+                      border: `1px solid ${selectedTemplateId === id ? "#6366f1" : "rgba(255,255,255,0.06)"}`,
+                      textAlign: "left",
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    <div style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem", fontSize: "0.95rem" }}>{t.title}</div>
+                    <div style={{ color: "#9ca3af", fontSize: "0.8rem", lineHeight: "1.4" }}>{t.description}</div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Right column: live iframe preview & test panel */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                <section className="surface-panel" style={{ padding: "1.5rem" }}>
+                  <h3 style={{ margin: "0 0 1rem 0", color: "#fff", fontSize: "1.1rem" }}>Send a Test Email</h3>
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!testEmailAddress) return;
+                      setSendingTest(true);
+                      setEmailStatus({ success: false, message: "", error: "" });
+                      try {
+                        const res = await fetch("/api/admin/emails/test", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ templateId: selectedTemplateId, testEmail: testEmailAddress }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || "Failed to dispatch email.");
+                        setEmailStatus({ success: true, message: data.message, error: "" });
+                      } catch (err: any) {
+                        setEmailStatus({ success: false, message: "", error: err.message });
+                      } finally {
+                        setSendingTest(false);
+                      }
+                    }}
+                    style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}
+                  >
+                    <input
+                      type="email"
+                      value={testEmailAddress}
+                      onChange={(e) => setTestEmailAddress(e.target.value)}
+                      placeholder="recipient@example.com"
+                      required
+                      style={{
+                        flexGrow: 1,
+                        background: "#1f2937",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        borderRadius: "0.375rem",
+                        padding: "0.6rem 0.8rem",
+                        color: "#fff",
+                        fontSize: "0.85rem"
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      disabled={sendingTest}
+                      style={{
+                        background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "0.375rem",
+                        padding: "0.6rem 1.25rem",
+                        fontWeight: 600,
+                        fontSize: "0.85rem",
+                        cursor: "pointer",
+                        opacity: sendingTest ? 0.6 : 1
+                      }}
+                    >
+                      {sendingTest ? "Sending..." : "Send Test"}
+                    </button>
+                  </form>
+                  {emailStatus.message && (
+                    <div style={{ color: "#34d399", fontSize: "0.8rem", marginTop: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                      <Check size={14} /> {emailStatus.message}
+                    </div>
+                  )}
+                  {emailStatus.error && (
+                    <div style={{ color: "#f87171", fontSize: "0.8rem", marginTop: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                      <X size={14} /> {emailStatus.error}
+                    </div>
+                  )}
+                </section>
+
+                <div style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                  <div style={{ padding: "0.75rem 1.25rem", background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ color: "#9ca3af", fontSize: "0.75rem" }}>
+                      Subject: <strong style={{ color: "#fff" }}>{(emailTemplates as any)[selectedTemplateId].subject}</strong>
+                    </div>
+                    <span style={{ fontSize: "0.7rem", color: "#6b7280", background: "rgba(255,255,255,0.04)", padding: "0.2rem 0.5rem", borderRadius: "0.25rem" }}>HTML PREVIEW</span>
+                  </div>
+                  <iframe
+                    srcDoc={(emailTemplates as any)[selectedTemplateId].getHtml()}
+                    title="Email Template Preview"
+                    style={{ border: "none", width: "100%", height: "550px", background: "#0a0e17" }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
