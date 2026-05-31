@@ -48,10 +48,11 @@ export default async function AdminPage() {
   let llmKeys: Awaited<ReturnType<typeof getLlmKeys>> = [];
   let plans: any[] = [];
   let paymentRequests: any[] = [];
+  let feedbacks: any[] = [];
   let upiId = "pogakula@ybl";
 
   try {
-    const [dbUsers, dbProjects, dbSubscriptions, dbTotalTenants, dbLlmKeys, dbPlans, dbRequests, dbUpiSetting] = await Promise.all([
+    const [dbUsers, dbProjects, dbSubscriptions, dbTotalTenants, dbLlmKeys, dbPlans, dbRequests, dbUpiSetting, dbFeedbacks] = await Promise.all([
       prisma.user.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
       prisma.project.findMany({ include: { tenant: true, customDomain: true }, orderBy: { createdAt: "desc" } }),
       prisma.subscription.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
@@ -60,6 +61,7 @@ export default async function AdminPage() {
       prisma.plan.findMany({ orderBy: { price: "asc" } }),
       prisma.paymentRequest.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
       prisma.systemSetting.findUnique({ where: { key: "upiId" } }),
+      prisma.feedback.findMany({ orderBy: { createdAt: "desc" } }),
     ]);
     users = dbUsers;
     projects = dbProjects;
@@ -68,6 +70,7 @@ export default async function AdminPage() {
     llmKeys = dbLlmKeys;
     plans = dbPlans;
     paymentRequests = dbRequests;
+    feedbacks = dbFeedbacks;
     upiId = dbUpiSetting?.value || "pogakula@ybl";
   } catch (error) {
     console.error("Admin data load failed:", error);
@@ -123,6 +126,7 @@ export default async function AdminPage() {
         llmKeys={llmKeys}
         initialPlans={plans}
         initialRequests={paymentRequests}
+        initialFeedbacks={feedbacks}
         initialUpiId={upiId}
         baseDomain={baseDomain}
         protocol={protocol}

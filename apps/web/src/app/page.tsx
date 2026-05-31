@@ -3,19 +3,18 @@ import { cookies } from "next/headers";
 import { verifySession } from "@/lib/session";
 import GeneratorForm from "./GeneratorForm";
 import MarketingHeader from "./components/MarketingHeader";
-import { CheckCircle2, Compass, Globe2, Layers3, Mail, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import { CheckCircle2, Compass, Globe2, Layers3, Mail, ShieldCheck, Sparkles, Zap, ShoppingCart, MessageSquare, Code, DollarSign } from "lucide-react";
+import PricingSection from "./components/PricingSection";
 
 const features = [
   { icon: Sparkles, title: "AI copy and layout", text: "Generate structured pages, hero copy, pricing blocks, feature grids, and contact sections from one prompt." },
   { icon: Layers3, title: "Modern component system", text: "Every website is composed from reusable sections that are easier to edit, inspect, and expand." },
   { icon: Globe2, title: "Subdomain publishing", text: "Publish projects to instant subdomains with custom-domain workflows ready for paid plans." },
   { icon: ShieldCheck, title: "Provider key controls", text: "Admins can configure global LLM keys while users can bring their own provider credentials." },
-];
-
-const plans = [
-  { name: "Free", price: "$0", text: "For trying the builder", items: ["1 active website", "5 generation credits", "Webbing subdomain"], featured: false },
-  { name: "Pro", price: "$29", text: "For creators and teams", items: ["10 active websites", "100 credits per month", "Custom domains", "Commerce sections"], featured: true },
-  { name: "Agency", price: "$99", text: "For client production", items: ["Unlimited projects", "500 credits per month", "White-label workspace", "Priority support"], featured: false },
+  { icon: ShoppingCart, title: "eCommerce Storefronts", text: "Generate complete single-vendor stores with shopping carts, checkout logic, product variants, inventory, and payment setup." },
+  { icon: DollarSign, title: "Annual Subscriptions", text: "Switch to annual cycles to save up to 15% on paid plan quotas, making client sites highly affordable." },
+  { icon: Code, title: "White-labeled ZIP Export", text: "Download fully offline-ready HTML, CSS, and vanilla JS archives of your sites, free of engine tags or scripts." },
+  { icon: MessageSquare, title: "Integrated Feedback System", text: "Submit suggestions or report bugs directly from the dashboard panel. View resolved support tickets instantly." }
 ];
 
 export default function LandingPage() {
@@ -64,28 +63,8 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="pricing" className="section-band">
-          <div className="section-copy">
-            <span className="eyebrow">Pricing</span>
-            <h2>Plans that scan clearly.</h2>
-            <p>Simple tiers, clearer spacing, and calls to action that do not stack awkwardly down the page.</p>
-          </div>
-          <div className="pricing-grid">
-            {plans.map((plan) => (
-              <article className={`pricing-card ${plan.featured ? "featured" : ""}`} key={plan.name}>
-                <span className="eyebrow">{plan.name}</span>
-                <span className="price">{plan.price}<small> / month</small></span>
-                <p>{plan.text}</p>
-                <ul>
-                  {plan.items.map((item) => (
-                    <li key={item}><CheckCircle2 size={17} color="#3ddc97" /> {item}</li>
-                  ))}
-                </ul>
-                <a className={plan.featured ? "primary-action" : "secondary-action"} href="/signup">Choose {plan.name}</a>
-              </article>
-            ))}
-          </div>
-        </section>
+        <PricingSection />
+
 
         <section id="about" className="section-band">
           <div className="about-contact-grid">

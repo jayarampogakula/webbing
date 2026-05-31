@@ -128,6 +128,15 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const [buyCreditsView, setBuyCreditsView] = useState(false);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annually">("monthly");
 
+  // Feedback states
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [feedbackType, setFeedbackType] = useState<"BUG" | "FEEDBACK">("FEEDBACK");
+  const [feedbackTitle, setFeedbackTitle] = useState("");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [feedbackSuccessMsg, setFeedbackSuccessMsg] = useState("");
+  const [feedbackErrorMsg, setFeedbackErrorMsg] = useState("");
+
   // Left Panel Sidebar Tabs
   const [builderTab, setBuilderTab] = useState<"chat" | "layers" | "properties" | "assets" | "settings">("chat");
   // Settings sub-tab
@@ -695,6 +704,38 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
     }
   };
 
+  const handleSubmitFeedback = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feedbackTitle.trim() || !feedbackMessage.trim()) return;
+    setSubmittingFeedback(true);
+    setFeedbackSuccessMsg("");
+    setFeedbackErrorMsg("");
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: feedbackType,
+          title: feedbackTitle,
+          message: feedbackMessage
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to submit feedback.");
+      setFeedbackSuccessMsg("Thank you! Your feedback has been submitted successfully.");
+      setFeedbackTitle("");
+      setFeedbackMessage("");
+      setTimeout(() => {
+        setFeedbackModalOpen(false);
+        setFeedbackSuccessMsg("");
+      }, 2500);
+    } catch (err: any) {
+      setFeedbackErrorMsg(err.message || "Something went wrong.");
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  };
+
   const subdomainUrl = currentProject
     ? `${protocol}://${currentProject.subdomain}.${baseDomain}`
     : "";
@@ -810,6 +851,36 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                 {!sidebarCollapsed && <span>Admin Console</span>}
               </a>
             )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setFeedbackModalOpen(true);
+                setFeedbackSuccessMsg("");
+                setFeedbackErrorMsg("");
+                setFeedbackTitle("");
+                setFeedbackMessage("");
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                width: "100%",
+                padding: "0.6rem 0.8rem",
+                borderRadius: "0.375rem",
+                background: "none",
+                border: "none",
+                color: "#9ca3af",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                textAlign: "left",
+                transition: "all 0.2s"
+              }}
+            >
+              <MessageSquare size={16} />
+              {!sidebarCollapsed && <span>Submit Feedback</span>}
+            </button>
           </div>
 
           <button
@@ -2451,6 +2522,93 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Feedback / Bug Report Modal */}
+      {feedbackModalOpen && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(7, 11, 19, 0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: "1.5rem" }}>
+          <div className="glass-panel" style={{ width: "100%", maxWidth: "500px", padding: "2.5rem", borderRadius: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            <div>
+              <span className="eyebrow" style={{ color: "#c084fc" }}>Support & Suggestions</span>
+              <h3 style={{ margin: 0, color: "#fff", fontSize: "1.35rem" }}>Submit Feedback or Bug</h3>
+              <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Help us improve Webbing. Report bugs or suggest new product features.</p>
+            </div>
+
+            {feedbackSuccessMsg && (
+              <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem" }}>
+                {feedbackSuccessMsg}
+              </div>
+            )}
+
+            {feedbackErrorMsg && (
+              <div style={{ padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem" }}>
+                {feedbackErrorMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmitFeedback} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>REPORT TYPE</label>
+                <select
+                  className="premium-input"
+                  value={feedbackType}
+                  onChange={(e: any) => setFeedbackType(e.target.value)}
+                  style={{ width: "100%" }}
+                >
+                  <option value="FEEDBACK">Suggestion / Feedback</option>
+                  <option value="BUG">Bug Report</option>
+                </select>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>TITLE</label>
+                <input
+                  type="text"
+                  className="premium-input"
+                  value={feedbackTitle}
+                  onChange={(e) => setFeedbackTitle(e.target.value)}
+                  placeholder="e.g. Broken links in ecommerce settings"
+                  required
+                  style={{ width: "100%" }}
+                  disabled={submittingFeedback}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>MESSAGE / DETAILS</label>
+                <textarea
+                  className="premium-input"
+                  value={feedbackMessage}
+                  onChange={(e) => setFeedbackMessage(e.target.value)}
+                  placeholder="Describe the issue or feedback in detail..."
+                  required
+                  rows={4}
+                  style={{ width: "100%", resize: "none" }}
+                  disabled={submittingFeedback}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "0.5rem" }}>
+                <button
+                  type="button"
+                  onClick={() => setFeedbackModalOpen(false)}
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.6rem 1.2rem", borderRadius: "0.5rem", fontSize: "0.8rem", cursor: "pointer" }}
+                  disabled={submittingFeedback}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="glow-btn"
+                  style={{ background: "linear-gradient(to right, #6366f1, #d946ef)", color: "#fff", padding: "0.6rem 1.5rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}
+                  disabled={submittingFeedback}
+                >
+                  {submittingFeedback ? "Submitting..." : "Submit Report"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -296,3 +296,17 @@ model PaymentRequest {
   updatedAt  DateTime @updatedAt
 }
 
+model Feedback {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  userEmail String
+  type      String   // BUG or FEEDBACK
+  title     String
+  message   String   @db.Text
+  status    String   @default("OPEN") // OPEN, RESOLVED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+

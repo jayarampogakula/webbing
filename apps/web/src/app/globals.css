@@ -998,3 +998,13 @@ option {
   color: #ffffff !important;
 }
 
+/* Center header links on desktop screens (width > 900px) */
+@media (min-width: 901px) {
+  .nav-links {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Check, X, Shield, Plus, Trash2, Edit2, Sparkles, DollarSign, Layers, Users, Key, ChevronLeft, ChevronRight, Home } from "lucide-react";
+import { Check, X, Shield, Plus, Trash2, Edit2, Sparkles, DollarSign, Layers, Users, Key, ChevronLeft, ChevronRight, Home, MessageSquare } from "lucide-react";
 import PlanEditor from "./PlanEditor";
 import LlmKeyManager from "../components/LlmKeyManager";
 
@@ -75,6 +75,7 @@ interface AdminConsoleProps {
   llmKeys: any[];
   initialPlans: Plan[];
   initialRequests: PaymentRequest[];
+  initialFeedbacks?: any[];
   initialUpiId: string;
   baseDomain: string;
   protocol: string;
@@ -89,16 +90,18 @@ export default function AdminConsole({
   llmKeys,
   initialPlans,
   initialRequests,
+  initialFeedbacks = [],
   initialUpiId,
   baseDomain,
   protocol,
 }: AdminConsoleProps) {
   // States
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "keys" | "plans" | "payments">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "keys" | "plans" | "payments" | "feedback">("dashboard");
   const [upiId, setUpiId] = useState(initialUpiId);
   const [plans, setPlans] = useState<Plan[]>(initialPlans);
   const [requests, setRequests] = useState<PaymentRequest[]>(initialRequests);
+  const [feedbacks, setFeedbacks] = useState<any[]>(initialFeedbacks);
 
   const totalUsers = users.length;
   const totalSites = projects.length;
@@ -230,6 +233,32 @@ export default function AdminConsole({
       setMessage(data.message || `Payment successfully ${action === "APPROVE" ? "approved" : "rejected"}.`);
     } catch (err: any) {
       setError(err.message || `Failed to process payment request.`);
+    }
+  };
+
+  const handleResolveFeedback = async (feedbackId: string, action: "RESOLVE" | "DELETE") => {
+    if (!confirm(`Are you sure you want to ${action.toLowerCase()} this feedback ticket?`)) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/feedback`, {
+        method: action === "DELETE" ? "DELETE" : "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedbackId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update feedback status.");
+
+      if (action === "DELETE") {
+        setFeedbacks(prev => prev.filter(f => f.id !== feedbackId));
+        setMessage("Feedback ticket deleted successfully.");
+      } else {
+        setFeedbacks(prev => prev.map(f => f.id === feedbackId ? { ...f, status: "RESOLVED" } : f));
+        setMessage("Feedback ticket marked as resolved.");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to update feedback ticket.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -373,6 +402,31 @@ export default function AdminConsole({
           >
             <DollarSign size={16} />
             {!sidebarCollapsed && <span>Payments</span>}
+          </button>
+
+          {/* Feedback & Bug Reports Menu */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("feedback")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              width: "100%",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "0.375rem",
+              background: activeTab === "feedback" ? "rgba(129, 140, 248, 0.08)" : "none",
+              border: "none",
+              color: activeTab === "feedback" ? "#818cf8" : "#9ca3af",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              textAlign: "left",
+              transition: "all 0.2s"
+            }}
+          >
+            <MessageSquare size={16} />
+            {!sidebarCollapsed && <span>Feedbacks / Bugs</span>}
           </button>
 
           <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0.5rem 0" }} />
@@ -906,6 +960,109 @@ export default function AdminConsole({
                       <tr>
                         <td colSpan={7} style={{ textAlign: "center", color: "#9ca3af", padding: "2rem" }}>
                           No payment requests submitted.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* TAB 6: FEEDBACK & BUG REPORTS MANAGER */}
+        {activeTab === "feedback" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+            <section className="surface-panel">
+              <div style={{ marginBottom: "1.5rem" }}>
+                <span className="eyebrow">Support Tickets</span>
+                <h2 style={{ margin: 0, color: "#fff", fontSize: "1.25rem", fontWeight: 800 }}>User Feedbacks & Bug Reports</h2>
+                <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Review bugs, features, and suggestions submitted by users from their workspace dashboards.</p>
+              </div>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Submitter</th>
+                      <th>Type</th>
+                      <th>Title</th>
+                      <th>Details / Message</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: "right" }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {feedbacks.map((f) => (
+                      <tr key={f.id}>
+                        <td>
+                          <div style={{ display: "flex", flexDirection: "column" }}>
+                            <strong>{f.userEmail}</strong>
+                            <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>Workspace ID: {f.tenantId}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span
+                            style={{
+                              fontSize: "0.7rem",
+                              fontWeight: 800,
+                              padding: "0.15rem 0.4rem",
+                              borderRadius: "0.25rem",
+                              background: f.type === "BUG" ? "rgba(239, 68, 68, 0.12)" : "rgba(59, 130, 246, 0.12)",
+                              color: f.type === "BUG" ? "#f87171" : "#60a5fa",
+                              textTransform: "uppercase"
+                            }}
+                          >
+                            {f.type}
+                          </span>
+                        </td>
+                        <td><strong>{f.title}</strong></td>
+                        <td style={{ maxWidth: "250px", wordBreak: "break-word" }}>
+                          <span style={{ fontSize: "0.85rem", color: "#cbd5e1" }}>{f.message}</span>
+                        </td>
+                        <td>{new Date(f.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          <span
+                            style={{
+                              fontSize: "0.75rem",
+                              padding: "0.15rem 0.4rem",
+                              borderRadius: "0.25rem",
+                              fontWeight: 700,
+                              background: f.status === "RESOLVED" ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)",
+                              color: f.status === "RESOLVED" ? "#34d399" : "#f59e0b"
+                            }}
+                          >
+                            {f.status}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <div style={{ display: "inline-flex", gap: "0.5rem" }}>
+                            {f.status === "OPEN" && (
+                              <button
+                                onClick={() => handleResolveFeedback(f.id, "RESOLVE")}
+                                className="glow-btn"
+                                style={{ background: "#10b981", color: "#fff", border: "none", padding: "0.25rem 0.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                                disabled={loading}
+                              >
+                                Resolve
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleResolveFeedback(f.id, "DELETE")}
+                              style={{ background: "rgba(239, 68, 68, 0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", padding: "0.25rem 0.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                              disabled={loading}
+                              title="Delete Ticket"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {feedbacks.length === 0 && (
+                      <tr>
+                        <td colSpan={7} style={{ textAlign: "center", color: "#9ca3af", padding: "2rem" }}>
+                          No feedbacks or bug reports submitted yet.
                         </td>
                       </tr>
                     )}
