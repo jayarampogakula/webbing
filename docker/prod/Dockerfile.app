@@ -22,21 +22,19 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=base --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=base --chown=nextjs:nodejs /app/apps/web/next.config.js ./apps/web/next.config.js
-COPY --from=base --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
-COPY --from=base --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=base --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=base --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
-COPY --from=base --chown=nextjs:nodejs /app/packages/db/prisma ./packages/db/prisma
-COPY --from=base --chown=nextjs:nodejs /app/packages/db/dist ./packages/db/dist
+# Copy all build workspace files from base
+COPY --from=base --chown=nextjs:nodejs /app ./
 
-# Copy shebang entrypoint script and clean Windows CRLF line endings to Linux LF
-COPY --from=base /app/docker/prod/entrypoint.sh ./entrypoint.sh
-RUN sed -i 's/\r$//' ./entrypoint.sh
-RUN chmod +x ./entrypoint.sh
+# Setup shebang entrypoint script
+RUN sed -i 's/\r$//' ./docker/prod/entrypoint.sh && chmod +x ./docker/prod/entrypoint.sh
+COPY --from=base --chown=nextjs:nodejs /app/docker/prod/entrypoint.sh ./entrypoint.sh
+RUN sed -i 's/\r$//' ./entrypoint.sh && chmod +x ./entrypoint.sh
+
+# Change WORKDIR to apps/web as requested
+WORKDIR /app/apps/web
 
 USER nextjs
 EXPOSE 3000
 ENV PORT 3000
-CMD ["./entrypoint.sh"]
+CMD ["/app/entrypoint.sh"]
+
