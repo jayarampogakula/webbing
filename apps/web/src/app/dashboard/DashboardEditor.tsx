@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Settings, Check, Server, RefreshCw, Sparkles, Globe, Edit2, Play, Download, Layout, ArrowLeft, Plus, MessageSquare, Layers, Sliders, Image, LogOut, CheckCircle, AlertTriangle, ExternalLink, Shield, ArrowRight, Trash2, ChevronLeft, ChevronRight, PlusCircle, Home } from "lucide-react";
+import { Settings, Check, Server, RefreshCw, Sparkles, Globe, Edit2, Play, Download, Layout, ArrowLeft, Plus, MessageSquare, Layers, Sliders, Image, LogOut, CheckCircle, AlertTriangle, ExternalLink, Shield, ArrowRight, Trash2, ChevronLeft, ChevronRight, PlusCircle, Home, Menu } from "lucide-react";
 import GeneratorForm from "../GeneratorForm";
 import LlmKeyManager, { LlmKeyView } from "../components/LlmKeyManager";
 
@@ -117,6 +117,24 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const [isCreatingNew, setIsCreatingNew] = useState(tenant.projects.length === 0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [splitLayout, setSplitLayout] = useState<"split" | "editor-focus" | "preview-focus" | "editor-only" | "preview-only">("split");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 900);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) {
+      if (splitLayout !== "editor-only" && splitLayout !== "preview-only") {
+        setSplitLayout("editor-only");
+      }
+    }
+  }, [isMobile, splitLayout]);
 
   // Upgrade Plan states
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
@@ -849,25 +867,49 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   // ----------------------------------------------------
   if (activeView === "homepage") {
     return (
-      <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "#070b13", overflow: "hidden" }}>
+      <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "#070b13", overflow: "hidden", position: "relative" }}>
+        {/* Mobile sidebar backdrop mask */}
+        {isMobile && !sidebarCollapsed && (
+          <div 
+            onClick={() => setSidebarCollapsed(true)} 
+            style={{
+              position: "fixed",
+              top: "70px",
+              left: 0,
+              width: "100vw",
+              height: "calc(100vh - 70px)",
+              background: "rgba(0, 0, 0, 0.5)",
+              backdropFilter: "blur(4px)",
+              zIndex: 40
+            }}
+          />
+        )}
+
         {/* PERSISTENT LEFT SIDEBAR */}
         <div style={{
-          width: sidebarCollapsed ? "64px" : "200px",
-          minWidth: sidebarCollapsed ? "64px" : "200px",
-          background: "rgba(10, 14, 23, 0.95)",
-          borderRight: "1px solid rgba(255,255,255,0.05)",
+          position: isMobile ? "fixed" : "relative",
+          left: 0,
+          top: isMobile ? "70px" : "auto",
+          height: isMobile ? "calc(100vh - 70px)" : "100%",
+          zIndex: isMobile ? 50 : "auto",
+          width: isMobile ? (sidebarCollapsed ? "0px" : "200px") : (sidebarCollapsed ? "64px" : "200px"),
+          minWidth: isMobile ? (sidebarCollapsed ? "0px" : "200px") : (sidebarCollapsed ? "64px" : "200px"),
+          background: "rgba(10, 14, 23, 0.98)",
+          borderRight: isMobile && sidebarCollapsed ? "none" : "1px solid rgba(255,255,255,0.05)",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          padding: "1.5rem 0.5rem 0.5rem 0.5rem",
-          transition: "width 0.2s, min-width 0.2s",
-          flexShrink: 0
+          padding: isMobile && sidebarCollapsed ? "0" : "1.5rem 0.5rem 0.5rem 0.5rem",
+          transition: "width 0.2s, min-width 0.2s, padding 0.2s",
+          flexShrink: 0,
+          overflow: isMobile && sidebarCollapsed ? "hidden" : "visible"
         }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
             <button
               onClick={() => {
                 setActiveView("homepage");
                 setIsCreatingNew(false);
+                if (isMobile) setSidebarCollapsed(true);
               }}
               style={{
                 display: "flex",
@@ -894,6 +936,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
               onClick={() => {
                 setIsCreatingNew(true);
                 setActiveView("builder");
+                if (isMobile) setSidebarCollapsed(true);
               }}
               style={{
                 display: "flex",
@@ -919,6 +962,9 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             {user.role === "ADMIN" && (
               <a
                 href="/admin"
+                onClick={() => {
+                  if (isMobile) setSidebarCollapsed(true);
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -946,6 +992,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                 setFeedbackErrorMsg("");
                 setFeedbackTitle("");
                 setFeedbackMessage("");
+                if (isMobile) setSidebarCollapsed(true);
               }}
               style={{
                 display: "flex",
@@ -992,18 +1039,38 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
           </button>
         </div>
 
-        <div style={{ flexGrow: 1, padding: "2.5rem", background: "#0a0e17", overflowY: "auto" }}>
+        <div style={{ flexGrow: 1, padding: isMobile ? "1.25rem" : "2.5rem", background: "#0a0e17", overflowY: "auto" }}>
         <main style={{ maxWidth: "1200px", margin: "0 auto" }}>
           
           {/* Header row */}
-          <div className="dashboard-header-row">
-            <div>
-              <span className="eyebrow" style={{ color: "#818cf8" }}>Dashboard</span>
-              <h1 style={{ fontSize: "clamp(1.3rem, 4.5vw, 2.25rem)", fontWeight: 850, margin: "0.25rem 0", color: "#fff", wordBreak: "break-word" }}>Welcome back, {user.email}</h1>
-              <p style={{ color: "#9ca3af", fontSize: "0.9rem", margin: 0 }}>Create, customize, publish and export your dynamic web sites.</p>
+          <div className="dashboard-header-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+              {isMobile && (
+                <button
+                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: "#fff",
+                    padding: "0.5rem 0.75rem",
+                    borderRadius: "0.4rem",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  <Menu size={18} />
+                </button>
+              )}
+              <div>
+                <span className="eyebrow" style={{ color: "#818cf8" }}>Dashboard</span>
+                <h1 style={{ fontSize: "clamp(1.3rem, 4.5vw, 2.25rem)", fontWeight: 850, margin: "0.25rem 0", color: "#fff", wordBreak: "break-word" }}>Welcome back, {user.email}</h1>
+                <p style={{ color: "#9ca3af", fontSize: "0.9rem", margin: 0 }}>Create, customize, publish and export your dynamic web sites.</p>
+              </div>
             </div>
             
-            <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap", marginTop: isMobile ? "0.5rem" : "0" }}>
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", background: "rgba(255, 255, 255, 0.02)", padding: "0.4rem 1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.05)", fontSize: "0.85rem" }}>
                 <span style={{ color: "#9ca3af" }}>Credits: <strong style={{ color: "#818cf8" }}>{remainingCredits} left</strong></span>
                 <button
@@ -1020,6 +1087,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                 onClick={() => {
                   setIsCreatingNew(true);
                   setActiveView("builder");
+                  if (isMobile) setSidebarCollapsed(true);
                 }}
                 className="glow-btn"
                 style={{
@@ -1243,19 +1311,42 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   // UNIFIED BUILDER WORKSPACE VIEW RENDER
   // ----------------------------------------------------
   return (
-    <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "#070b13", overflow: "hidden" }}>
+    <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "#070b13", overflow: "hidden", position: "relative" }}>
+      {/* Mobile sidebar backdrop mask */}
+      {isMobile && !sidebarCollapsed && (
+        <div 
+          onClick={() => setSidebarCollapsed(true)} 
+          style={{
+            position: "fixed",
+            top: "70px",
+            left: 0,
+            width: "100vw",
+            height: "calc(100vh - 70px)",
+            background: "rgba(0, 0, 0, 0.5)",
+            backdropFilter: "blur(4px)",
+            zIndex: 40
+          }}
+        />
+      )}
+
       {/* PERSISTENT LEFT SIDEBAR */}
       <div style={{
-        width: sidebarCollapsed ? "64px" : "200px",
-        minWidth: sidebarCollapsed ? "64px" : "200px",
-        background: "rgba(10, 14, 23, 0.95)",
-        borderRight: "1px solid rgba(255,255,255,0.05)",
+        position: isMobile ? "fixed" : "relative",
+        left: 0,
+        top: isMobile ? "70px" : "auto",
+        height: isMobile ? "calc(100vh - 70px)" : "100%",
+        zIndex: isMobile ? 50 : "auto",
+        width: isMobile ? (sidebarCollapsed ? "0px" : "200px") : (sidebarCollapsed ? "64px" : "200px"),
+        minWidth: isMobile ? (sidebarCollapsed ? "0px" : "200px") : (sidebarCollapsed ? "64px" : "200px"),
+        background: "rgba(10, 14, 23, 0.98)",
+        borderRight: isMobile && sidebarCollapsed ? "none" : "1px solid rgba(255,255,255,0.05)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        padding: "1.5rem 0.5rem 0.5rem 0.5rem",
-        transition: "width 0.2s, min-width 0.2s",
-        flexShrink: 0
+        padding: isMobile && sidebarCollapsed ? "0" : "1.5rem 0.5rem 0.5rem 0.5rem",
+        transition: "width 0.2s, min-width 0.2s, padding 0.2s",
+        flexShrink: 0,
+        overflow: isMobile && sidebarCollapsed ? "hidden" : "visible"
       }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
           <button
@@ -1263,6 +1354,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             onClick={() => {
               setActiveView("homepage");
               setIsCreatingNew(false);
+              if (isMobile) setSidebarCollapsed(true);
             }}
             style={{
               display: "flex",
@@ -1290,6 +1382,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             onClick={() => {
               setIsCreatingNew(true);
               setActiveView("builder");
+              if (isMobile) setSidebarCollapsed(true);
             }}
             style={{
               display: "flex",
@@ -1315,6 +1408,9 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
           {user.role === "ADMIN" && (
             <a
               href="/admin"
+              onClick={() => {
+                if (isMobile) setSidebarCollapsed(true);
+              }}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -1343,7 +1439,10 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
               <button
                 type="button"
-                onClick={() => setBuilderTab("chat")}
+                onClick={() => {
+                  setBuilderTab("chat");
+                  if (isMobile) setSidebarCollapsed(true);
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -1367,7 +1466,10 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
               <button
                 type="button"
-                onClick={() => setBuilderTab("layers")}
+                onClick={() => {
+                  setBuilderTab("layers");
+                  if (isMobile) setSidebarCollapsed(true);
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -1391,7 +1493,10 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
               <button
                 type="button"
-                onClick={() => setBuilderTab("properties")}
+                onClick={() => {
+                  setBuilderTab("properties");
+                  if (isMobile) setSidebarCollapsed(true);
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -1415,7 +1520,10 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
               <button
                 type="button"
-                onClick={() => setBuilderTab("assets")}
+                onClick={() => {
+                  setBuilderTab("assets");
+                  if (isMobile) setSidebarCollapsed(true);
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -1439,7 +1547,10 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
               <button
                 type="button"
-                onClick={() => setBuilderTab("settings")}
+                onClick={() => {
+                  setBuilderTab("settings");
+                  if (isMobile) setSidebarCollapsed(true);
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -1492,9 +1603,28 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
       <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       
       {/* 1. Header Control Bar */}
-      <div className="builder-header-bar">
+      <div className="builder-header-bar" style={{ flexWrap: "wrap", padding: isMobile ? "0.6rem 0.75rem" : "0.8rem 1.5rem", gap: "0.5rem" }}>
         
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+          {isMobile && (
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#fff",
+                padding: "0.4rem 0.6rem",
+                borderRadius: "0.4rem",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginRight: "0.25rem"
+              }}
+            >
+              <Menu size={16} />
+            </button>
+          )}
           <button
             onClick={() => {
               setActiveView("homepage");
@@ -1516,15 +1646,15 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
           >
             <ArrowLeft size={14} /> Dashboard
           </button>
-
+ 
           <span style={{ color: "rgba(255,255,255,0.15)" }}>|</span>
-
+ 
           {currentProject && !isCreatingNew && (
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>Project:</span>
+              {!isMobile && <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>Project:</span>}
               <select
                 className="premium-input"
-                style={{ padding: "0.25rem 1.5rem 0.25rem 0.75rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.1)", fontSize: "0.8rem", width: "auto", minHeight: "auto", height: "30px" }}
+                style={{ padding: "0.25rem 1.5rem 0.25rem 0.75rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.1)", fontSize: "0.8rem", width: isMobile ? "120px" : "auto", minHeight: "auto", height: "30px" }}
                 value={selectedProjectId}
                 onChange={(e) => setSelectedProjectId(e.target.value)}
               >
@@ -1537,59 +1667,78 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             </div>
           )}
         </div>
-
+ 
         {/* Action controls */}
         {currentProject && !isCreatingNew && (
-          <div style={{ display: "flex", gap: "0.8rem", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "0.8rem", alignItems: "center", flexWrap: "wrap", width: isMobile ? "100%" : "auto", justifyContent: isMobile ? "space-between" : "flex-end" }}>
             
             {/* Split layout resizer control */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", background: "rgba(255,255,255,0.02)", padding: "0.2rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <button
-                type="button"
-                onClick={() => setSplitLayout("split")}
-                style={{ background: splitLayout === "split" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "split" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
-                title="Split View (50/50)"
-              >
-                50:50
-              </button>
-              <button
-                type="button"
-                onClick={() => setSplitLayout("editor-focus")}
-                style={{ background: splitLayout === "editor-focus" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "editor-focus" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
-                title="Focus Editor (70/30)"
-              >
-                Editor Wide
-              </button>
-              <button
-                type="button"
-                onClick={() => setSplitLayout("preview-focus")}
-                style={{ background: splitLayout === "preview-focus" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "preview-focus" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
-                title="Focus Preview (30/70)"
-              >
-                Preview Wide
-              </button>
-              <button
-                type="button"
-                onClick={() => setSplitLayout("editor-only")}
-                style={{ background: splitLayout === "editor-only" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "editor-only" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
-                title="Hide Preview"
-              >
-                Hide Preview
-              </button>
-              <button
-                type="button"
-                onClick={() => setSplitLayout("preview-only")}
-                style={{ background: splitLayout === "preview-only" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "preview-only" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
-                title="Hide Editor"
-              >
-                Hide Editor
-              </button>
-            </div>
+            {isMobile ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", background: "rgba(255,255,255,0.02)", padding: "0.2rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <button
+                  type="button"
+                  onClick={() => setSplitLayout("editor-only")}
+                  style={{ background: (splitLayout === "editor-only" || splitLayout === "split" || splitLayout === "editor-focus") ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: (splitLayout === "editor-only" || splitLayout === "split" || splitLayout === "editor-focus") ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                >
+                  Editor
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSplitLayout("preview-only")}
+                  style={{ background: (splitLayout === "preview-only" || splitLayout === "preview-focus") ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: (splitLayout === "preview-only" || splitLayout === "preview-focus") ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                >
+                  Preview
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", background: "rgba(255,255,255,0.02)", padding: "0.2rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <button
+                  type="button"
+                  onClick={() => setSplitLayout("split")}
+                  style={{ background: splitLayout === "split" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "split" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                  title="Split View (50/50)"
+                >
+                  50:50
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSplitLayout("editor-focus")}
+                  style={{ background: splitLayout === "editor-focus" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "editor-focus" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                  title="Focus Editor (70/30)"
+                >
+                  Editor Wide
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSplitLayout("preview-focus")}
+                  style={{ background: splitLayout === "preview-focus" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "preview-focus" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                  title="Focus Preview (30/70)"
+                >
+                  Preview Wide
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSplitLayout("editor-only")}
+                  style={{ background: splitLayout === "editor-only" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "editor-only" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                  title="Hide Preview"
+                >
+                  Hide Preview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSplitLayout("preview-only")}
+                  style={{ background: splitLayout === "preview-only" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "preview-only" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                  title="Hide Editor"
+                >
+                  Hide Editor
+                </button>
+              </div>
+            )}
             
             {/* AI Credits remaining */}
             <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
               <div style={{ fontSize: "0.8rem", color: "#9ca3af", background: "rgba(255, 255, 255, 0.02)", padding: "0.3rem 0.8rem", borderRadius: "0.4rem", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                AI Credits: <strong style={{ color: "#a855f7" }}>{remainingCredits} left</strong>
+                {isMobile ? "" : "AI Credits: "}<strong style={{ color: "#a855f7" }}>{remainingCredits} {isMobile ? "Credits" : "left"}</strong>
               </div>
               <button
                 onClick={() => {
@@ -1598,7 +1747,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                 }}
                 style={{ background: isAgency ? "rgba(168, 85, 247, 0.15)" : "rgba(129, 140, 248, 0.15)", border: isAgency ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(129, 140, 248, 0.3)", color: isAgency ? "#d8b4fe" : "#a5b4fc", padding: "0.3rem 0.6rem", borderRadius: "0.4rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", height: "26px" }}
               >
-                {isAgency ? "Buy Credits" : "Upgrade"}
+                {isAgency ? (isMobile ? "Credits" : "Buy Credits") : "Upgrade"}
               </button>
             </div>
 
@@ -1692,7 +1841,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
           {/* Left Config Panel (Editor pane) */}
           {splitLayout !== "preview-only" && (
             <div style={{
-              width: splitLayout === "editor-only" ? "100%" : splitLayout === "editor-focus" ? "70%" : splitLayout === "preview-focus" ? "30%" : "50%",
+              width: isMobile ? "100%" : splitLayout === "editor-only" ? "100%" : splitLayout === "editor-focus" ? "70%" : splitLayout === "preview-focus" ? "30%" : "50%",
               flexGrow: 0,
               flexShrink: 0,
               display: "flex",
@@ -1876,7 +2025,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                               <label>Subheading Description</label>
                               <textarea className="field" value={selectedSectionContent.subheading || ""} onChange={(e) => handleFieldChange("subheading", e.target.value)} placeholder="Value proposition details" rows={3} />
                             </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "1rem" }}>
                               <div className="field-group">
                                 <label>CTA Button Text</label>
                                 <input className="field" value={selectedSectionContent.ctaText || ""} onChange={(e) => handleFieldChange("ctaText", e.target.value)} placeholder="Contact Us" />
@@ -1886,7 +2035,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                                 <input className="field" value={selectedSectionContent.ctaUrl || ""} onChange={(e) => handleFieldChange("ctaUrl", e.target.value)} placeholder="#contact" />
                               </div>
                             </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "1rem" }}>
                               <div className="field-group">
                                 <label>Secondary CTA Text</label>
                                 <input className="field" value={selectedSectionContent.secondaryCtaText || ""} onChange={(e) => handleFieldChange("secondaryCtaText", e.target.value)} placeholder="Learn More" />
@@ -1966,7 +2115,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                                   <label>Quote</label>
                                   <textarea className="field" value={rev?.quote || ""} onChange={(e) => handleArrayFieldChange("testimonials", idx, "quote", e.target.value)} placeholder="Quote text" rows={2} />
                                 </div>
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "1rem" }}>
                                   <div className="field-group">
                                     <label>Author Name</label>
                                     <input className="field" value={rev?.author || ""} onChange={(e) => handleArrayFieldChange("testimonials", idx, "author", e.target.value)} placeholder="Author" />
@@ -1991,7 +2140,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                             ]).map((pl: any, idx: number) => (
                               <div key={idx} style={{ padding: "0.75rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.4rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                                 <strong style={{ fontSize: "0.75rem", color: "#818cf8" }}>Plan {idx + 1}</strong>
-                                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "1rem" }}>
+                                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.2fr 0.8fr", gap: "1rem" }}>
                                   <div className="field-group">
                                     <label>Plan Name</label>
                                     <input className="field" value={pl?.name || ""} onChange={(e) => handleArrayFieldChange("plans", idx, "name", e.target.value)} placeholder="Name" />
@@ -2042,7 +2191,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                               <label>Subtitle Description</label>
                               <textarea className="field" value={selectedSectionContent.subheading || ""} onChange={(e) => handleFieldChange("subheading", e.target.value)} placeholder="Convert text detail" rows={2} />
                             </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "1rem" }}>
                               <div className="field-group">
                                 <label>CTA Button Text</label>
                                 <input className="field" value={selectedSectionContent.ctaText || ""} onChange={(e) => handleFieldChange("ctaText", e.target.value)} placeholder="Get Started" />
@@ -2116,7 +2265,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                           <textarea className="field" value={heroSubheading} onChange={(e) => setHeroSubheading(e.target.value)} placeholder="Subheading details" rows={3} disabled={loading} />
                         </div>
 
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "1rem" }}>
                           <div className="field-group">
                             <label>CTA Button Text</label>
                             <input className="field" value={heroCtaText} onChange={(e) => setHeroCtaText(e.target.value)} placeholder="Contact Us" disabled={loading} />
@@ -2441,7 +2590,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
         {/* Right Iframe preview workspace */}
         {splitLayout !== "editor-only" && (
           <div className="builder-preview-container" style={{
-            width: splitLayout === "preview-only" ? "100%" : splitLayout === "preview-focus" ? "70%" : splitLayout === "editor-focus" ? "30%" : "50%",
+            width: isMobile ? "100%" : splitLayout === "preview-only" ? "100%" : splitLayout === "preview-focus" ? "70%" : splitLayout === "editor-focus" ? "30%" : "50%",
             flexGrow: 1,
             display: "flex",
             flexDirection: "column"

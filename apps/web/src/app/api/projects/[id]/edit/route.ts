@@ -124,6 +124,7 @@ export async function POST(
           }
         });
       }
+    }
     // 5. Perform generic overrides on any section by sectionId
     if (validated.sectionId && validated.sectionContent) {
       const section = await prisma.section.findUnique({
