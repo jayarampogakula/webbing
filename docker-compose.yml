@@ -47,6 +47,11 @@ services:
       SMTP_FROM: ${SMTP_FROM:-Webbing Support <support@webbing.in>}
     ports:
       - "3000:3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webbing-wildcard.rule=HostRegexp('^.+\\.webbing\\.in$$')"
+      - "traefik.http.routers.webbing-wildcard.entrypoints=web"
+      - "traefik.http.services.webbing-wildcard.loadbalancer.server.port=3000"
 
   worker:
     build:
