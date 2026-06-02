@@ -209,3 +209,55 @@ export async function sendCreditsPurchaseEmail(
   `;
   return sendMailSafe(toEmail, subject, html);
 }
+
+/**
+ * Send Contact Form Submission Email
+ */
+export async function sendContactFormEmail(
+  toEmail: string,
+  projectName: string,
+  senderName: string,
+  senderEmail: string,
+  message: string
+) {
+  const subject = `New message from ${senderName} via ${projectName} ✉️`;
+  const html = `
+<div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">✉️ Contact Submission</span>
+    </div>
+    <h1 style="font-size: 20px; font-weight: 700; color: #ffffff; margin-bottom: 20px;">New Message Received</h1>
+    <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 25px;">
+      Someone has filled out the contact form on your website <strong style="color: #ffffff;">${projectName}</strong>. Here are the details:
+    </p>
+    <div style="background-color: #1f2937; border-radius: 8px; padding: 20px; margin-bottom: 30px; border: 1px solid #374151;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #d1d5db;">
+        <tr>
+          <td style="padding: 6px 0; color: #9ca3af; width: 80px;">Name:</td>
+          <td style="padding: 6px 0; font-weight: 600; color: #ffffff;">${senderName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #9ca3af;">Email:</td>
+          <td style="padding: 6px 0; font-weight: 600; color: #ffffff;"><a href="mailto:${senderEmail}" style="color: #818cf8; text-decoration: none;">${senderEmail}</a></td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 0 6px 0; color: #9ca3af; vertical-align: top;" colspan="2">Message:</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 12px; background: rgba(0,0,0,0.2); border-radius: 4px; color: #e5e7eb; line-height: 1.6;" colspan="2">
+            ${message.replace(/\n/g, "<br/>")}
+          </td>
+        </tr>
+      </table>
+    </div>
+    <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
+    <p style="font-size: 11px; color: #6b7280; text-align: center; margin: 0;">
+      This email was sent dynamically by Webbing AI on behalf of your hosted website.
+    </p>
+  </div>
+</div>
+  `;
+  return sendMailSafe(toEmail, subject, html);
+}
+

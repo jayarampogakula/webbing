@@ -62,6 +62,16 @@ services:
       - "traefik.http.routers.webbing-https.tls=true"
       # Service
       - "traefik.http.services.webbing.loadbalancer.server.port=3000"
+      # Custom domain catch-all (lowest priority, catches anything not matched above)
+      - "traefik.http.routers.webbing-custom-http.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.webbing-custom-http.entrypoints=http"
+      - "traefik.http.routers.webbing-custom-http.service=webbing"
+      - "traefik.http.routers.webbing-custom-http.priority=1"
+      - "traefik.http.routers.webbing-custom-https.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.webbing-custom-https.entrypoints=https"
+      - "traefik.http.routers.webbing-custom-https.service=webbing"
+      - "traefik.http.routers.webbing-custom-https.priority=1"
+      - "traefik.http.routers.webbing-custom-https.tls=true"
 
   worker:
     build:

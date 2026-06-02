@@ -1015,4 +1015,229 @@ option {
   }
 }
 
+/* ==========================================================================
+   Webbing Theme Customizations
+   ========================================================================== */
+
+/* 1. GAMING THEME OVERRIDES */
+.theme-gaming {
+  font-family: 'Courier New', Courier, monospace;
+}
+.theme-gaming h1, .theme-gaming h2, .theme-gaming h3 {
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+}
+.theme-gaming header#header {
+  background: rgba(2, 6, 23, 0.9) !important;
+  border-bottom: 2px solid #06b6d4 !important;
+  box-shadow: 0 4px 20px rgba(6, 182, 212, 0.15);
+}
+.theme-gaming .glass-card, .theme-gaming .glass-panel {
+  background: rgba(15, 23, 42, 0.9) !important;
+  border: 1px solid rgba(34, 197, 94, 0.3) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.1);
+}
+.theme-gaming .glass-card:hover {
+  border-color: #06b6d4 !important;
+  box-shadow: 0 0 25px rgba(6, 182, 212, 0.3) !important;
+  transform: translateY(-4px) scale(1.02);
+}
+.theme-gaming .primary-action {
+  background: linear-gradient(135deg, #22c55e, #06b6d4) !important;
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.4) !important;
+  border-radius: 0.25rem !important;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+/* 2. CREATOR THEME OVERRIDES */
+.theme-creator {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.theme-creator h1, .theme-creator h2, .theme-creator h3 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.theme-creator header#header {
+  margin: 1.5rem auto 0;
+  width: calc(100% - 4rem);
+  max-width: 1000px;
+  border-radius: 999px !important;
+  background: rgba(24, 8, 40, 0.6) !important;
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  padding: 0.8rem 2rem !important;
+}
+.theme-creator .glass-card, .theme-creator .glass-panel {
+  background: rgba(24, 8, 40, 0.65) !important;
+  border: 1px solid rgba(236, 72, 153, 0.15) !important;
+  border-radius: 1.5rem !important;
+  box-shadow: 0 12px 36px rgba(139, 92, 246, 0.15) !important;
+}
+.theme-creator .glass-card:hover {
+  border-color: rgba(236, 72, 153, 0.4) !important;
+  box-shadow: 0 20px 40px rgba(236, 72, 153, 0.25) !important;
+  transform: translateY(-6px);
+}
+.theme-creator .primary-action {
+  background: linear-gradient(135deg, #f97316, #ec4899) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 8px 25px rgba(236, 72, 153, 0.3) !important;
+}
+
+/* 3. LUXURY THEME OVERRIDES */
+.theme-luxury {
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+}
+.theme-luxury h1, .theme-luxury h2, .theme-luxury h3 {
+  font-family: Georgia, serif;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 10px rgba(212, 175, 55, 0.1);
+}
+.theme-luxury header#header {
+  background: rgba(8, 8, 8, 0.95) !important;
+  border-bottom: 1px solid #d4af37 !important;
+  padding: 1.5rem 3rem !important;
+}
+.theme-luxury .glass-card, .theme-luxury .glass-panel {
+  background: #121212 !important;
+  border: 1px solid rgba(212, 175, 55, 0.25) !important;
+  border-radius: 2px !important;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8) !important;
+}
+.theme-luxury .glass-card:hover {
+  border-color: #d4af37 !important;
+  box-shadow: 0 15px 45px rgba(212, 175, 55, 0.15) !important;
+  transform: translateY(-2px);
+}
+.theme-luxury .primary-action {
+  background: transparent !important;
+  color: #d4af37 !important;
+  border: 1px solid #d4af37 !important;
+  border-radius: 0 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+.theme-luxury .primary-action:hover {
+  background: #d4af37 !important;
+  color: #000000 !important;
+}
+
+/* 4. FITNESS THEME OVERRIDES */
+.theme-fitness {
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
+.theme-fitness h1, .theme-fitness h2, .theme-fitness h3 {
+  font-family: Impact, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-style: italic;
+}
+.theme-fitness header#header {
+  background: #141414 !important;
+  border-bottom: 3px solid #e11d48 !important;
+}
+.theme-fitness .glass-card, .theme-fitness .glass-panel {
+  background: #0d0d0d !important;
+  border: 2px solid #374151 !important;
+  border-radius: 0px !important;
+  transform: skewX(-3deg);
+  box-shadow: 5px 5px 0px rgba(225, 29, 72, 0.2);
+}
+.theme-fitness .glass-card:hover {
+  border-color: #e11d48 !important;
+  transform: skewX(-3deg) translateY(-4px);
+  box-shadow: 8px 8px 0px rgba(225, 29, 72, 0.4);
+}
+.theme-fitness .primary-action {
+  background: #e11d48 !important;
+  color: #fff !important;
+  border-radius: 0 !important;
+  text-transform: uppercase;
+  font-style: italic;
+  font-weight: 900;
+  box-shadow: 4px 4px 0px #ea580c !important;
+}
+
+/* 5. SAAS THEME OVERRIDES */
+.theme-saas {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.theme-saas h1, .theme-saas h2, .theme-saas h3 {
+  letter-spacing: -0.03em;
+  font-weight: 800;
+}
+.theme-saas header#header {
+  background: rgba(5, 11, 24, 0.8) !important;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.15) !important;
+}
+.theme-saas .glass-card, .theme-saas .glass-panel {
+  background: rgba(10, 15, 29, 0.75) !important;
+  border: 1px solid rgba(59, 130, 246, 0.12) !important;
+  border-radius: 0.75rem !important;
+}
+.theme-saas .glass-card:hover {
+  border-color: rgba(59, 130, 246, 0.4) !important;
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15) !important;
+}
+.theme-saas .primary-action {
+  background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3) !important;
+}
+
+/* 6. MODERN STARTUP THEME OVERRIDES */
+.theme-startup {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+.theme-startup h1, .theme-startup h2, .theme-startup h3 {
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+.theme-startup header#header {
+  margin: 1rem auto 0;
+  width: calc(100% - 2rem);
+  max-width: 1200px;
+  border-radius: 1rem !important;
+  background: rgba(6, 9, 20, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 1rem 2rem !important;
+}
+.theme-startup .glass-card, .theme-startup .glass-panel {
+  position: relative;
+  background: rgba(6, 9, 20, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 1.25rem !important;
+}
+.theme-startup .glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1.25rem;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(217, 70, 239, 0.2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+.theme-startup .glass-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(139, 92, 246, 0.2) !important;
+}
+.theme-startup .glass-card:hover::before {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(217, 70, 239, 0.5));
+}
+.theme-startup .primary-action {
+  background: linear-gradient(135deg, #6366f1, #d946ef) !important;
+  box-shadow: 0 8px 24px rgba(217, 70, 239, 0.3) !important;
+  border-radius: 0.75rem !important;
+}
+
 

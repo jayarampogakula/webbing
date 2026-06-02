@@ -4,6 +4,7 @@ import { prisma } from "@webbing/db";
 import { CheckCircle2, Mail, ArrowRight, Zap, Star, ArrowUpRight, Phone } from "lucide-react";
 import EcommerceStore from "@/components/EcommerceStore";
 import ClientEffects from "@/components/ClientEffects";
+import ContactForm from "@/components/ContactForm";
 
 // Safe text renderer helper to avoid React child object crashes
 function renderText(val: any, fallback: string = ""): string {
@@ -184,41 +185,57 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
     let bgClass = "bg-grad-saas";
     let textGradClass = "text-grad-saas";
     let fontClass = "font-gaming";
+    let logoGradient = "linear-gradient(135deg, #6366f1, #d946ef)";
+    let themeClass = "theme-startup";
 
     if (designStyle === "Gaming") {
       bgClass = "bg-grad-gaming";
       textGradClass = "text-grad-gaming";
       fontClass = "font-gaming";
+      logoGradient = "linear-gradient(135deg, #22c55e, #10b981)";
+      themeClass = "theme-gaming";
     } else if (designStyle === "Creator") {
       bgClass = "bg-grad-creator";
       textGradClass = "text-grad-creator";
       fontClass = "font-gaming";
+      logoGradient = "linear-gradient(135deg, #f97316, #ec4899)";
+      themeClass = "theme-creator";
     } else if (designStyle === "Luxury") {
       bgClass = "bg-grad-luxury";
       textGradClass = "text-grad-luxury";
       fontClass = "font-serif-lux";
+      logoGradient = "linear-gradient(135deg, #d4af37, #aa7c11)";
+      themeClass = "theme-luxury";
     } else if (designStyle === "Fitness") {
       bgClass = "bg-grad-fitness";
       textGradClass = "text-grad-fitness";
       fontClass = "font-gaming";
+      logoGradient = "linear-gradient(135deg, #e11d48, #ea580c)";
+      themeClass = "theme-fitness";
     } else if (designStyle === "SaaS") {
       bgClass = "bg-grad-saas";
       textGradClass = "text-grad-saas";
       fontClass = "font-gaming";
+      logoGradient = "linear-gradient(135deg, #3b82f6, #6366f1)";
+      themeClass = "theme-saas";
     } else if (designStyle === "Modern Startup") {
       bgClass = "bg-grad-saas";
       textGradClass = "text-grad-saas";
       fontClass = "font-gaming";
+      logoGradient = "linear-gradient(135deg, #6366f1, #d946ef)";
+      themeClass = "theme-startup";
     } else {
       bgClass = "bg-grad-saas";
       textGradClass = "text-grad-saas";
       fontClass = "font-gaming";
+      logoGradient = "linear-gradient(135deg, #6366f1, #d946ef)";
+      themeClass = "theme-startup";
     }
 
     // Client side effects initialized below in JSX
 
     return (
-      <div className={`site-preview ${bgClass} ${fontClass}`} style={{ minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
+      <div className={`site-preview ${themeClass} ${bgClass} ${fontClass}`} style={{ minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
         {/* Dynamic Sections Loop */}
         {page.sections.map((section, idx) => {
           const content = (section.content as any) || {};
@@ -236,7 +253,9 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
               return (
                 <header key={section.id} id="header" className="reveal-on-scroll active" style={{ position: "sticky", top: 0, zIndex: 50, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.2rem 2rem", background: "rgba(6, 9, 20, 0.4)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
                   <a href="#" style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <span style={{ padding: "0.25rem 0.5rem", borderRadius: "0.40rem", background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", fontSize: "1rem" }}>W</span>
+                    <span style={{ padding: "0.25rem 0.5rem", borderRadius: "0.40rem", background: logoGradient, color: "#fff", fontSize: "1rem" }}>
+                      {renderText(project.name)?.[0]?.toUpperCase() || "W"}
+                    </span>
                     {renderText(project.name)}
                   </a>
                   <nav style={{ display: "flex", gap: "1.5rem" }}>
@@ -259,7 +278,7 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
             case "HERO": {
               return (
                 <section key={section.id} id="hero" className="reveal-on-scroll active" style={{ padding: "6rem 2rem", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                  <div className="preview-hero" style={{ width: "100%", maxWidth: "1100px", display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "3rem", alignItems: "center" }}>
+                  <div className="preview-hero" style={{ width: "100%", maxWidth: "1100px", display: content.imageUrl ? "grid" : "block", gridTemplateColumns: content.imageUrl ? "1.2fr 0.8fr" : "none", gap: "3rem", alignItems: "center" }}>
                     <div>
                       <span className="eyebrow" style={{ background: "rgba(99, 102, 241, 0.1)", padding: "0.3rem 0.8rem", borderRadius: "999px", color: "#a5b4fc", fontSize: "0.75rem" }}>
                         {renderText(designStyle)} Style
@@ -281,25 +300,10 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
                         )}
                       </div>
                     </div>
-                    {content.imageUrl ? (
+                    {content.imageUrl && (
                       <div className="animate-float" style={{ position: "relative", display: "flex", justifyContent: "center" }}>
                         <img src={resolveImageUrl(content.imageUrl, designStyle)} alt="Visual" style={{ width: "100%", maxWidth: "450px", borderRadius: "1rem", boxShadow: "0 20px 40px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.08)", objectFit: "cover", aspectRatio: "4/3" }} />
-                        <div className="glass-panel" style={{ position: "absolute", bottom: "-1.5rem", left: "-1rem", padding: "1rem", borderRadius: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          <Zap size={16} color="#c084fc" />
-                          <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#fff" }}>Ready to Publish</span>
-                        </div>
                       </div>
-                    ) : (
-                      <aside className="preview-panel animate-float" style={{ padding: "2.5rem" }}>
-                        <strong>AI Website Builder</strong>
-                        <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.5rem 0", lineHeight: 1.5 }}>
-                          This website runs on Webbing's premium design engine.
-                        </p>
-                        <div className="key-meta" style={{ flexWrap: "wrap", marginTop: "1rem" }}>
-                          <span>{renderText(project.status)}</span>
-                          <span>{renderText(project.subdomain)}</span>
-                        </div>
-                      </aside>
                     )}
                   </div>
                 </section>
@@ -545,25 +549,7 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
                       <h2 style={{ fontSize: "2rem", fontWeight: 800, color: "#fff", margin: "0.5rem 0 2rem 0" }}>
                         {renderText(content.heading, "Start a Conversation")}
                       </h2>
-                      <form style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                          <div className="field-group">
-                            <label>Full Name</label>
-                            <input type="text" className="field" placeholder="John Doe" />
-                          </div>
-                          <div className="field-group">
-                            <label>Email Address</label>
-                            <input type="email" className="field" placeholder="john@company.com" />
-                          </div>
-                        </div>
-                        <div className="field-group">
-                          <label>Your Message</label>
-                          <textarea className="field" rows={4} placeholder="Tell us about your project..."></textarea>
-                        </div>
-                        <button className="primary-action" type="button" style={{ alignSelf: "flex-start", minHeight: "auto", padding: "0.75rem 1.5rem" }}>
-                          Send Message
-                        </button>
-                      </form>
+                      <ContactForm projectId={project.id} />
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: "2rem", paddingLeft: "1rem" }}>
                       <div>
