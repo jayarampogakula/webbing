@@ -32,27 +32,35 @@ export default function middleware(req: NextRequest) {
   const hostname = req.headers.get("host") || "webbing.io";
   const path = url.pathname;
 
+  // Strip port from hostname so subdomain detection works on any port (3000, 3001, etc.)
+  const hostnameWithoutPort = hostname.split(":")[0].toLowerCase();
+
   // Local development fallback/handling
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://webbing.io";
-  let appHost = appUrl.startsWith("http") ? new URL(appUrl).host : appUrl;
+  let appHost = appUrl.startsWith("http") ? new URL(appUrl).hostname : appUrl.split(":")[0];
+  appHost = appHost.toLowerCase();
 
   // Auto-adapt base domain mapping to support webbing.in dynamically
-  if (hostname.endsWith("webbing.in")) {
+  if (hostnameWithoutPort.endsWith("webbing.in")) {
     appHost = "webbing.in";
-  } else if (hostname.endsWith("webbing.io")) {
+  } else if (hostnameWithoutPort.endsWith("webbing.io")) {
     appHost = "webbing.io";
   }
   
+  // Extract subdomain dynamically regardless of port or environment
   let currentHost = "";
-  if (process.env.NODE_ENV === "production") {
-    currentHost = hostname.replace(`.${appHost}`, "").replace(appHost, "");
+  if (hostnameWithoutPort.endsWith(appHost)) {
+    currentHost = hostnameWithoutPort.replace(`.${appHost}`, "").replace(appHost, "");
+  } else if (hostnameWithoutPort.endsWith("localhost")) {
+    currentHost = hostnameWithoutPort.replace(".localhost", "").replace("localhost", "");
   } else {
-    currentHost = hostname.replace(".localhost:3000", "").replace("localhost:3000", "");
+    // Treat as custom domain (e.g. customerdomain.com)
+    currentHost = hostnameWithoutPort;
   }
 
-  currentHost = currentHost.toLowerCase().replace(/^www\./, "");
+  currentHost = currentHost.replace(/^www\./, "");
 
-  const hostClean = hostname.replace("www.", "");
+  const hostClean = hostnameWithoutPort.replace("www.", "");
 
   // 1. Root and standard app/dashboard pages
   if (
