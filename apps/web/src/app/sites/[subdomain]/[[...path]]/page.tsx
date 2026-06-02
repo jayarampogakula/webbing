@@ -232,6 +232,47 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
       themeClass = "theme-startup";
     }
 
+    // Policies routes interception
+    const policies = themeConfig.metadata?.policies || {};
+    const isPrivacyPage = slug === "privacy-policy" && policies.privacyPolicyEnabled;
+    const isTermsPage = slug === "terms-of-service" && policies.termsEnabled;
+    const isRefundPage = slug === "refund-policy" && policies.refundPolicyEnabled;
+
+    if (isPrivacyPage || isTermsPage || isRefundPage) {
+      const pageTitle = isPrivacyPage ? "Privacy Policy" : isTermsPage ? "Terms of Service" : "Refund Policy";
+      const pageContent = isPrivacyPage ? policies.privacyPolicyText : isTermsPage ? policies.termsText : policies.refundPolicyText;
+
+      return (
+        <div className={`site-preview ${themeClass} ${bgClass} ${fontClass}`} style={{ minHeight: "100vh", position: "relative", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
+          {/* Simple header */}
+          <header style={{ padding: "1.5rem 2rem", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: "1100px", margin: "0 auto", width: "100%" }}>
+            <a href="/" style={{ color: "#fff", textDecoration: "none", fontSize: "1.25rem", fontWeight: 800 }}>
+              {renderText(project.name)}
+            </a>
+            <a href="/" style={{ color: "#818cf8", textDecoration: "none", fontSize: "0.85rem", fontWeight: 600 }}>
+              Back to Home
+            </a>
+          </header>
+
+          {/* Policy content */}
+          <main style={{ maxWidth: "800px", margin: "4rem auto", padding: "0 2rem", color: "#cbd5e1", lineHeight: "1.8", flexGrow: 1 }}>
+            <h1 style={{ color: "#fff", fontSize: "2.5rem", fontWeight: 850, marginBottom: "1rem" }}>{pageTitle}</h1>
+            <p style={{ color: "#9ca3af", fontSize: "0.85rem", marginBottom: "3rem" }}>Last Updated: {new Date(project.updatedAt).toLocaleDateString()}</p>
+            
+            <div style={{ whiteSpace: "pre-wrap" }}>
+              {pageContent || `No policy content has been specified yet for this page.`}
+            </div>
+          </main>
+
+          {/* Simple footer */}
+          <footer style={{ padding: "3rem 2rem", borderTop: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "center", alignItems: "center", color: "#6b7280", fontSize: "0.85rem", maxWidth: "1100px", margin: "0 auto", width: "100%" }}>
+            <span>© {new Date().getFullYear()} {renderText(project.name)}. All rights reserved.</span>
+          </footer>
+          <ClientEffects designStyle={designStyle} />
+        </div>
+      );
+    }
+
     // Client side effects initialized below in JSX
 
     return (
@@ -581,8 +622,15 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", color: "#9ca3af", fontSize: "0.85rem", flexWrap: "wrap", gap: "1rem" }}>
                     <span>© {new Date().getFullYear()} {renderText(project.name)}. All rights reserved.</span>
                     <div style={{ display: "flex", gap: "1.5rem" }}>
-                      <a href="#" style={{ transition: "color 0.2s" }}>Privacy Policy</a>
-                      <a href="#" style={{ transition: "color 0.2s" }}>Terms of Service</a>
+                      {policies.privacyPolicyEnabled && (
+                        <a href="/privacy-policy" style={{ transition: "color 0.2s" }}>Privacy Policy</a>
+                      )}
+                      {policies.termsEnabled && (
+                        <a href="/terms-of-service" style={{ transition: "color 0.2s" }}>Terms of Service</a>
+                      )}
+                      {policies.refundPolicyEnabled && (
+                        <a href="/refund-policy" style={{ transition: "color 0.2s" }}>Refund Policy</a>
+                      )}
                     </div>
                   </div>
                   {isFree && (

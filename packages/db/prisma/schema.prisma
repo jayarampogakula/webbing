@@ -58,6 +58,14 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
+  // Affiliate & Referrals
+  affiliateCode String?        @unique
+  referredBy    String?
+  referredByUser User?         @relation("ReferralRelation", fields: [referredBy], references: [id])
+  referrals     User[]         @relation("ReferralRelation")
+  commissions   AffiliateCommission[] @relation("ReferrerCommissions")
+  payoutRequests PayoutRequest[]
+
   // Tenant / Team relationships
   tenantId      String
   tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -80,6 +88,7 @@ model Tenant {
   usageMetrics         UsageMetric[]
   teamMembers          TeamMember[]
   paymentRequests      PaymentRequest[]
+  refundRequests       RefundRequest[]
 }
 
 model TeamMember {
@@ -144,6 +153,7 @@ model Project {
   pages         Page[]
   assets        Asset[]
   ecomStore     EcomStore?
+  contactSubmissions ContactSubmission[]
 }
 
 model Page {
@@ -285,15 +295,18 @@ model SystemSetting {
 }
 
 model PaymentRequest {
-  id         String   @id @default(uuid())
-  tenantId   String
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  planId     String
-  amount     Int
-  utr        String   @unique
-  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  planId      String
+  amount      Int
+  utr         String   @unique
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  commissions AffiliateCommission[]
+  refundRequest RefundRequest?
 }
 
 model Feedback {
@@ -307,6 +320,54 @@ model Feedback {
   status    String   @default("OPEN") // OPEN, RESOLVED
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ContactSubmission {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  email       String
+  message     String   @db.Text
+  createdAt   DateTime @default(now())
+}
+
+model AffiliateCommission {
+  id               String         @id @default(uuid())
+  referrerId       String
+  referrer         User           @relation("ReferrerCommissions", fields: [referrerId], references: [id], onDelete: Cascade)
+  refereeId        String
+  amount           Int            // Commission in INR
+  paymentRequestId String
+  paymentRequest   PaymentRequest @relation(fields: [paymentRequestId], references: [id], onDelete: Cascade)
+  status           String         @default("PENDING") // PENDING, AVAILABLE, WITHDRAWN, CANCELLED
+  availableAt      DateTime       // Mature date (createdAt + 10 days)
+  createdAt        DateTime       @default(now())
+}
+
+model PayoutRequest {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  upiId      String   // PhonePe/GPay number or ID
+  amount     Int      // Amount requested in INR
+  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model RefundRequest {
+  id               String         @id @default(uuid())
+  tenantId         String
+  tenant           Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  paymentRequestId String         @unique
+  paymentRequest   PaymentRequest @relation(fields: [paymentRequestId], references: [id], onDelete: Cascade)
+  amountPaid       Int
+  creditsUsed      Int
+  refundAmount     Int
+  status           String         @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
 

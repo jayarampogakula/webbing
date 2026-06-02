@@ -7,7 +7,7 @@ import { sendWelcomeEmail } from "@/lib/mail";
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, tenantName } = await req.json();
+    const { name, email, password, tenantName, referrerCode } = await req.json();
 
     if (!email || !password || !name) {
       return NextResponse.json(
@@ -54,6 +54,20 @@ export async function POST(req: Request) {
       },
     });
 
+    // Generate unique affiliate code for the new user
+    const affiliateCode = name.trim().split(" ")[0].replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
+
+    // Resolve referrer id if any
+    let referrerId: string | undefined = undefined;
+    if (referrerCode) {
+      const referrerUser = await prisma.user.findFirst({
+        where: { affiliateCode: referrerCode.trim().toUpperCase() }
+      });
+      if (referrerUser) {
+        referrerId = referrerUser.id;
+      }
+    }
+
     // 3. Hash password and create User
     const passwordHash = hashPassword(password);
     const user = await prisma.user.create({
@@ -63,6 +77,8 @@ export async function POST(req: Request) {
         passwordHash,
         role: Role.USER,
         tenantId: tenant.id,
+        affiliateCode,
+        referredBy: referrerId
       },
     });
 

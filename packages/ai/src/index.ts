@@ -527,7 +527,8 @@ Choose an appropriate ID based on the niche:
           "inventory": 100, // starting stock integer
           "category": "Niche category (e.g., 'Keyboards')",
           "variants": ["Red Switch", "Blue Switch"], // string array of product options/variants
-          "specifications": { "Brand": "KeyBrand", "Warranty": "1 Year" } // key-value metadata record
+          "specifications": { "Brand": "KeyBrand", "Warranty": "1 Year" }, // key-value metadata record
+          "imageUrl": "Unsplash photo URL (use the Unsplash photo URL format specified above matching the product type)"
         }
       ]
       `;

@@ -86,7 +86,17 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="footer">© {new Date().getFullYear()} Webbing Platforms Inc. All rights reserved.</footer>
+      <footer className="footer" style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center", justifyContent: "center", padding: "3rem 2rem" }}>
+        <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", justifyContent: "center", marginBottom: "0.5rem" }}>
+          <a href="/terms" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.85rem", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = '#fff'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}>Terms & Conditions</a>
+          <a href="/privacy" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.85rem", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = '#fff'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}>Privacy Policy</a>
+          <a href="/cookies" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.85rem", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = '#fff'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}>Cookies Policy</a>
+          <a href="/refund" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.85rem", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = '#fff'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}>Refund Policy</a>
+        </div>
+        <div style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "0.8rem" }}>
+          © {new Date().getFullYear()} Webbing Platforms Inc. All rights reserved.
+        </div>
+      </footer>
     </div>
   );
 }

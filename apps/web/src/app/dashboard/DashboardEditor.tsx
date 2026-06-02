@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Settings, Check, Server, RefreshCw, Sparkles, Globe, Edit2, Play, Download, Layout, ArrowLeft, Plus, MessageSquare, Layers, Sliders, Image, LogOut, CheckCircle, AlertTriangle, ExternalLink, Shield, ArrowRight, Trash2, ChevronLeft, ChevronRight, PlusCircle, Home, Menu } from "lucide-react";
+import { Settings, Check, Server, RefreshCw, Sparkles, Globe, Edit2, Play, Download, Layout, ArrowLeft, Plus, MessageSquare, Layers, Sliders, Image, LogOut, CheckCircle, AlertTriangle, ExternalLink, Shield, ArrowRight, Trash2, ChevronLeft, ChevronRight, PlusCircle, Home, Menu, Mail, Users, DollarSign, Percent } from "lucide-react";
 import GeneratorForm from "../GeneratorForm";
 import LlmKeyManager, { LlmKeyView } from "../components/LlmKeyManager";
 
@@ -42,10 +42,18 @@ interface Project {
     sslStatus: string;
   } | null;
   pages: Page[];
+  contactSubmissions?: any[];
 }
 
 interface DashboardEditorProps {
-  user: { userId: string; email: string; role: string; tenantId: string };
+  user: {
+    userId: string;
+    email: string;
+    role: string;
+    tenantId: string;
+    referredBy?: string | null;
+    affiliateCode?: string | null;
+  };
   tenant: {
     id: string;
     name: string;
@@ -156,6 +164,14 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const [feedbackSuccessMsg, setFeedbackSuccessMsg] = useState("");
   const [feedbackErrorMsg, setFeedbackErrorMsg] = useState("");
 
+  // Change password states
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [changePasswordLoading, setChangePasswordLoading] = useState(false);
+  const [changePasswordError, setChangePasswordError] = useState("");
+  const [changePasswordSuccess, setChangePasswordSuccess] = useState("");
+
   // Auto collapse sidebar on mobile screen widths
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth <= 768) {
@@ -164,9 +180,36 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   }, []);
 
   // Left Panel Sidebar Tabs
-  const [builderTab, setBuilderTab] = useState<"chat" | "layers" | "properties" | "assets" | "settings">("chat");
+  const [builderTab, setBuilderTab] = useState<"chat" | "layers" | "properties" | "assets" | "settings" | "leads">("chat");
   // Settings sub-tab
-  const [settingsTab, setSettingsTab] = useState<"general" | "domains" | "seo" | "analytics" | "keys" | "devkeys">("general");
+  const [settingsTab, setSettingsTab] = useState<"general" | "domains" | "seo" | "analytics" | "keys" | "devkeys" | "policies">("general");
+
+  // Policies settings state
+  const [privacyPolicyEnabled, setPrivacyPolicyEnabled] = useState(false);
+  const [privacyPolicyText, setPrivacyPolicyText] = useState("");
+  const [termsEnabled, setTermsEnabled] = useState(false);
+  const [termsText, setTermsText] = useState("");
+  const [refundPolicyEnabled, setRefundPolicyEnabled] = useState(false);
+  const [refundPolicyText, setRefundPolicyText] = useState("");
+
+  // Affiliate & Payout states
+  const [homeSubView, setHomeSubView] = useState<"projects" | "affiliate">("projects");
+  const [affiliateStats, setAffiliateStats] = useState<any>(null);
+  const [referralsLog, setReferralsLog] = useState<any[]>([]);
+  const [payoutsList, setPayoutsList] = useState<any[]>([]);
+  const [loadingAffiliate, setLoadingAffiliate] = useState(false);
+  const [upiIdInput, setUpiIdInput] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [submittingPayout, setSubmittingPayout] = useState(false);
+  const [payoutMessage, setPayoutMessage] = useState("");
+  const [payoutError, setPayoutError] = useState("");
+
+  // Refund request states
+  const [refundEligibility, setRefundEligibility] = useState<any>(null);
+  const [loadingRefundStatus, setLoadingRefundStatus] = useState(false);
+  const [submittingRefund, setSubmittingRefund] = useState(false);
+  const [refundMessage, setRefundMessage] = useState("");
+  const [refundError, setRefundError] = useState("");
 
   // Selected Project
   const currentProject = projects.find((p) => p.id === selectedProjectId);
@@ -496,6 +539,17 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             ...currentProject.theme,
             preferredProvider,
             analyticsTag,
+            metadata: {
+              ...(currentProject.theme as any)?.metadata,
+              policies: {
+                privacyPolicyEnabled,
+                privacyPolicyText,
+                termsEnabled,
+                termsText,
+                refundPolicyEnabled,
+                refundPolicyText
+              }
+            }
           },
           seo: {
             title: seoTitle,
@@ -789,6 +843,122 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
     }
   };
 
+  // Synchronize Policy Settings when currentProject changes
+  useEffect(() => {
+    if (currentProject) {
+      const policies = (currentProject.theme as any)?.metadata?.policies || {};
+      setPrivacyPolicyEnabled(!!policies.privacyPolicyEnabled);
+      setPrivacyPolicyText(policies.privacyPolicyText || "");
+      setTermsEnabled(!!policies.termsEnabled);
+      setTermsText(policies.termsText || "");
+      setRefundPolicyEnabled(!!policies.refundPolicyEnabled);
+      setRefundPolicyText(policies.refundPolicyText || "");
+    }
+  }, [selectedProjectId, projects]);
+
+  const fetchAffiliateData = async () => {
+    setLoadingAffiliate(true);
+    try {
+      const res = await fetch("/api/payments/payout");
+      const data = await res.json();
+      if (data.success) {
+        setAffiliateStats(data.stats);
+        setReferralsLog(data.referralsLog || []);
+        setPayoutsList(data.payouts || []);
+      }
+    } catch (err) {
+      console.error("Error fetching affiliate data:", err);
+    } finally {
+      setLoadingAffiliate(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeView === "homepage" && homeSubView === "affiliate") {
+      fetchAffiliateData();
+    }
+  }, [activeView, homeSubView]);
+
+  const handlePayoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPayoutError("");
+    setPayoutMessage("");
+    if (!upiIdInput || !withdrawAmount) {
+      setPayoutError("UPI ID and amount are required.");
+      return;
+    }
+    const amountNum = parseInt(withdrawAmount, 10);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      setPayoutError("Please enter a valid amount.");
+      return;
+    }
+    setSubmittingPayout(true);
+    try {
+      const res = await fetch("/api/payments/payout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ upiId: upiIdInput, amount: amountNum })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPayoutMessage(data.message);
+        setWithdrawAmount("");
+        fetchAffiliateData(); // reload stats
+      } else {
+        setPayoutError(data.error || "Failed to submit request.");
+      }
+    } catch (err) {
+      setPayoutError("An error occurred. Please try again.");
+    } finally {
+      setSubmittingPayout(false);
+    }
+  };
+
+  const checkRefundEligibility = async () => {
+    setLoadingRefundStatus(true);
+    try {
+      const res = await fetch("/api/payments/refund");
+      const data = await res.json();
+      setRefundEligibility(data);
+    } catch (err) {
+      console.error("Error checking refund eligibility:", err);
+    } finally {
+      setLoadingRefundStatus(false);
+    }
+  };
+
+  useEffect(() => {
+    if (upgradeModalOpen) {
+      checkRefundEligibility();
+    }
+  }, [upgradeModalOpen]);
+
+  const handleRefundSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRefundError("");
+    setRefundMessage("");
+    if (!confirm("Are you sure you want to cancel your plan? This will downgrade your workspace to the Free tier immediately and submit a refund verification request.")) return;
+    setSubmittingRefund(true);
+    try {
+      const res = await fetch("/api/payments/refund", {
+        method: "POST"
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRefundMessage(data.message || "Plan cancelled successfully.");
+        setTimeout(() => {
+          window.location.reload();
+        }, 2500);
+      } else {
+        setRefundError(data.error || "Failed to cancel subscription.");
+      }
+    } catch (err) {
+      setRefundError("An error occurred. Please try again.");
+    } finally {
+      setSubmittingRefund(false);
+    }
+  };
+
   // Submit payment request for upgrade
   const handleConfirmUpgrade = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -796,13 +966,15 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
     setSubmittingRequest(true);
     setUpgradeMessage("");
     setUpgradeError("");
+    const hasReferrer = !!user.referredBy;
+    const finalAmount = hasReferrer ? Math.round(selectedUpgradePlan.price * 0.9) : selectedUpgradePlan.price;
     try {
       const res = await fetch("/api/payments/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           planId: selectedUpgradePlan.id || selectedUpgradePlan.name.toLowerCase().replace(/\s+/g, "-"),
-          amount: selectedUpgradePlan.price,
+          amount: finalAmount,
           utr: utrCode
         })
       });
@@ -851,6 +1023,48 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
       setFeedbackErrorMsg(err.message || "Something went wrong.");
     } finally {
       setSubmittingFeedback(false);
+    }
+  };
+
+  const handleChangePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword) {
+      setChangePasswordError("All fields are required.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setChangePasswordError("New password must be at least 6 characters long.");
+      return;
+    }
+
+    setChangePasswordLoading(true);
+    setChangePasswordError("");
+    setChangePasswordSuccess("");
+
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setChangePasswordSuccess("Password changed successfully!");
+        setCurrentPassword("");
+        setNewPassword("");
+        setTimeout(() => {
+          setChangePasswordOpen(false);
+          setChangePasswordSuccess("");
+        }, 1500);
+      } else {
+        setChangePasswordError(data.error || "Failed to change password.");
+      }
+    } catch (err) {
+      console.error(err);
+      setChangePasswordError("An unexpected error occurred.");
+    } finally {
+      setChangePasswordLoading(false);
     }
   };
 
@@ -922,6 +1136,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             <button
               onClick={() => {
                 setActiveView("homepage");
+                setHomeSubView("projects");
                 setIsCreatingNew(false);
                 if (isMobile) setSidebarCollapsed(true);
               }}
@@ -932,9 +1147,9 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                 width: "100%",
                 padding: "0.6rem 0.8rem",
                 borderRadius: "0.375rem",
-                background: "rgba(129, 140, 248, 0.08)",
+                background: (activeView === "homepage" && homeSubView === "projects") ? "rgba(129, 140, 248, 0.08)" : "none",
                 border: "none",
-                color: "#818cf8",
+                color: (activeView === "homepage" && homeSubView === "projects") ? "#818cf8" : "#9ca3af",
                 cursor: "pointer",
                 fontSize: "0.85rem",
                 fontWeight: 600,
@@ -944,6 +1159,34 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             >
               <Home size={16} />
               {!sidebarCollapsed && <span>Dashboard</span>}
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveView("homepage");
+                setHomeSubView("affiliate");
+                setIsCreatingNew(false);
+                if (isMobile) setSidebarCollapsed(true);
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                width: "100%",
+                padding: "0.6rem 0.8rem",
+                borderRadius: "0.375rem",
+                background: (activeView === "homepage" && homeSubView === "affiliate") ? "rgba(129, 140, 248, 0.08)" : "none",
+                border: "none",
+                color: (activeView === "homepage" && homeSubView === "affiliate") ? "#818cf8" : "#9ca3af",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                textAlign: "left",
+                transition: "all 0.2s"
+              }}
+            >
+              <Percent size={16} />
+              {!sidebarCollapsed && <span>Affiliate Program</span>}
             </button>
 
             <button
@@ -1031,6 +1274,37 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
           </div>
 
           <button
+            type="button"
+            onClick={() => {
+              setChangePasswordOpen(true);
+              setChangePasswordError("");
+              setChangePasswordSuccess("");
+              setCurrentPassword("");
+              setNewPassword("");
+              if (isMobile) setSidebarCollapsed(true);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              width: "100%",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "0.375rem",
+              background: "none",
+              border: "none",
+              color: "#9ca3af",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              textAlign: "left",
+              transition: "all 0.2s"
+            }}
+          >
+            <Shield size={16} />
+            {!sidebarCollapsed && <span>Change Password</span>}
+          </button>
+
+          <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             style={{
               display: "flex",
@@ -1054,7 +1328,218 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
         </div>
 
         <div style={{ flexGrow: 1, padding: isMobile ? "1.25rem" : "2.5rem", background: "#0a0e17", overflowY: "auto" }}>
-        <main style={{ maxWidth: "1200px", margin: "0 auto" }}>
+          {homeSubView === "affiliate" ? (
+            <main style={{ maxWidth: "1000px", margin: "0 auto", color: "#fff" }}>
+              {/* Affiliate Dashboard header */}
+              <div style={{ marginBottom: "2rem" }}>
+                <span className="eyebrow" style={{ color: "#818cf8" }}>Partner Program</span>
+                <h1 style={{ fontSize: "2.25rem", fontWeight: 850, margin: "0.25rem 0", color: "#fff" }}>Webbing Affiliate Center</h1>
+                <p style={{ color: "#9ca3af", fontSize: "0.95rem", margin: 0 }}>
+                  Refer users to Webbing. They get <strong style={{ color: "#34d399" }}>10% discount</strong> on any purchase/renewal, and you earn <strong style={{ color: "#818cf8" }}>10% lifetime recurring commission</strong>!
+                </p>
+              </div>
+
+              {/* Referral Link & Code Panel */}
+              <div className="glass-panel" style={{ padding: "1.5rem", borderRadius: "0.75rem", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", marginBottom: "2rem" }}>
+                <h3 style={{ margin: "0 0 1rem 0" }}>Your Unique Referral Link</h3>
+                <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                  <input
+                    readOnly
+                    value={`${protocol}://${baseDomain}/signup?ref=${user.affiliateCode || ""}`}
+                    className="field"
+                    style={{ flexGrow: 1, fontFamily: "monospace", fontSize: "0.85rem", background: "rgba(0,0,0,0.2)" }}
+                    onClick={(e) => (e.target as any).select()}
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${protocol}://${baseDomain}/signup?ref=${user.affiliateCode || ""}`);
+                      alert("Referral link copied to clipboard!");
+                    }}
+                    className="secondary-action"
+                    style={{ whiteSpace: "nowrap", padding: "0.6rem 1rem" }}
+                  >
+                    Copy Link
+                  </button>
+                </div>
+                <div style={{ marginTop: "0.75rem", fontSize: "0.8rem", color: "#9ca3af" }}>
+                  Share this link. Your partner code is <strong style={{ color: "#818cf8" }}>{user.affiliateCode}</strong>
+                </div>
+              </div>
+
+              {loadingAffiliate ? (
+                <div style={{ padding: "3rem", textAlign: "center", color: "#9ca3af" }}>Loading affiliate stats...</div>
+              ) : (
+                <>
+                  {/* Earnings Grid */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.5rem", marginBottom: "2.5rem" }}>
+                    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", padding: "1.5rem", borderRadius: "0.75rem" }}>
+                      <span style={{ fontSize: "0.8rem", color: "#9ca3af", display: "block" }}>Total Commissions Earned</span>
+                      <strong style={{ fontSize: "2rem", color: "#fff", display: "block", marginTop: "0.5rem" }}>
+                        ₹{(affiliateStats?.totalEarned || 0).toLocaleString()}
+                      </strong>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", padding: "1.5rem", borderRadius: "0.75rem" }}>
+                      <span style={{ fontSize: "0.8rem", color: "#a5b4fc", display: "block" }}>Pending (Within Refund Period)</span>
+                      <strong style={{ fontSize: "2rem", color: "#818cf8", display: "block", marginTop: "0.5rem" }}>
+                        ₹{(affiliateStats?.pendingBalance || 0).toLocaleString()}
+                      </strong>
+                    </div>
+                    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", padding: "1.5rem", borderRadius: "0.75rem" }}>
+                      <span style={{ fontSize: "0.8rem", color: "#86efac", display: "block" }}>Net Available for Payout</span>
+                      <strong style={{ fontSize: "2rem", color: "#34d399", display: "block", marginTop: "0.5rem" }}>
+                        ₹{(affiliateStats?.availableBalance || 0).toLocaleString()}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* Form & History columns */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "2rem", alignItems: "start" }}>
+                    
+                    {/* Withdraw Form */}
+                    <div className="glass-panel" style={{ padding: "2rem", borderRadius: "0.75rem" }}>
+                      <h3 style={{ margin: "0 0 1rem 0" }}>Request Payout</h3>
+                      <p style={{ color: "#9ca3af", fontSize: "0.8rem", lineHeight: 1.4, margin: "0 0 1.5rem 0" }}>
+                        Commissions become mature and withdrawable after the 10-day customer refund window closes.
+                      </p>
+
+                      {payoutMessage && (
+                        <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem", marginBottom: "1rem" }}>
+                          {payoutMessage}
+                        </div>
+                      )}
+
+                      {payoutError && (
+                        <div style={{ padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem", marginBottom: "1rem" }}>
+                          {payoutError}
+                        </div>
+                      )}
+
+                      <form onSubmit={handlePayoutSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                        <div className="field-group">
+                          <label>UPI ID or PhonePe/GPay UPI number</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. 9876543210@ybl or username@okaxis"
+                            className="field"
+                            value={upiIdInput}
+                            onChange={(e) => setUpiIdInput(e.target.value)}
+                          />
+                        </div>
+                        <div className="field-group">
+                          <label>Withdrawal Amount (INR)</label>
+                          <div style={{ display: "flex", gap: "0.5rem" }}>
+                            <input
+                              type="number"
+                              required
+                              min={1}
+                              max={affiliateStats?.availableBalance || 0}
+                              placeholder="e.g. 500"
+                              className="field"
+                              value={withdrawAmount}
+                              onChange={(e) => setWithdrawAmount(e.target.value)}
+                              style={{ flexGrow: 1 }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setWithdrawAmount(String(affiliateStats?.availableBalance || 0))}
+                              className="secondary-action"
+                              style={{ fontSize: "0.8rem", padding: "0 1rem" }}
+                            >
+                              Max
+                            </button>
+                          </div>
+                        </div>
+
+                        <button
+                          type="submit"
+                          className="glow-btn"
+                          disabled={submittingPayout || (affiliateStats?.availableBalance || 0) <= 0}
+                          style={{ marginTop: "1rem", width: "100%", justifyContent: "center" }}
+                        >
+                          {submittingPayout ? "Submitting..." : `Withdraw ₹${parseInt(withdrawAmount || "0").toLocaleString()}`}
+                        </button>
+                      </form>
+                    </div>
+
+                    {/* Referrals Log */}
+                    <div className="glass-panel" style={{ padding: "2rem", borderRadius: "0.75rem", maxHeight: "400px", overflowY: "auto" }}>
+                      <h3 style={{ margin: "0 0 1rem 0" }}>Referral & Commission Log</h3>
+                      {referralsLog.length === 0 ? (
+                        <div style={{ color: "#6b7280", fontSize: "0.85rem", textAlign: "center", padding: "2rem" }}>No referrals recorded yet.</div>
+                      ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                          {referralsLog.map((log) => (
+                            <div key={log.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                              <div>
+                                <span style={{ fontSize: "0.85rem", color: "#fff", display: "block" }}>{log.refereeEmail}</span>
+                                <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                                  {log.planId.replace("-annual", " Annual")} • {new Date(log.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <div style={{ textAlign: "right" }}>
+                                <strong style={{ fontSize: "0.9rem", color: "#34d399", display: "block" }}>+₹{log.amount}</strong>
+                                <span style={{
+                                  fontSize: "0.7rem",
+                                  padding: "0.1rem 0.35rem",
+                                  borderRadius: "10px",
+                                  background: log.status === "CANCELLED" ? "rgba(239, 68, 68, 0.15)" : log.status === "AVAILABLE" || log.status === "WITHDRAWN" ? "rgba(34, 197, 94, 0.15)" : "rgba(234, 179, 8, 0.15)",
+                                  color: log.status === "CANCELLED" ? "#f87171" : log.status === "AVAILABLE" || log.status === "WITHDRAWN" ? "#4ade80" : "#facc15"
+                                }}>
+                                  {log.status}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Payout History Log */}
+                  <div className="glass-panel" style={{ padding: "2rem", borderRadius: "0.75rem", marginTop: "2rem" }}>
+                    <h3 style={{ margin: "0 0 1rem 0" }}>Payout History</h3>
+                    {payoutsList.length === 0 ? (
+                      <div style={{ color: "#6b7280", fontSize: "0.85rem", textAlign: "center", padding: "2rem" }}>No payout requests submitted yet.</div>
+                    ) : (
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem", color: "#cbd5e1" }}>
+                        <thead>
+                          <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", textAlign: "left" }}>
+                            <th style={{ padding: "0.5rem" }}>Date</th>
+                            <th style={{ padding: "0.5rem" }}>UPI ID</th>
+                            <th style={{ padding: "0.5rem" }}>Amount</th>
+                            <th style={{ padding: "0.5rem" }}>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {payoutsList.map((payout) => (
+                            <tr key={payout.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                              <td style={{ padding: "0.75rem 0.5rem" }}>{new Date(payout.createdAt).toLocaleDateString()}</td>
+                              <td style={{ padding: "0.75rem 0.5rem", fontFamily: "monospace" }}>{payout.upiId}</td>
+                              <td style={{ padding: "0.75rem 0.5rem" }}>₹{payout.amount}</td>
+                              <td style={{ padding: "0.75rem 0.5rem" }}>
+                                <span style={{
+                                  fontSize: "0.7rem",
+                                  padding: "0.15rem 0.4rem",
+                                  borderRadius: "10px",
+                                  fontWeight: 700,
+                                  background: payout.status === "APPROVED" ? "rgba(34, 197, 94, 0.15)" : payout.status === "REJECTED" ? "rgba(239, 68, 68, 0.15)" : "rgba(234, 179, 8, 0.15)",
+                                  color: payout.status === "APPROVED" ? "#4ade80" : payout.status === "REJECTED" ? "#f87171" : "#facc15"
+                                }}>
+                                  {payout.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </>
+              )}
+            </main>
+          ) : (
+            <main style={{ maxWidth: "1200px", margin: "0 auto" }}>
           
           {/* Header row */}
           <div className="dashboard-header-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
@@ -1316,6 +1801,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
           )}
 
         </main>
+      )}
       </div>
       </div>
     );
@@ -1562,6 +2048,33 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
               <button
                 type="button"
                 onClick={() => {
+                  setBuilderTab("leads");
+                  if (isMobile) setSidebarCollapsed(true);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  width: "100%",
+                  padding: "0.6rem 0.8rem",
+                  borderRadius: "0.375rem",
+                  background: builderTab === "leads" ? "rgba(129, 140, 248, 0.08)" : "none",
+                  border: "none",
+                  color: builderTab === "leads" ? "#818cf8" : "#9ca3af",
+                  cursor: "pointer",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  textAlign: "left",
+                  transition: "all 0.2s"
+                }}
+              >
+                <Mail size={16} />
+                {!sidebarCollapsed && <span>Leads</span>}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
                   setBuilderTab("settings");
                   if (isMobile) setSidebarCollapsed(true);
                 }}
@@ -1588,6 +2101,37 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             </>
           )}
         </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setChangePasswordOpen(true);
+              setChangePasswordError("");
+              setChangePasswordSuccess("");
+              setCurrentPassword("");
+              setNewPassword("");
+              if (isMobile) setSidebarCollapsed(true);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              width: "100%",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "0.375rem",
+              background: "none",
+              border: "none",
+              color: "#9ca3af",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              textAlign: "left",
+              transition: "all 0.2s"
+            }}
+          >
+            <Shield size={16} />
+            {!sidebarCollapsed && <span>Change Password</span>}
+          </button>
 
         <button
           type="button"
@@ -2375,6 +2919,59 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                   </div>
                 )}
 
+                {/* TAB CONTENT: LEADS PANEL */}
+                {builderTab === "leads" && (
+                  <div>
+                    <h3 style={{ margin: "0 0 0.5rem 0", color: "#fff", fontSize: "1.1rem" }}>Contact Submissions (Leads)</h3>
+                    <p style={{ color: "#9ca3af", fontSize: "0.8rem", margin: "0 0 1.5rem 0" }}>
+                      View all inquiries submitted through the contact form on your published site.
+                    </p>
+
+                    {!currentProject.contactSubmissions || currentProject.contactSubmissions.length === 0 ? (
+                      <div style={{ padding: "3rem", background: "rgba(255,255,255,0.01)", border: "1px dashed rgba(255,255,255,0.08)", borderRadius: "0.75rem", textAlign: "center", color: "#9ca3af" }}>
+                        No submissions received yet.
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                        {currentProject.contactSubmissions.map((sub: any) => (
+                          <div 
+                            key={sub.id} 
+                            className="glass-panel" 
+                            style={{ 
+                              padding: "1.25rem", 
+                              borderRadius: "0.75rem", 
+                              border: "1px solid rgba(255,255,255,0.06)",
+                              background: "rgba(13,19,35,0.4)"
+                            }}
+                          >
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem" }}>
+                              <div>
+                                <strong style={{ color: "#fff", display: "block", fontSize: "0.95rem" }}>{sub.name}</strong>
+                                <a href={`mailto:${sub.email}`} style={{ color: "#818cf8", fontSize: "0.8rem", textDecoration: "none" }}>{sub.email}</a>
+                              </div>
+                              <span style={{ fontSize: "0.7rem", color: "#6b7280" }}>
+                                {new Date(sub.createdAt).toLocaleString()}
+                              </span>
+                            </div>
+                            <p style={{ 
+                              color: "#cbd5e1", 
+                              fontSize: "0.85rem", 
+                              margin: 0, 
+                              whiteSpace: "pre-wrap", 
+                              lineHeight: 1.5,
+                              background: "rgba(0,0,0,0.15)",
+                              padding: "0.75rem",
+                              borderRadius: "0.4rem"
+                            }}>
+                              {sub.message}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* TAB CONTENT: SETTINGS SECTION */}
                 {builderTab === "settings" && (
                   <div>
@@ -2385,6 +2982,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                       <button onClick={() => setSettingsTab("seo")} style={{ background: "none", border: "none", color: settingsTab === "seo" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>SEO</button>
                       <button onClick={() => setSettingsTab("analytics")} style={{ background: "none", border: "none", color: settingsTab === "analytics" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>Analytics</button>
                       <button onClick={() => setSettingsTab("keys")} style={{ background: "none", border: "none", color: settingsTab === "keys" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>AI Keys</button>
+                      <button onClick={() => setSettingsTab("policies")} type="button" style={{ background: "none", border: "none", color: settingsTab === "policies" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>Policies</button>
                       {isAgencyOrAdmin && (
                         <button onClick={() => setSettingsTab("devkeys")} type="button" style={{ background: "none", border: "none", color: settingsTab === "devkeys" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>Developer Keys</button>
                       )}
@@ -2595,6 +3193,96 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                         </div>
                       )}
 
+                      {/* LEGAL POLICIES MANAGEMENT */}
+                      {settingsTab === "policies" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                          <h4 style={{ color: "#fff", margin: 0 }}>Legal Policies Configurations</h4>
+                          <p style={{ color: "#9ca3af", fontSize: "0.75rem", margin: 0, lineHeight: 1.4 }}>
+                            Toggle legal documents and write policy contents for your client website. Once enabled, visitors can access these at /privacy-policy, /terms-of-service, and /refund-policy.
+                          </p>
+
+                          <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: "0.5rem 0" }} />
+
+                          {/* Terms & Conditions */}
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <label style={{ fontSize: "0.85rem", color: "#fff", fontWeight: 700 }}>Terms & Conditions Policy</label>
+                              <label style={{ display: "inline-flex", alignItems: "center", cursor: "pointer", gap: "0.5rem" }}>
+                                <input
+                                  type="checkbox"
+                                  checked={termsEnabled}
+                                  onChange={(e) => setTermsEnabled(e.target.checked)}
+                                  style={{ width: "16px", height: "16px" }}
+                                />
+                                <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{termsEnabled ? "Enabled" : "Disabled"}</span>
+                              </label>
+                            </div>
+                            {termsEnabled && (
+                              <textarea
+                                className="field"
+                                rows={4}
+                                placeholder="Describe the rules and guidelines for using your services..."
+                                value={termsText}
+                                onChange={(e) => setTermsText(e.target.value)}
+                                style={{ fontSize: "0.8rem", width: "100%", padding: "0.6rem", background: "rgba(0,0,0,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.4rem" }}
+                              />
+                            )}
+                          </div>
+
+                          {/* Privacy Policy */}
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <label style={{ fontSize: "0.85rem", color: "#fff", fontWeight: 700 }}>Privacy Policy</label>
+                              <label style={{ display: "inline-flex", alignItems: "center", cursor: "pointer", gap: "0.5rem" }}>
+                                <input
+                                  type="checkbox"
+                                  checked={privacyPolicyEnabled}
+                                  onChange={(e) => setPrivacyPolicyEnabled(e.target.checked)}
+                                  style={{ width: "16px", height: "16px" }}
+                                />
+                                <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{privacyPolicyEnabled ? "Enabled" : "Disabled"}</span>
+                              </label>
+                            </div>
+                            {privacyPolicyEnabled && (
+                              <textarea
+                                className="field"
+                                rows={4}
+                                placeholder="Explain how user data is gathered, processed, and secured..."
+                                value={privacyPolicyText}
+                                onChange={(e) => setPrivacyPolicyText(e.target.value)}
+                                style={{ fontSize: "0.8rem", width: "100%", padding: "0.6rem", background: "rgba(0,0,0,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.4rem" }}
+                              />
+                            )}
+                          </div>
+
+                          {/* Refund Policy */}
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <label style={{ fontSize: "0.85rem", color: "#fff", fontWeight: 700 }}>Refund Policy</label>
+                              <label style={{ display: "inline-flex", alignItems: "center", cursor: "pointer", gap: "0.5rem" }}>
+                                <input
+                                  type="checkbox"
+                                  checked={refundPolicyEnabled}
+                                  onChange={(e) => setRefundPolicyEnabled(e.target.checked)}
+                                  style={{ width: "16px", height: "16px" }}
+                                />
+                                <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{refundPolicyEnabled ? "Enabled" : "Disabled"}</span>
+                              </label>
+                            </div>
+                            {refundPolicyEnabled && (
+                              <textarea
+                                className="field"
+                                rows={4}
+                                placeholder="Detail subscription cancellations, credit usage deductions, and returns conditions..."
+                                value={refundPolicyText}
+                                onChange={(e) => setRefundPolicyText(e.target.value)}
+                                style={{ fontSize: "0.8rem", width: "100%", padding: "0.6rem", background: "rgba(0,0,0,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.4rem" }}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {settingsTab !== "keys" && settingsTab !== "devkeys" && (
                         <button type="submit" className="primary-action" style={{ width: "100%", justifyContent: "center", marginTop: "0.5rem" }} disabled={loading}>
                           {loading ? "Applying Settings..." : "Save Settings Configuration"}
@@ -2784,6 +3472,70 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                   : "Choose a pricing plan to increase your AI credits quota or purchase extra credits."}
               </p>
             </div>
+
+            {/* Referral Discount Banner */}
+            {!!user.referredBy && (
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", background: "rgba(34, 197, 94, 0.1)", border: "1px solid rgba(34, 197, 94, 0.2)", borderRadius: "0.5rem", padding: "0.75rem 1rem", color: "#4ade80", fontSize: "0.85rem", fontWeight: 600 }}>
+                <Sparkles size={16} />
+                <span>10% Referral Discount Applied! Discount is automatically subtracted from payment totals.</span>
+              </div>
+            )}
+
+            {/* Current Active Plan & Refund Section */}
+            {tenant.subscription && tenant.subscription.planId !== "free-plan" && tenant.subscription.planId !== "starter" && (
+              <div style={{ background: "rgba(255, 255, 255, 0.02)", padding: "1.25rem", borderRadius: "0.75rem", border: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <span style={{ fontSize: "0.75rem", color: "#9ca3af", display: "block" }}>CURRENT ACTIVE PLAN</span>
+                    <strong style={{ color: "#fff", display: "block", fontSize: "1.1rem", textTransform: "capitalize" }}>
+                      {tenant.subscription.planId.replace("-plan", "").replace("-annual", " Annual")}
+                    </strong>
+                    <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                      Credits: {tenant.subscription.creditsUsed} / {tenant.subscription.creditsLimit} used
+                    </span>
+                  </div>
+                  <div>
+                    {refundEligibility && refundEligibility.eligible && (
+                      <button
+                        type="button"
+                        onClick={handleRefundSubmit}
+                        disabled={submittingRefund}
+                        className="danger-action"
+                        style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 700 }}
+                      >
+                        {submittingRefund ? "Processing..." : "Cancel & Refund"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Refund quote calculations display */}
+                {refundEligibility && refundEligibility.eligible && (
+                  <div style={{ background: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.1)", borderRadius: "0.5rem", padding: "0.75rem 1rem", fontSize: "0.75rem", color: "#f87171" }}>
+                    <div style={{ fontWeight: 700, marginBottom: "0.25rem" }}>Eligible for cancellation & credit-deducted refund:</div>
+                    <ul style={{ margin: 0, paddingLeft: "1.2rem", lineHeight: 1.4 }}>
+                      <li>Original payment: ₹{refundEligibility.amountPaid}</li>
+                      <li>Credits used: {refundEligibility.creditsUsed} (deducted at ₹{Math.round(refundEligibility.deductAmount / (refundEligibility.creditsUsed || 1))} per credit)</li>
+                      <li>Deduction amount: -₹{refundEligibility.deductAmount}</li>
+                      <li>Estimated net refund: <strong>₹{refundEligibility.refundAmount}</strong></li>
+                      <li>Refund window expires in: <strong>{refundEligibility.daysRemaining} days</strong></li>
+                    </ul>
+                  </div>
+                )}
+
+                {refundMessage && (
+                  <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem" }}>
+                    {refundMessage}
+                  </div>
+                )}
+
+                {refundError && (
+                  <div style={{ padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem" }}>
+                    {refundError}
+                  </div>
+                )}
+              </div>
+            )}
 
             {upgradeMessage && (
               <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem" }}>
@@ -3006,49 +3758,60 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
               </div>
             ) : (
               <form onSubmit={handleConfirmUpgrade} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-                <div style={{ background: "rgba(255,255,255,0.02)", padding: "1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.04)" }}>
-                  <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>SELECTED PLAN</span>
-                  <strong style={{ color: "#fff", display: "block", fontSize: "1.1rem" }}>{selectedUpgradePlan.name}</strong>
-                  <span style={{ fontSize: "0.9rem", color: "#818cf8", display: "block" }}>Amount to Pay: <strong>₹{selectedUpgradePlan.price}</strong></span>
-                </div>
+                {(() => {
+                  const hasReferrer = !!user.referredBy;
+                  const finalPrice = hasReferrer ? Math.round(selectedUpgradePlan.price * 0.9) : selectedUpgradePlan.price;
+                  return (
+                    <>
+                      <div style={{ background: "rgba(255,255,255,0.02)", padding: "1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.04)" }}>
+                        <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>SELECTED PLAN</span>
+                        <strong style={{ color: "#fff", display: "block", fontSize: "1.1rem" }}>{selectedUpgradePlan.name}</strong>
+                        <span style={{ fontSize: "0.9rem", color: "#818cf8", display: "block" }}>
+                          Amount to Pay: <strong>₹{finalPrice}</strong>
+                          {hasReferrer && <span style={{ color: "#4ade80", fontSize: "0.75rem", marginLeft: "0.5rem" }}>(10% Referrer Discount Applied)</span>}
+                        </span>
+                      </div>
 
-                {selectedUpgradePlan.price > 0 ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center" }}>
-                    <span style={{ fontSize: "0.85rem", color: "#cbd5e1", textAlign: "center" }}>
-                      Scan the QR code below using any UPI app (GPay, PhonePe, Paytm, BHIM, etc.) to complete payment:
-                    </span>
-                    
-                    {/* Dynamic QR Code Render */}
-                    <div style={{ background: "#fff", padding: "1rem", borderRadius: "1rem", display: "inline-flex" }}>
-                      <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                          `upi://pay?pa=${upiId}&pn=Webbing&am=${selectedUpgradePlan.price}&cu=INR&tn=Webbing%20Upgrade%20${selectedUpgradePlan.id || selectedUpgradePlan.name}`
-                        )}`}
-                        alt="UPI QR Code"
-                        style={{ width: "180px", height: "180px" }}
-                      />
-                    </div>
-                    
-                    <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>UPI ID: <strong>{upiId}</strong></span>
+                      {selectedUpgradePlan.price > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center" }}>
+                          <span style={{ fontSize: "0.85rem", color: "#cbd5e1", textAlign: "center" }}>
+                            Scan the QR code below using any UPI app (GPay, PhonePe, Paytm, BHIM, etc.) to complete payment:
+                          </span>
+                          
+                          {/* Dynamic QR Code Render */}
+                          <div style={{ background: "#fff", padding: "1rem", borderRadius: "1rem", display: "inline-flex" }}>
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+                                `upi://pay?pa=${upiId}&pn=Webbing&am=${finalPrice}&cu=INR&tn=Webbing%20Upgrade%20${selectedUpgradePlan.id || selectedUpgradePlan.name}`
+                              )}`}
+                              alt="UPI QR Code"
+                              style={{ width: "180px", height: "180px" }}
+                            />
+                          </div>
+                          
+                          <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>UPI ID: <strong>{upiId}</strong></span>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", width: "100%" }}>
-                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>UPI TRANSACTION REFERENCE ID (UTR - 12 DIGITS)</label>
-                      <input
-                        type="text"
-                        className="premium-input"
-                        placeholder="e.g. 625123956841"
-                        value={utrCode}
-                        onChange={(e) => setUtrCode(e.target.value.replace(/\D/g, "").slice(0, 12))}
-                        required
-                        pattern="\d{12}"
-                        style={{ width: "100%" }}
-                        disabled={submittingRequest}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <p style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>Are you sure you want to downgrade/switch to the free Starter plan?</p>
-                )}
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", width: "100%" }}>
+                            <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>UPI TRANSACTION REFERENCE ID (UTR - 12 DIGITS)</label>
+                            <input
+                              type="text"
+                              className="premium-input"
+                              placeholder="e.g. 625123956841"
+                              value={utrCode}
+                              onChange={(e) => setUtrCode(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                              required
+                              pattern="\d{12}"
+                              style={{ width: "100%" }}
+                              disabled={submittingRequest}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <p style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>Are you sure you want to downgrade/switch to the free Starter plan?</p>
+                      )}
+                    </>
+                  );
+                })()}
 
                 <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "1rem" }}>
                   <button
@@ -3154,6 +3917,80 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                   disabled={submittingFeedback}
                 >
                   {submittingFeedback ? "Submitting..." : "Submit Report"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Change Password Modal */}
+      {changePasswordOpen && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(7, 11, 19, 0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: "1.5rem" }}>
+          <div className="glass-panel" style={{ width: "100%", maxWidth: "450px", padding: "2.5rem", borderRadius: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            <div>
+              <span className="eyebrow" style={{ color: "#818cf8" }}>Security settings</span>
+              <h3 style={{ margin: 0, color: "#fff", fontSize: "1.35rem" }}>Change Password</h3>
+              <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Update your password to secure your Webbing account.</p>
+            </div>
+
+            {changePasswordSuccess && (
+              <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem" }}>
+                {changePasswordSuccess}
+              </div>
+            )}
+
+            {changePasswordError && (
+              <div style={{ padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem" }}>
+                {changePasswordError}
+              </div>
+            )}
+
+            <form onSubmit={handleChangePasswordSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>CURRENT PASSWORD</label>
+                <input
+                  type="password"
+                  className="premium-input"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Enter current password"
+                  required
+                  style={{ width: "100%" }}
+                  disabled={changePasswordLoading}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>NEW PASSWORD</label>
+                <input
+                  type="password"
+                  className="premium-input"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="At least 6 characters"
+                  required
+                  style={{ width: "100%" }}
+                  disabled={changePasswordLoading}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "0.5rem" }}>
+                <button
+                  type="button"
+                  onClick={() => setChangePasswordOpen(false)}
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.6rem 1.2rem", borderRadius: "0.5rem", fontSize: "0.8rem", cursor: "pointer" }}
+                  disabled={changePasswordLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="glow-btn"
+                  style={{ background: "linear-gradient(to right, #6366f1, #d946ef)", color: "#fff", padding: "0.6rem 1.5rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}
+                  disabled={changePasswordLoading}
+                >
+                  {changePasswordLoading ? "Updating..." : "Update Password"}
                 </button>
               </div>
             </form>

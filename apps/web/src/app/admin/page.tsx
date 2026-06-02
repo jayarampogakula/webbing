@@ -50,9 +50,11 @@ export default async function AdminPage() {
   let paymentRequests: any[] = [];
   let feedbacks: any[] = [];
   let upiId = "pogakula@ybl";
+  let payoutRequests: any[] = [];
+  let refundRequests: any[] = [];
 
   try {
-    const [dbUsers, dbProjects, dbSubscriptions, dbTotalTenants, dbLlmKeys, dbPlans, dbRequests, dbUpiSetting, dbFeedbacks] = await Promise.all([
+    const [dbUsers, dbProjects, dbSubscriptions, dbTotalTenants, dbLlmKeys, dbPlans, dbRequests, dbUpiSetting, dbFeedbacks, dbPayouts, dbRefunds] = await Promise.all([
       prisma.user.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
       prisma.project.findMany({ include: { tenant: true, customDomain: true, user: true }, orderBy: { createdAt: "desc" } }),
       prisma.subscription.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
@@ -62,6 +64,8 @@ export default async function AdminPage() {
       prisma.paymentRequest.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
       prisma.systemSetting.findUnique({ where: { key: "upiId" } }),
       prisma.feedback.findMany({ orderBy: { createdAt: "desc" } }),
+      prisma.payoutRequest.findMany({ include: { user: true }, orderBy: { createdAt: "desc" } }),
+      prisma.refundRequest.findMany({ include: { tenant: true, paymentRequest: true }, orderBy: { createdAt: "desc" } }),
     ]);
     users = dbUsers;
     projects = dbProjects;
@@ -72,6 +76,8 @@ export default async function AdminPage() {
     paymentRequests = dbRequests;
     feedbacks = dbFeedbacks;
     upiId = dbUpiSetting?.value || "pogakula@ybl";
+    payoutRequests = dbPayouts;
+    refundRequests = dbRefunds;
   } catch (error) {
     console.error("Admin data load failed:", error);
     return (
@@ -128,6 +134,8 @@ export default async function AdminPage() {
         initialRequests={paymentRequests}
         initialFeedbacks={feedbacks}
         initialUpiId={upiId}
+        initialPayouts={payoutRequests}
+        initialRefunds={refundRequests}
         baseDomain={baseDomain}
         protocol={protocol}
       />

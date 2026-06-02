@@ -14,6 +14,16 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get("ref");
+      if (ref) {
+        localStorage.setItem("webbing_referrer", ref);
+      }
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -26,10 +36,17 @@ export default function SignUpPage() {
     }
 
     try {
+      const referrerCode = typeof window !== "undefined" ? localStorage.getItem("webbing_referrer") : null;
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), password, tenantName: tenantName.trim() || undefined }),
+        body: JSON.stringify({ 
+          name: name.trim(), 
+          email: email.trim(), 
+          password, 
+          tenantName: tenantName.trim() || undefined,
+          referrerCode: referrerCode || undefined
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create account.");

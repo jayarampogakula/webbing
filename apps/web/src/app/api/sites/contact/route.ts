@@ -32,6 +32,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Project not found." }, { status: 404 });
     }
 
+    // Save submission to database
+    await prisma.contactSubmission.create({
+      data: {
+        projectId,
+        name,
+        email,
+        message,
+      },
+    });
+
     // Find the email in the CONTACT section content
     let recipientEmail = "";
     const contactSection = project.pages

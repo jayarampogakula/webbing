@@ -25,6 +25,9 @@ export async function GET(
           include: {
             sections: { orderBy: { order: "asc" } }
           }
+        },
+        contactSubmissions: {
+          orderBy: { createdAt: "desc" }
         }
       },
     });

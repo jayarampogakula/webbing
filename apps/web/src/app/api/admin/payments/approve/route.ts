@@ -143,6 +143,31 @@ export async function POST(req: Request) {
             domainType: "CUSTOM"
           }
         });
+        
+        // 3. Create Affiliate Commission if referred
+        const payingUser = await tx.user.findFirst({
+          where: { tenantId: request.tenantId },
+          orderBy: { createdAt: "asc" }
+        });
+
+        if (payingUser && payingUser.referredBy) {
+          const planKey = plan.name.toLowerCase().replace(/\s+/g, "-");
+          if (planKey !== "starter" && !request.planId.startsWith("credits-")) {
+            const commissionAmount = Math.round(request.amount * 0.1);
+            const availableDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+
+            await tx.affiliateCommission.create({
+              data: {
+                referrerId: payingUser.referredBy,
+                refereeId: payingUser.id,
+                amount: commissionAmount,
+                paymentRequestId: requestId,
+                status: "PENDING",
+                availableAt: availableDate
+              }
+            });
+          }
+        }
 
         return { request: updatedReq, subscription: sub };
       });

@@ -49,9 +49,10 @@ export default async function DashboardPage() {
   let llmKeys: Awaited<ReturnType<typeof getLlmKeys>> = [];
   let plans: any[] = [];
   let upiId = "pogakula@ybl";
+  let dbUserObj = null;
 
   try {
-    const [dbTenant, dbLlmKeys, dbPlans, dbUpiSetting] = await Promise.all([
+    const [dbTenant, dbLlmKeys, dbPlans, dbUpiSetting, dbUser] = await Promise.all([
       prisma.tenant.findUnique({
         where: { id: user.tenantId },
         include: {
@@ -78,11 +79,13 @@ export default async function DashboardPage() {
       getLlmKeys(user.userId),
       prisma.plan.findMany({ orderBy: { price: "asc" } }),
       prisma.systemSetting.findUnique({ where: { key: "upiId" } }),
+      prisma.user.findUnique({ where: { id: user.userId } }),
     ]);
     tenant = dbTenant;
     llmKeys = dbLlmKeys;
     plans = dbPlans;
     upiId = dbUpiSetting?.value || "pogakula@ybl";
+    dbUserObj = dbUser;
   } catch (error) {
     console.error("Dashboard data load failed:", error);
     return (
@@ -115,6 +118,9 @@ export default async function DashboardPage() {
     return <div className="app-shell"><main className="app-main"><div className="form-alert">Workspace not found. Please contact support.</div></main></div>;
   }
 
+  const mergedUser = { ...user, ...dbUserObj };
+
+
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0a0e17" }}>
       <header className="site-nav dashboard-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: 0, background: "rgba(10, 14, 23, 0.95)" }}>
@@ -129,7 +135,7 @@ export default async function DashboardPage() {
       </header>
 
       <DashboardEditor
-        user={user}
+        user={mergedUser as any}
         tenant={tenant as any}
         baseDomain={baseDomain}
         protocol={protocol}

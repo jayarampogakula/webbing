@@ -148,9 +148,7 @@ const worker = new Worker<WebsiteGenerationJobData>(
               description: descriptionJson,
               price: p.price || 1299,
               inventory: p.inventory || 100,
-              images: p.imageSearchQuery ? [
-                `https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80` // Resolved dynamically by frontend query search lookup
-              ] : []
+              images: p.imageUrl ? [p.imageUrl] : []
             };
           });
 

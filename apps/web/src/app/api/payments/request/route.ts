@@ -53,6 +53,48 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Plan ID, amount, and UTR transaction ID are required." }, { status: 400 });
     }
 
+    // Resolve expected price
+    const cleanPlanId = planId.replace("-annual", "");
+    let lookupName = cleanPlanId;
+    if (cleanPlanId === "pro-plan") lookupName = "Pro Plan";
+    else if (cleanPlanId === "agency") lookupName = "Agency";
+    else if (cleanPlanId === "starter") lookupName = "Starter";
+
+    let expectedAmount = 0;
+    if (planId.startsWith("credits-")) {
+      const match = planId.match(/credits-(\d+)/);
+      const count = match ? parseInt(match[1], 10) : 0;
+      if (count === 10) expectedAmount = 99;
+      else if (count === 50) expectedAmount = 399;
+      else if (count === 100) expectedAmount = 699;
+    } else {
+      const plan = await prisma.plan.findUnique({
+        where: { name: lookupName }
+      });
+      if (plan) {
+        expectedAmount = plan.price;
+        if (planId.endsWith("-annual")) {
+          if (cleanPlanId === "pro-plan") expectedAmount = 6468;
+          else if (cleanPlanId === "agency") expectedAmount = 25488;
+        }
+      }
+    }
+
+    // Verify discount if user has a referrer
+    const dbUserReferrer = await prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { referredBy: true }
+    });
+
+    if (dbUserReferrer?.referredBy && expectedAmount > 0) {
+      expectedAmount = Math.round(expectedAmount * 0.9);
+    }
+
+    const submittedAmount = parseInt(String(amount), 10);
+    if (expectedAmount > 0 && submittedAmount !== expectedAmount) {
+      return NextResponse.json({ error: `Incorrect payment amount submitted. Expected ₹${expectedAmount}.` }, { status: 400 });
+    }
+
     // Verify if UTR is unique
     const existing = await prisma.paymentRequest.findUnique({
       where: { utr }

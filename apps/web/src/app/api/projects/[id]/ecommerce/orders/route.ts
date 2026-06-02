@@ -114,7 +114,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
           items: items, // JSON format
           total: Number(total),
           status: "PENDING",
-          paymentId: `pay_${paymentMethod}_${Math.random().toString(36).substring(2, 10).toUpperCase()}`
+          paymentId: body.paymentId || `pay_${paymentMethod}_${Math.random().toString(36).substring(2, 10).toUpperCase()}`
         }
       });
 

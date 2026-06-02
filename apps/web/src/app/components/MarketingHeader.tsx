@@ -11,6 +11,16 @@ interface MarketingHeaderProps {
 export default function MarketingHeader({ active, user }: MarketingHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get("ref");
+      if (ref) {
+        localStorage.setItem("webbing_referrer", ref);
+      }
+    }
+  }, []);
+
   return (
     <header className="site-nav" style={{ position: "relative" }}>
       <div className="brand-wrapper">

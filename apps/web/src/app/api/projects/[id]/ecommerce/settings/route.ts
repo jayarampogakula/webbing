@@ -24,15 +24,18 @@ async function checkAdminAuth(projectId: string) {
 
 const DEFAULT_SETTINGS = {
   gateways: {
-    stripe: true,
-    razorpay: true,
-    paypal: false,
-    phonepe: false,
-    googlepay: true,
     upi: true,
     banktransfer: false,
     cod: true,
   },
+  paymentDetails: {
+    upiId: "",
+    bankName: "",
+    accountName: "",
+    accountNumber: "",
+    ifscCode: "",
+  },
+  adminPassword: "",
   whatsapp: {
     enabled: true,
     phoneNumber: "919999999999",

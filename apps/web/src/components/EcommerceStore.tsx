@@ -105,6 +105,9 @@ export default function EcommerceStore({
   const [couponCode, setCouponCode] = useState("");
   const [couponFeedback, setCouponFeedback] = useState("");
   const [orderSuccess, setOrderSuccess] = useState<any>(null);
+  const [productQty, setProductQty] = useState(1);
+  const [toastMsg, setToastMsg] = useState("");
+  const [justAddedProductIds, setJustAddedProductIds] = useState<Record<string, boolean>>({});
 
   // Admin Interface States
   const [adminTab, setAdminTab] = useState("overview");
@@ -121,6 +124,20 @@ export default function EcommerceStore({
     imageUrl: ""
   });
   const [updatingOrderStatus, setUpdatingOrderStatus] = useState({ orderId: "", status: "", trackingNumber: "" });
+
+  // Payment Details Local Edit States
+  const [upiIdInput, setUpiIdInput] = useState("");
+  const [bankNameInput, setBankNameInput] = useState("");
+  const [bankAccountNameInput, setBankAccountNameInput] = useState("");
+  const [bankAccountNumberInput, setBankAccountNumberInput] = useState("");
+  const [bankIfscInput, setBankIfscInput] = useState("");
+
+  // Password Change Edit States
+  const [newAdminPassword, setNewAdminPassword] = useState("");
+  const [confirmAdminPassword, setConfirmAdminPassword] = useState("");
+
+  // Customer/Checkout states
+  const [paymentReference, setPaymentReference] = useState("");
 
   // Load state from local storage on mount
   useEffect(() => {
@@ -150,6 +167,11 @@ export default function EcommerceStore({
     fetchSettings();
   }, [initialPathSlug, projectId]);
 
+  // Reset product quantity when product changes
+  useEffect(() => {
+    setProductQty(1);
+  }, [selectedProductId]);
+
   // Sync Cart to LocalStorage
   const syncCart = (newCart: typeof cart) => {
     setCart(newCart);
@@ -169,7 +191,20 @@ export default function EcommerceStore({
     try {
       const res = await fetch(`/api/projects/${projectId}/ecommerce/settings`);
       const data = await res.json();
-      if (data.settings) setSettings(data.settings);
+      if (data.settings) {
+        setSettings(data.settings);
+        setUpiIdInput(data.settings.paymentDetails?.upiId || "");
+        setBankNameInput(data.settings.paymentDetails?.bankName || "");
+        setBankAccountNameInput(data.settings.paymentDetails?.accountName || "");
+        setBankAccountNumberInput(data.settings.paymentDetails?.accountNumber || "");
+        setBankIfscInput(data.settings.paymentDetails?.ifscCode || "");
+        
+        // Ensure checked payment method is active
+        const activeGws = Object.entries(data.settings.gateways || {}).filter(([_, act]) => act).map(([name]) => name);
+        if (activeGws.length > 0 && !activeGws.includes(checkoutForm.paymentMethod)) {
+          setCheckoutForm(prev => ({ ...prev, paymentMethod: activeGws[0] }));
+        }
+      }
     } catch (e) { console.error("Error fetching settings:", e); }
   };
 
@@ -206,15 +241,15 @@ export default function EcommerceStore({
     };
   };
 
-  // Unsplash Image Helper using exact query fallback
+  // Unsplash/Flickr Image Helper using exact query fallback
   const getProductImage = (prod: Product) => {
-    if (prod.images && prod.images.length > 0 && prod.images[0].startsWith("http")) {
+    if (prod.images && prod.images.length > 0 && prod.images[0]) {
       return prod.images[0];
     }
     
     const parsed = parseProductDescription(prod.description);
-    const query = encodeURIComponent(`${prod.name} ${parsed.category}`);
-    return `https://images.unsplash.com/featured/?${query || "gadget"}`;
+    const query = encodeURIComponent(`${prod.name} ${parsed.category || ""}`.trim());
+    return `https://loremflickr.com/640/480/${query || "product"}`;
   };
 
   // Add Product to Cart
@@ -229,6 +264,16 @@ export default function EcommerceStore({
     }
     
     syncCart(newCart);
+
+    // Show Toast notification
+    setToastMsg(`Added "${product.name}" (${quantity}) to cart!`);
+    setTimeout(() => setToastMsg(""), 3000);
+
+    // Set momentary added state for visual button confirmation
+    setJustAddedProductIds(prev => ({ ...prev, [product.id]: true }));
+    setTimeout(() => {
+      setJustAddedProductIds(prev => ({ ...prev, [product.id]: false }));
+    }, 2000);
   };
 
   // Remove / Update Cart Items
@@ -332,7 +377,8 @@ export default function EcommerceStore({
           customerName: name,
           items: orderItems,
           total: getCartTotal(),
-          paymentMethod: checkoutForm.paymentMethod
+          paymentMethod: checkoutForm.paymentMethod,
+          paymentId: (checkoutForm.paymentMethod === "upi" || checkoutForm.paymentMethod === "banktransfer") ? paymentReference.trim() : undefined
         })
       });
 
@@ -341,6 +387,7 @@ export default function EcommerceStore({
 
       setOrderSuccess(data.order);
       syncCart([]); // Clear cart
+      setPaymentReference("");
       
       // Sync customer orders list in session
       if (customer && customer.email.toLowerCase() === email.toLowerCase()) {
@@ -389,14 +436,76 @@ export default function EcommerceStore({
     e.preventDefault();
     setAdminError("");
     
-    // Simple verify against admin dashboard credentials matching project key or default pwd
-    if (adminPassword === "admin123" || adminPassword === projectId.slice(0, 8)) {
+    // Verify against custom admin password or default admin123
+    const customPassword = settings.adminPassword || "admin123";
+    if (adminPassword === customPassword || adminPassword === projectId.slice(0, 8)) {
       setAdminAuth(true);
       localStorage.setItem(`admin_auth_${projectId}`, "true");
       fetchAdminOrders();
       setAdminPassword("");
     } else {
       setAdminError("Invalid administrative password credentials.");
+    }
+  };
+
+  const handleAdminPasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAdminPassword) {
+      alert("Please enter a new password.");
+      return;
+    }
+    if (newAdminPassword !== confirmAdminPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+    
+    try {
+      const updatedSettings = {
+        ...settings,
+        adminPassword: newAdminPassword
+      };
+      const res = await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settings: updatedSettings })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update password");
+      
+      setSettings(updatedSettings);
+      setNewAdminPassword("");
+      setConfirmAdminPassword("");
+      alert("Admin password updated successfully!");
+    } catch (err: any) {
+      alert(err.message || "Error updating password.");
+    }
+  };
+
+  const handleSavePaymentSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const updatedSettings = {
+        ...settings,
+        paymentDetails: {
+          upiId: upiIdInput,
+          bankName: bankNameInput,
+          accountName: bankAccountNameInput,
+          accountNumber: bankAccountNumberInput,
+          ifscCode: bankIfscInput
+        }
+      };
+      const res = await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settings: updatedSettings })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save settings");
+      
+      setSettings(updatedSettings);
+      alert("Payment gateway details saved successfully!");
+    } catch (err: any) {
+      alert(err.message || "Error saving payment settings.");
     }
   };
 
@@ -538,6 +647,11 @@ export default function EcommerceStore({
 
   return (
     <div style={{ color: "#f8fafc", fontFamily: "'Outfit', 'Inter', sans-serif", minHeight: "100vh", background: "#0a0e17", display: "flex", flexDirection: "column" }}>
+      {toastMsg && (
+        <div style={{ position: "fixed", top: "2rem", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg, #6366f1, #a855f7)", color: "#fff", padding: "0.75rem 1.5rem", borderRadius: "2rem", boxShadow: "0 10px 25px rgba(99, 102, 241, 0.4)", zIndex: 100, display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 700 }}>
+          <CheckCircle2 size={16} /> {toastMsg}
+        </div>
+      )}
       
       {/* 1. STORE HEADER NAVIGATION */}
       <nav style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 50, background: "rgba(10, 14, 23, 0.95)", backdropFilter: "blur(12px)", padding: "1rem 2rem" }}>
@@ -690,9 +804,9 @@ export default function EcommerceStore({
                         <span style={{ fontSize: "1.1rem", fontWeight: 800 }}>₹{Number(prod.price).toLocaleString()}</span>
                         <button 
                           onClick={() => handleAddToCart(prod, 1)}
-                          style={{ background: "#6366f1", border: 0, color: "#fff", padding: "0.4rem 0.8rem", borderRadius: "0.4rem", fontSize: "0.8rem", cursor: "pointer", fontWeight: 600 }}
+                          style={{ background: justAddedProductIds[prod.id] ? "#10b981" : "#6366f1", border: 0, color: "#fff", padding: "0.4rem 0.8rem", borderRadius: "0.4rem", fontSize: "0.8rem", cursor: "pointer", fontWeight: 600, transition: "all 0.2s" }}
                         >
-                          Add to Cart
+                          {justAddedProductIds[prod.id] ? "✓ Added" : "Add to Cart"}
                         </button>
                       </div>
                     </div>
@@ -794,9 +908,9 @@ export default function EcommerceStore({
                         <span style={{ fontSize: "1.05rem", fontWeight: 800 }}>₹{Number(prod.price).toLocaleString()}</span>
                         <button 
                           onClick={() => handleAddToCart(prod, 1)}
-                          style={{ background: "#6366f1", border: 0, color: "#fff", padding: "0.4rem 0.7rem", borderRadius: "0.4rem", fontSize: "0.75rem", cursor: "pointer", fontWeight: 600 }}
+                          style={{ background: justAddedProductIds[prod.id] ? "#10b981" : "#6366f1", border: 0, color: "#fff", padding: "0.4rem 0.7rem", borderRadius: "0.4rem", fontSize: "0.75rem", cursor: "pointer", fontWeight: 600, transition: "all 0.2s" }}
                         >
-                          Add
+                          {justAddedProductIds[prod.id] ? "✓ Added" : "Add"}
                         </button>
                       </div>
                     </div>
@@ -865,19 +979,41 @@ export default function EcommerceStore({
                   </div>
                 )}
 
+                {/* Quantity selector */}
+                <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginTop: "0.5rem" }}>
+                  <span style={{ fontSize: "0.85rem", color: "#94a3b8", fontWeight: 600 }}>Quantity</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <button 
+                      type="button"
+                      onClick={() => setProductQty(q => Math.max(1, q - 1))}
+                      style={{ width: "1.75rem", height: "1.75rem", borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: 0, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <Minus size={12} />
+                    </button>
+                    <span style={{ width: "1.5rem", textAlign: "center", fontSize: "0.9rem" }}>{productQty}</span>
+                    <button 
+                      type="button"
+                      onClick={() => setProductQty(q => q + 1)}
+                      style={{ width: "1.75rem", height: "1.75rem", borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: 0, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+                </div>
+
                 {/* Purchase Actions */}
                 <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
                   <button 
                     disabled={activeProduct.inventory <= 0}
-                    onClick={() => handleAddToCart(activeProduct, 1)}
+                    onClick={() => handleAddToCart(activeProduct, productQty)}
                     className="primary-action" 
-                    style={{ flex: 1, padding: "0.8rem", justifyContent: "center" }}
+                    style={{ flex: 1, padding: "0.8rem", justifyContent: "center", background: justAddedProductIds[activeProduct.id] ? "#10b981" : undefined }}
                   >
-                    Add To Cart
+                    {justAddedProductIds[activeProduct.id] ? "✓ Added to Cart!" : "Add To Cart"}
                   </button>
                   <button 
                     disabled={activeProduct.inventory <= 0}
-                    onClick={() => { handleAddToCart(activeProduct, 1); setView("cart"); }}
+                    onClick={() => { handleAddToCart(activeProduct, productQty); setView("cart"); }}
                     className="secondary-action" 
                     style={{ flex: 1, padding: "0.8rem", justifyContent: "center", border: "1px solid #818cf8", color: "#818cf8" }}
                   >
@@ -1146,24 +1282,109 @@ export default function EcommerceStore({
 
                   {/* Payment Gateway Toggle */}
                   <h3 style={{ margin: "1rem 0 0 0", fontSize: "1.1rem", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "0.5rem" }}>Payment Gateway</h3>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.8rem" }}>
-                    {settings.gateways?.upi && (
-                      <label style={{ display: "flex", gap: "0.5rem", padding: "0.8rem", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.4rem", cursor: "pointer", background: checkoutForm.paymentMethod === "upi" ? "rgba(99,102,241,0.08)" : "transparent" }}>
-                        <input type="radio" name="gateway" checked={checkoutForm.paymentMethod === "upi"} onChange={() => setCheckoutForm({ ...checkoutForm, paymentMethod: "upi" })} />
-                        UPI Payment Instant
-                      </label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.8rem" }}>
+                      {settings.gateways?.upi && (
+                        <label style={{ display: "flex", gap: "0.5rem", padding: "0.8rem", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.4rem", cursor: "pointer", background: checkoutForm.paymentMethod === "upi" ? "rgba(99,102,241,0.08)" : "transparent" }}>
+                          <input type="radio" name="gateway" checked={checkoutForm.paymentMethod === "upi"} onChange={() => { setCheckoutForm({ ...checkoutForm, paymentMethod: "upi" }); setPaymentReference(""); }} />
+                          UPI / GPay / PhonePe
+                        </label>
+                      )}
+                      {settings.gateways?.banktransfer && (
+                        <label style={{ display: "flex", gap: "0.5rem", padding: "0.8rem", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.4rem", cursor: "pointer", background: checkoutForm.paymentMethod === "banktransfer" ? "rgba(99,102,241,0.08)" : "transparent" }}>
+                          <input type="radio" name="gateway" checked={checkoutForm.paymentMethod === "banktransfer"} onChange={() => { setCheckoutForm({ ...checkoutForm, paymentMethod: "banktransfer" }); setPaymentReference(""); }} />
+                          Bank Transfer
+                        </label>
+                      )}
+                      {settings.gateways?.cod && (
+                        <label style={{ display: "flex", gap: "0.5rem", padding: "0.8rem", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.4rem", cursor: "pointer", background: checkoutForm.paymentMethod === "cod" ? "rgba(99,102,241,0.08)" : "transparent" }}>
+                          <input type="radio" name="gateway" checked={checkoutForm.paymentMethod === "cod"} onChange={() => { setCheckoutForm({ ...checkoutForm, paymentMethod: "cod" }); setPaymentReference(""); }} />
+                          Cash On Delivery (COD)
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Dynamic checkout panels for selected method */}
+                    {checkoutForm.paymentMethod === "upi" && settings.gateways?.upi && (
+                      <div className="glass-panel" style={{ padding: "1rem", borderRadius: "0.5rem", border: "1px solid rgba(99, 102, 241, 0.2)", background: "rgba(99, 102, 241, 0.02)", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", marginTop: "0.5rem" }}>
+                        <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "#818cf8" }}>Scan to Pay via UPI</span>
+                        
+                        {(() => {
+                          const upiId = settings.paymentDetails?.upiId || "example@upi";
+                          const merchantName = projectSubdomain || "Webbing Store";
+                          const amount = getCartTotal();
+                          const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(merchantName)}&am=${amount}&cu=INR`;
+                          const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}`;
+                          
+                          return (
+                            <div style={{ background: "#fff", padding: "0.75rem", borderRadius: "0.5rem", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                              <img src={qrUrl} alt="UPI QR Code" style={{ width: "180px", height: "180px" }} />
+                            </div>
+                          );
+                        })()}
+
+                        <div style={{ textAlign: "center", fontSize: "0.8rem", color: "#94a3b8", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                          <span>Scan QR with GPay, PhonePe, Paytm, or BHIM</span>
+                          <strong>UPI ID: {settings.paymentDetails?.upiId || "Not Configured"}</strong>
+                          <strong style={{ color: "#fff", fontSize: "0.9rem", marginTop: "0.25rem" }}>Amount to Pay: ₹{getCartTotal().toLocaleString()}</strong>
+                        </div>
+
+                        <div className="field-group" style={{ width: "100%", textAlign: "left" }}>
+                          <label style={{ fontSize: "0.8rem", fontWeight: 700 }}>Transaction ID / UTR Number (12-Digit)</label>
+                          <input 
+                            type="text" 
+                            className="field" 
+                            required
+                            pattern="\d{12}"
+                            title="Please enter the exact 12-digit UPI UTR number"
+                            value={paymentReference} 
+                            onChange={(e) => setPaymentReference(e.target.value)} 
+                            placeholder="Enter 12-digit transaction number" 
+                          />
+                        </div>
+                      </div>
                     )}
-                    {settings.gateways?.stripe && (
-                      <label style={{ display: "flex", gap: "0.5rem", padding: "0.8rem", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.4rem", cursor: "pointer", background: checkoutForm.paymentMethod === "stripe" ? "rgba(99,102,241,0.08)" : "transparent" }}>
-                        <input type="radio" name="gateway" checked={checkoutForm.paymentMethod === "stripe"} onChange={() => setCheckoutForm({ ...checkoutForm, paymentMethod: "stripe" })} />
-                        Credit/Debit Card (Stripe)
-                      </label>
+
+                    {checkoutForm.paymentMethod === "banktransfer" && settings.gateways?.banktransfer && (
+                      <div className="glass-panel" style={{ padding: "1rem", borderRadius: "0.5rem", border: "1px solid rgba(99, 102, 241, 0.2)", background: "rgba(99, 102, 241, 0.02)", display: "flex", flexDirection: "column", gap: "1rem", marginTop: "0.5rem" }}>
+                        <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "#818cf8" }}>Bank Transfer Instructions</span>
+                        
+                        <div style={{ fontSize: "0.85rem", color: "#cbd5e1", display: "grid", gridTemplateColumns: "130px 1fr", gap: "0.5rem", padding: "0.5rem 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                          <span>Bank Name:</span>
+                          <strong>{settings.paymentDetails?.bankName || "N/A"}</strong>
+                          
+                          <span>Account Holder:</span>
+                          <strong>{settings.paymentDetails?.accountName || "N/A"}</strong>
+                          
+                          <span>Account Number:</span>
+                          <strong>{settings.paymentDetails?.accountNumber || "N/A"}</strong>
+                          
+                          <span>IFSC Code:</span>
+                          <strong>{settings.paymentDetails?.ifscCode || "N/A"}</strong>
+                        </div>
+
+                        <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+                          Transfer the final amount of <strong>₹{getCartTotal().toLocaleString()}</strong> to the details above, then enter the payment reference number below.
+                        </div>
+
+                        <div className="field-group" style={{ width: "100%" }}>
+                          <label style={{ fontSize: "0.8rem", fontWeight: 700 }}>Bank Transfer Reference / Transaction ID</label>
+                          <input 
+                            type="text" 
+                            className="field" 
+                            required
+                            value={paymentReference} 
+                            onChange={(e) => setPaymentReference(e.target.value)} 
+                            placeholder="Enter bank transaction reference" 
+                          />
+                        </div>
+                      </div>
                     )}
-                    {settings.gateways?.cod && (
-                      <label style={{ display: "flex", gap: "0.5rem", padding: "0.8rem", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.4rem", cursor: "pointer", background: checkoutForm.paymentMethod === "cod" ? "rgba(99,102,241,0.08)" : "transparent" }}>
-                        <input type="radio" name="gateway" checked={checkoutForm.paymentMethod === "cod"} onChange={() => setCheckoutForm({ ...checkoutForm, paymentMethod: "cod" })} />
-                        Cash On Delivery (COD)
-                      </label>
+
+                    {checkoutForm.paymentMethod === "cod" && settings.gateways?.cod && (
+                      <div style={{ padding: "0.8rem", fontSize: "0.8rem", color: "#94a3b8" }}>
+                        Cash on Delivery: You will pay cash once the delivery agent delivers your package.
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1390,7 +1611,9 @@ export default function EcommerceStore({
                   </div>
                   
                   <button type="submit" className="primary-action" style={{ width: "100%", justifyContent: "center", background: "#a855f7" }}>Unlock Dashboard</button>
-                  <span style={{ fontSize: "0.7rem", color: "#64748b", textAlign: "center" }}>Hint: Default password is `admin123`</span>
+                  <span style={{ fontSize: "0.7rem", color: "#64748b", textAlign: "center" }}>
+                    {settings.adminPassword ? "Hint: Password has been customized" : "Hint: Default password is `admin123`"}
+                  </span>
                 </form>
               </div>
             ) : (
@@ -1695,21 +1918,21 @@ export default function EcommerceStore({
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", flexWrap: "wrap" }}>
                       
                       {/* Payment Gateways Config panel */}
-                      <div className="glass-panel" style={{ padding: "1.25rem", borderRadius: "0.75rem", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "1rem" }}>
-                        <h4 style={{ margin: 0 }}>Active Gateways</h4>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                          {Object.entries(settings.gateways || {}).map(([gw, active]: any) => (
-                            <label key={gw} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", fontSize: "0.85rem" }}>
-                              <span style={{ textTransform: "uppercase" }}>{gw} integration</span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                        <div className="glass-panel" style={{ padding: "1.25rem", borderRadius: "0.75rem", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                          <h4 style={{ margin: 0 }}>Active Gateways</h4>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                            <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", fontSize: "0.85rem" }}>
+                              <span>UPI / PhonePe / Google Pay</span>
                               <input 
                                 type="checkbox" 
-                                checked={active}
+                                checked={!!settings.gateways?.upi}
                                 onChange={async (e) => {
                                   const updatedSettings = {
                                     ...settings,
                                     gateways: {
                                       ...settings.gateways,
-                                      [gw]: e.target.checked
+                                      upi: e.target.checked
                                     }
                                   };
                                   setSettings(updatedSettings);
@@ -1721,59 +1944,229 @@ export default function EcommerceStore({
                                 }}
                               />
                             </label>
-                          ))}
+                            <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", fontSize: "0.85rem" }}>
+                              <span>Bank Transfer</span>
+                              <input 
+                                type="checkbox" 
+                                checked={!!settings.gateways?.banktransfer}
+                                onChange={async (e) => {
+                                  const updatedSettings = {
+                                    ...settings,
+                                    gateways: {
+                                      ...settings.gateways,
+                                      banktransfer: e.target.checked
+                                    }
+                                  };
+                                  setSettings(updatedSettings);
+                                  await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ settings: updatedSettings })
+                                  });
+                                }}
+                              />
+                            </label>
+                            <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", fontSize: "0.85rem" }}>
+                              <span>Cash on Delivery (COD)</span>
+                              <input 
+                                type="checkbox" 
+                                checked={!!settings.gateways?.cod}
+                                onChange={async (e) => {
+                                  const updatedSettings = {
+                                    ...settings,
+                                    gateways: {
+                                      ...settings.gateways,
+                                      cod: e.target.checked
+                                    }
+                                  };
+                                  setSettings(updatedSettings);
+                                  await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ settings: updatedSettings })
+                                  });
+                                }}
+                              />
+                            </label>
+                          </div>
                         </div>
+
+                        {/* Payment Details Form */}
+                        {(settings.gateways?.upi || settings.gateways?.banktransfer) && (
+                          <form onSubmit={handleSavePaymentSettings} className="glass-panel" style={{ padding: "1.25rem", borderRadius: "0.75rem", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                            <h4 style={{ margin: 0 }}>Payment Method Configuration</h4>
+                            
+                            {settings.gateways?.upi && (
+                              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", borderBottom: settings.gateways?.banktransfer ? "1px solid rgba(255,255,255,0.06)" : "none", paddingBottom: "1rem" }}>
+                                <span style={{ fontSize: "0.8rem", color: "#818cf8", fontWeight: 700 }}>UPI Settings</span>
+                                <div className="field-group">
+                                  <label>UPI ID or Phone Number</label>
+                                  <input 
+                                    type="text" 
+                                    className="field" 
+                                    value={upiIdInput} 
+                                    onChange={(e) => setUpiIdInput(e.target.value)} 
+                                    placeholder="e.g. 9876543210@upi or upi-id@bank" 
+                                    required
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {settings.gateways?.banktransfer && (
+                              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", paddingTop: "0.5rem" }}>
+                                <span style={{ fontSize: "0.8rem", color: "#818cf8", fontWeight: 700 }}>Bank Transfer Details</span>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }} className="field-group">
+                                  <div>
+                                    <label>Bank Name</label>
+                                    <input 
+                                      type="text" 
+                                      className="field" 
+                                      value={bankNameInput} 
+                                      onChange={(e) => setBankNameInput(e.target.value)} 
+                                      placeholder="e.g. HDFC Bank" 
+                                      required
+                                    />
+                                  </div>
+                                  <div>
+                                    <label>Account Holder</label>
+                                    <input 
+                                      type="text" 
+                                      className="field" 
+                                      value={bankAccountNameInput} 
+                                      onChange={(e) => setBankAccountNameInput(e.target.value)} 
+                                      placeholder="e.g. John Doe" 
+                                      required
+                                    />
+                                  </div>
+                                </div>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }} className="field-group">
+                                  <div>
+                                    <label>Account Number</label>
+                                    <input 
+                                      type="text" 
+                                      className="field" 
+                                      value={bankAccountNumberInput} 
+                                      onChange={(e) => setBankAccountNumberInput(e.target.value)} 
+                                      placeholder="e.g. 50100123456789" 
+                                      required
+                                    />
+                                  </div>
+                                  <div>
+                                    <label>IFSC Code</label>
+                                    <input 
+                                      type="text" 
+                                      className="field" 
+                                      value={bankIfscInput} 
+                                      onChange={(e) => setBankIfscInput(e.target.value)} 
+                                      placeholder="e.g. HDFC0000123" 
+                                      required
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            <button 
+                              type="submit" 
+                              className="primary-action" 
+                              style={{ width: "fit-content", alignSelf: "flex-end", padding: "0.4rem 1rem", fontSize: "0.8rem" }}
+                            >
+                              Save Payment Details
+                            </button>
+                          </form>
+                        )}
                       </div>
 
-                      {/* WhatsApp Business integrations */}
-                      <div className="glass-panel" style={{ padding: "1.25rem", borderRadius: "0.75rem", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "1rem" }}>
-                        <h4 style={{ margin: 0 }}>WhatsApp Business Notifications</h4>
-                        <div className="field-group">
-                          <label>WhatsApp Phone Number</label>
-                          <input 
-                            type="text" 
-                            className="field" 
-                            value={settings.whatsapp?.phoneNumber || ""} 
-                            onChange={async (e) => {
-                              const updatedSettings = {
-                                ...settings,
-                                whatsapp: {
-                                  ...settings.whatsapp,
-                                  phoneNumber: e.target.value
-                                }
-                              };
-                              setSettings(updatedSettings);
-                              await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ settings: updatedSettings })
-                              });
-                            }}
-                            placeholder="e.g. 919999999999" 
-                          />
+                      {/* Right column: WhatsApp & Password changes */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                        {/* WhatsApp Business integrations */}
+                        <div className="glass-panel" style={{ padding: "1.25rem", borderRadius: "0.75rem", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                          <h4 style={{ margin: 0 }}>WhatsApp Business Notifications</h4>
+                          <div className="field-group">
+                            <label>WhatsApp Phone Number</label>
+                            <input 
+                              type="text" 
+                              className="field" 
+                              value={settings.whatsapp?.phoneNumber || ""} 
+                              onChange={async (e) => {
+                                const updatedSettings = {
+                                  ...settings,
+                                  whatsapp: {
+                                    ...settings.whatsapp,
+                                    phoneNumber: e.target.value
+                                  }
+                                };
+                                setSettings(updatedSettings);
+                                await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ settings: updatedSettings })
+                                });
+                              }}
+                              placeholder="e.g. 919999999999" 
+                            />
+                          </div>
+                          <label style={{ display: "flex", gap: "0.5rem", fontSize: "0.8rem", cursor: "pointer" }}>
+                            <input 
+                              type="checkbox" 
+                              checked={settings.whatsapp?.enabled} 
+                              onChange={async (e) => {
+                                const updatedSettings = {
+                                  ...settings,
+                                  whatsapp: {
+                                    ...settings.whatsapp,
+                                    enabled: e.target.checked
+                                  }
+                                };
+                                setSettings(updatedSettings);
+                                await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ settings: updatedSettings })
+                                });
+                              }}
+                            />
+                            Enable WhatsApp customer chat button on detail pages
+                          </label>
                         </div>
-                        <label style={{ display: "flex", gap: "0.5rem", fontSize: "0.8rem", cursor: "pointer" }}>
-                          <input 
-                            type="checkbox" 
-                            checked={settings.whatsapp?.enabled} 
-                            onChange={async (e) => {
-                              const updatedSettings = {
-                                ...settings,
-                                whatsapp: {
-                                  ...settings.whatsapp,
-                                  enabled: e.target.checked
-                                }
-                              };
-                              setSettings(updatedSettings);
-                              await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ settings: updatedSettings })
-                              });
-                            }}
-                          />
-                          Enable WhatsApp customer chat button on detail pages
-                        </label>
+
+                        {/* Store Security (Admin Password Change) */}
+                        <form onSubmit={handleAdminPasswordChange} className="glass-panel" style={{ padding: "1.25rem", borderRadius: "0.75rem", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                          <h4 style={{ margin: 0 }}>Store Security Settings</h4>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                            <span style={{ fontSize: "0.8rem", color: "#818cf8", fontWeight: 700 }}>Change Administrative Password</span>
+                            <div className="field-group">
+                              <label>New Password</label>
+                              <input 
+                                type="password" 
+                                className="field" 
+                                value={newAdminPassword} 
+                                onChange={(e) => setNewAdminPassword(e.target.value)} 
+                                placeholder="Min 6 characters" 
+                                required
+                              />
+                            </div>
+                            <div className="field-group">
+                              <label>Confirm Password</label>
+                              <input 
+                                type="password" 
+                                className="field" 
+                                value={confirmAdminPassword} 
+                                onChange={(e) => setConfirmAdminPassword(e.target.value)} 
+                                placeholder="Repeat new password" 
+                                required
+                              />
+                            </div>
+                          </div>
+                          <button 
+                            type="submit" 
+                            className="primary-action" 
+                            style={{ width: "fit-content", alignSelf: "flex-end", padding: "0.4rem 1rem", fontSize: "0.8rem" }}
+                          >
+                            Change Password
+                          </button>
+                        </form>
                       </div>
 
                     </div>

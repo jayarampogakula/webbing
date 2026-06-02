@@ -81,6 +81,8 @@ interface AdminConsoleProps {
   initialRequests: PaymentRequest[];
   initialFeedbacks?: any[];
   initialUpiId: string;
+  initialPayouts?: any[];
+  initialRefunds?: any[];
   baseDomain: string;
   protocol: string;
 }
@@ -236,16 +238,20 @@ export default function AdminConsole({
   initialRequests,
   initialFeedbacks = [],
   initialUpiId,
+  initialPayouts = [],
+  initialRefunds = [],
   baseDomain,
   protocol,
 }: AdminConsoleProps) {
   // States
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "keys" | "plans" | "payments" | "feedback" | "emails">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "keys" | "plans" | "payments" | "feedback" | "emails" | "payouts" | "refunds">("dashboard");
   const [upiId, setUpiId] = useState(initialUpiId);
   const [plans, setPlans] = useState<Plan[]>(initialPlans);
   const [requests, setRequests] = useState<PaymentRequest[]>(initialRequests);
   const [feedbacks, setFeedbacks] = useState<any[]>(initialFeedbacks);
+  const [payouts, setPayouts] = useState<any[]>(initialPayouts);
+  const [refunds, setRefunds] = useState<any[]>(initialRefunds);
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<"welcome" | "payment_request" | "activation" | "credits">("welcome");
   const [testEmailAddress, setTestEmailAddress] = useState(user.email);
@@ -389,6 +395,46 @@ export default function AdminConsole({
       setMessage(data.message || `Payment successfully ${action === "APPROVE" ? "approved" : "rejected"}.`);
     } catch (err: any) {
       setError(err.message || `Failed to process payment request.`);
+    }
+  };
+
+  const handleProcessPayout = async (requestId: string, action: "APPROVE" | "REJECT") => {
+    if (!confirm(`Are you sure you want to ${action.toLowerCase()} this payout request?`)) return;
+    try {
+      const res = await fetch("/api/admin/payouts/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed to ${action.toLowerCase()} payout.`);
+
+      setPayouts(prev =>
+        prev.map(p => (p.id === requestId ? { ...p, status: action === "APPROVE" ? "APPROVED" : "REJECTED" } : p))
+      );
+      setMessage(data.message || `Payout request successfully ${action === "APPROVE" ? "approved" : "rejected"}.`);
+    } catch (err: any) {
+      setError(err.message || `Failed to process payout request.`);
+    }
+  };
+
+  const handleProcessRefund = async (requestId: string, action: "APPROVE" | "REJECT") => {
+    if (!confirm(`Are you sure you want to ${action.toLowerCase()} this refund request?`)) return;
+    try {
+      const res = await fetch("/api/admin/refunds/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed to ${action.toLowerCase()} refund.`);
+
+      setRefunds(prev =>
+        prev.map(r => (r.id === requestId ? { ...r, status: action === "APPROVE" ? "APPROVED" : "REJECTED" } : r))
+      );
+      setMessage(data.message || `Refund request successfully ${action === "APPROVE" ? "approved" : "rejected"}.`);
+    } catch (err: any) {
+      setError(err.message || `Failed to process refund request.`);
     }
   };
 
@@ -558,6 +604,56 @@ export default function AdminConsole({
           >
             <DollarSign size={16} />
             {!sidebarCollapsed && <span>Payments</span>}
+          </button>
+
+          {/* Payouts Item */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("payouts")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              width: "100%",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "0.375rem",
+              background: activeTab === "payouts" ? "rgba(129, 140, 248, 0.08)" : "none",
+              border: "none",
+              color: activeTab === "payouts" ? "#818cf8" : "#9ca3af",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              textAlign: "left",
+              transition: "all 0.2s"
+            }}
+          >
+            <DollarSign size={16} />
+            {!sidebarCollapsed && <span>Payout Requests</span>}
+          </button>
+
+          {/* Refunds Item */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("refunds")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              width: "100%",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "0.375rem",
+              background: activeTab === "refunds" ? "rgba(129, 140, 248, 0.08)" : "none",
+              border: "none",
+              color: activeTab === "refunds" ? "#818cf8" : "#9ca3af",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              textAlign: "left",
+              transition: "all 0.2s"
+            }}
+          >
+            <Layers size={16} />
+            {!sidebarCollapsed && <span>Refund Requests</span>}
           </button>
 
           {/* Feedback & Bug Reports Menu */}
@@ -1392,6 +1488,172 @@ export default function AdminConsole({
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* TAB 8: PAYOUT REQUESTS REVIEW PANEL */}
+        {activeTab === "payouts" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+            <div className="app-title" style={{ marginBottom: "1rem" }}>
+              <div>
+                <span className="eyebrow">Affiliates</span>
+                <h1 style={{ color: "#fff", margin: "0.25rem 0 0.5rem 0", fontSize: "1.75rem", fontWeight: 850 }}>Payout Requests</h1>
+                <p style={{ color: "#9ca3af", fontSize: "0.9rem", margin: 0 }}>Review and approve affiliate withdrawal requests to UPI ID addresses.</p>
+              </div>
+            </div>
+
+            <section className="surface-panel">
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Requested At</th>
+                      <th>Referrer Email</th>
+                      <th>UPI Address</th>
+                      <th>Amount</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payouts.map((payout) => (
+                      <tr key={payout.id}>
+                        <td>{new Date(payout.createdAt).toLocaleString()}</td>
+                        <td>
+                          <strong>{payout.user?.name || "N/A"}</strong>
+                          <span style={{ display: "block", fontSize: "0.75rem", color: "#9ca3af" }}>{payout.user?.email}</span>
+                        </td>
+                        <td style={{ fontFamily: "monospace", color: "#818cf8" }}>{payout.upiId}</td>
+                        <td style={{ fontWeight: 700, color: "#fff" }}>₹{payout.amount.toLocaleString()}</td>
+                        <td>
+                          <span
+                            style={{
+                              fontSize: "0.7rem",
+                              fontWeight: 700,
+                              padding: "0.2rem 0.5rem",
+                              borderRadius: "0.25rem",
+                              color: payout.status === "APPROVED" ? "#34d399" : payout.status === "REJECTED" ? "#f87171" : "#f59e0b",
+                              background: payout.status === "APPROVED" ? "rgba(52,211,153,0.1)" : payout.status === "REJECTED" ? "rgba(239, 68, 68, 0.1)" : "rgba(245,158,11,0.1)"
+                            }}
+                          >
+                            {payout.status}
+                          </span>
+                        </td>
+                        <td>
+                          {payout.status === "PENDING" ? (
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                              <button
+                                onClick={() => handleProcessPayout(payout.id, "APPROVE")}
+                                style={{ background: "rgba(52, 211, 153, 0.1)", border: "1px solid rgba(52, 211, 153, 0.2)", color: "#34d399", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", cursor: "pointer", fontWeight: 700 }}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleProcessPayout(payout.id, "REJECT")}
+                                style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#f87171", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", cursor: "pointer", fontWeight: 700 }}
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: "0.8rem", color: "#4b5563" }}>Processed</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {payouts.length === 0 && (
+                      <tr>
+                        <td colSpan={6} style={{ textAlign: "center", color: "#9ca3af", padding: "2rem" }}>No payout requests found.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* TAB 9: REFUND REQUESTS REVIEW PANEL */}
+        {activeTab === "refunds" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+            <div className="app-title" style={{ marginBottom: "1rem" }}>
+              <div>
+                <span className="eyebrow">Subscriptions</span>
+                <h1 style={{ color: "#fff", margin: "0.25rem 0 0.5rem 0", fontSize: "1.75rem", fontWeight: 850 }}>Refund Requests</h1>
+                <p style={{ color: "#9ca3af", fontSize: "0.9rem", margin: 0 }}>Review credits-deducted subscription cancellation and refund requests.</p>
+              </div>
+            </div>
+
+            <section className="surface-panel">
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Requested At</th>
+                      <th>Workspace / Owner</th>
+                      <th>Paid Amount</th>
+                      <th>Credits Used</th>
+                      <th>Refund Amount</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {refunds.map((ref) => (
+                      <tr key={ref.id}>
+                        <td>{new Date(ref.createdAt).toLocaleString()}</td>
+                        <td>
+                          <strong>{ref.tenant?.name || "N/A"}</strong>
+                          <span style={{ display: "block", fontSize: "0.75rem", color: "#9ca3af" }}>Slug: {ref.tenant?.slug}</span>
+                        </td>
+                        <td>₹{ref.amountPaid.toLocaleString()}</td>
+                        <td>{ref.creditsUsed} credits</td>
+                        <td style={{ fontWeight: 700, color: "#fff" }}>₹{ref.refundAmount.toLocaleString()}</td>
+                        <td>
+                          <span
+                            style={{
+                              fontSize: "0.7rem",
+                              fontWeight: 700,
+                              padding: "0.2rem 0.5rem",
+                              borderRadius: "0.25rem",
+                              color: ref.status === "APPROVED" ? "#34d399" : ref.status === "REJECTED" ? "#f87171" : "#f59e0b",
+                              background: ref.status === "APPROVED" ? "rgba(52,211,153,0.1)" : ref.status === "REJECTED" ? "rgba(239, 68, 68, 0.1)" : "rgba(245,158,11,0.1)"
+                            }}
+                          >
+                            {ref.status}
+                          </span>
+                        </td>
+                        <td>
+                          {ref.status === "PENDING" ? (
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                              <button
+                                onClick={() => handleProcessRefund(ref.id, "APPROVE")}
+                                style={{ background: "rgba(52, 211, 153, 0.1)", border: "1px solid rgba(52, 211, 153, 0.2)", color: "#34d399", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", cursor: "pointer", fontWeight: 700 }}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleProcessRefund(ref.id, "REJECT")}
+                                style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#f87171", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", cursor: "pointer", fontWeight: 700 }}
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: "0.8rem", color: "#4b5563" }}>Processed</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {refunds.length === 0 && (
+                      <tr>
+                        <td colSpan={7} style={{ textAlign: "center", color: "#9ca3af", padding: "2rem" }}>No refund requests found.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           </div>
         )}
       </div>
