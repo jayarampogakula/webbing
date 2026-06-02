@@ -49,9 +49,19 @@ services:
       - "3000:3000"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.webbing-wildcard.rule=HostRegexp('{subdomain:.+}.webbing.in') || HostRegexp('{subdomain:.+}.webbing.io')"
-      - "traefik.http.routers.webbing-wildcard.entrypoints=web"
-      - "traefik.http.services.webbing-wildcard.loadbalancer.server.port=3000"
+      # HTTP router
+      - "traefik.http.routers.webbing-http.rule=Host(`webbing.in`) || HostRegexp(`^.+\\.webbing\\.in$$`) || Host(`webbing.io`) || HostRegexp(`^.+\\.webbing\\.io$$`)"
+      - "traefik.http.routers.webbing-http.entrypoints=http"
+      - "traefik.http.routers.webbing-http.service=webbing"
+      - "traefik.http.routers.webbing-http.priority=100"
+      # HTTPS router
+      - "traefik.http.routers.webbing-https.rule=Host(`webbing.in`) || HostRegexp(`^.+\\.webbing\\.in$$`) || Host(`webbing.io`) || HostRegexp(`^.+\\.webbing\\.io$$`)"
+      - "traefik.http.routers.webbing-https.entrypoints=https"
+      - "traefik.http.routers.webbing-https.service=webbing"
+      - "traefik.http.routers.webbing-https.priority=100"
+      - "traefik.http.routers.webbing-https.tls=true"
+      # Service
+      - "traefik.http.services.webbing.loadbalancer.server.port=3000"
 
   worker:
     build:
