@@ -104,5 +104,5 @@ export default function middleware(req: NextRequest) {
 
   // 2. Subdomain & Custom Domain routing
   // Rewrites requests to the unified dynamic site renderer
-  return NextResponse.rewrite(new URL(`/_sites/${currentHost}${path}`, req.url));
+  return NextResponse.rewrite(new URL(`/sites/${currentHost}${path}`, req.url));
 }
