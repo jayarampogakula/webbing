@@ -38,13 +38,40 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-super-secret-auth-key}
       NEXT_PUBLIC_APP_URL: ${APP_URL:-https://app.webbing.io}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      SMTP_HOST: ${SMTP_HOST:-smtp.hostinger.com}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-support@webbing.in}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM:-Webbing Support <support@webbing.in>}
     ports:
       - "3000:3000"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.webbing-wildcard.rule=HostRegexp('{subdomain:.+}.webbing.in') || HostRegexp('{subdomain:.+}.webbing.io')"
-      - "traefik.http.routers.webbing-wildcard.entrypoints=web"
-      - "traefik.http.services.webbing-wildcard.loadbalancer.server.port=3000"
+      # HTTP router
+      - "traefik.http.routers.webbing-http.rule=Host(`webbing.in`) || HostRegexp(`^.+\\.webbing\\.in$$`) || Host(`webbing.io`) || HostRegexp(`^.+\\.webbing\\.io$$`)"
+      - "traefik.http.routers.webbing-http.entrypoints=http"
+      - "traefik.http.routers.webbing-http.service=webbing"
+      - "traefik.http.routers.webbing-http.priority=100"
+      # HTTPS router
+      - "traefik.http.routers.webbing-https.rule=Host(`webbing.in`) || HostRegexp(`^.+\\.webbing\\.in$$`) || Host(`webbing.io`) || HostRegexp(`^.+\\.webbing\\.io$$`)"
+      - "traefik.http.routers.webbing-https.entrypoints=https"
+      - "traefik.http.routers.webbing-https.service=webbing"
+      - "traefik.http.routers.webbing-https.priority=100"
+      - "traefik.http.routers.webbing-https.tls=true"
+      # Service
+      - "traefik.http.services.webbing.loadbalancer.server.port=3000"
+      # Custom domain catch-all (lowest priority, catches anything not matched above)
+      - "traefik.http.routers.webbing-custom-http.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.webbing-custom-http.entrypoints=http"
+      - "traefik.http.routers.webbing-custom-http.service=webbing"
+      - "traefik.http.routers.webbing-custom-http.priority=1"
+      - "traefik.http.routers.webbing-custom-https.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.webbing-custom-https.entrypoints=https"
+      - "traefik.http.routers.webbing-custom-https.service=webbing"
+      - "traefik.http.routers.webbing-custom-https.priority=1"
+      - "traefik.http.routers.webbing-custom-https.tls=true"
 
   worker:
     build:
@@ -60,6 +87,8 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:-redispassword}@redis:6379
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
 
 volumes:
   postgres_data:
