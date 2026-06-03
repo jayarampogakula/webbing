@@ -175,26 +175,75 @@ export default function GeneratorForm({ user, onSuccess }: GeneratorFormProps) {
       {/* STEP 2: DESIGN STYLE SELECTION */}
       {step === 2 && (
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-          <div className="field-group">
-            <label>Select Design Direction</label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.8rem", maxHeight: "250px", overflowY: "auto", padding: "0.2rem" }}>
-              {stylesList.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => setStyle(item.id)}
-                  style={{
-                    background: style === item.id ? "rgba(99, 102, 241, 0.15)" : "rgba(255, 255, 255, 0.02)",
-                    border: style === item.id ? "2px solid #818cf8" : "1px solid rgba(255, 255, 255, 0.06)",
-                    borderRadius: "0.5rem",
-                    padding: "0.8rem 1rem",
-                    cursor: "pointer",
-                    transition: "all 0.2s"
-                  }}
-                >
-                  <strong style={{ color: style === item.id ? "#818cf8" : "#fff", display: "block", fontSize: "0.85rem" }}>{item.label}</strong>
-                  <span style={{ color: "#9ca3af", fontSize: "0.75rem" }}>{item.desc}</span>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem", marginBottom: "0.5rem" }}>
+            {/* Left Column: Style Selection */}
+            <div className="field-group" style={{ display: "flex", flexDirection: "column" }}>
+              <label>Select Design Direction</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", maxHeight: "290px", overflowY: "auto", paddingRight: "0.5rem" }}>
+                {stylesList.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => setStyle(item.id)}
+                    style={{
+                      background: style === item.id ? "rgba(99, 102, 241, 0.12)" : "rgba(255, 255, 255, 0.02)",
+                      border: style === item.id ? "1.5px solid #818cf8" : "1px solid rgba(255, 255, 255, 0.06)",
+                      borderRadius: "0.5rem",
+                      padding: "0.75rem 1rem",
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    <strong style={{ color: style === item.id ? "#818cf8" : "#fff", display: "block", fontSize: "0.85rem" }}>{item.label}</strong>
+                    <span style={{ color: "#9ca3af", fontSize: "0.72rem" }}>{item.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Column: Theme Preview */}
+            <div className="field-group" style={{ display: "flex", flexDirection: "column", justifyContent: "flex-start" }}>
+              <label>Theme Preview</label>
+              <div 
+                style={{ 
+                  borderRadius: "0.5rem", 
+                  overflow: "hidden", 
+                  border: "1px solid rgba(255,255,255,0.08)", 
+                  background: "rgba(0,0,0,0.2)",
+                  height: "290px",
+                  display: "flex",
+                  flexDirection: "column",
+                  position: "relative"
+                }}
+              >
+                {/* Visual Thumbnail */}
+                <div style={{ flexGrow: 1, position: "relative", overflow: "hidden", background: "#0a0f1d" }}>
+                  <img 
+                    src={`/images/themes/${style.toLowerCase().replace(" ", "")}.png`} 
+                    alt={`${style} Theme Preview`} 
+                    style={{ 
+                      width: "100%", 
+                      height: "100%", 
+                      objectFit: "cover",
+                      objectPosition: "top"
+                    }}
+                  />
+                  <div 
+                    style={{ 
+                      position: "absolute", 
+                      bottom: 0, 
+                      left: 0, 
+                      right: 0, 
+                      padding: "1rem", 
+                      background: "linear-gradient(to top, rgba(7, 11, 19, 0.95) 30%, rgba(7, 11, 19, 0))",
+                      display: "flex",
+                      flexDirection: "column"
+                    }}
+                  >
+                    <span style={{ fontSize: "0.7rem", color: "#818cf8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>Interactive Theme</span>
+                    <strong style={{ fontSize: "1.1rem", color: "#fff", marginTop: "0.1rem" }}>{style} Preset</strong>
+                  </div>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
 
