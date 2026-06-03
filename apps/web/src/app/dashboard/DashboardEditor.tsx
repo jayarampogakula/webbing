@@ -1090,6 +1090,618 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const draftProjects = projects.filter(p => p.status === "DRAFT" || p.status === "GENERATING" || p.status === "FAILED");
   const publishedProjects = projects.filter(p => p.status === "PUBLISHED");
 
+  const renderModals = () => {
+    return (
+      <>
+        {/* 3. Publishing Checks overlay modal */}
+              {publishModalOpen && currentProject && (
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(7, 11, 19, 0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+                  <div className="glass-panel" style={{ width: "90%", maxWidth: "520px", padding: "2.5rem", borderRadius: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                    <div>
+                      <h3 style={{ margin: 0, color: "#fff", fontSize: "1.25rem" }}>Deploying Web Project</h3>
+                      <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Verifying SSL certificates, active routing pathways, and assets check.</p>
+                    </div>
+        
+                    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                      {publishProgress.map((step, idx) => (
+                        <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem 1rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.5rem" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                            {step.status === "running" && <RefreshCw size={16} className="animate-spin" color="#818cf8" />}
+                            {step.status === "success" && <CheckCircle size={16} color="#34d399" />}
+                            {step.status === "error" && <AlertTriangle size={16} color="#ef4444" />}
+                            {step.status === "pending" && <div style={{ width: "16px", height: "16px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.2)" }}></div>}
+                            <span style={{ fontSize: "0.85rem", color: "#e2e8f0" }}>{step.name}</span>
+                          </div>
+                          {step.error && <span style={{ fontSize: "0.75rem", color: "#f87171" }}>{step.error}</span>}
+                        </div>
+                      ))}
+                    </div>
+        
+                    {/* Publishing result card */}
+                    {publishResult === "success" && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                        <div style={{ padding: "1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem", textAlign: "center" }}>
+                          🎉 <strong>Website Published Successfully!</strong>
+                          <p style={{ margin: "0.25rem 0 0 0", color: "#cbd5e1" }}>Your production routing SSL certificates are validated.</p>
+                        </div>
+                        <div style={{ display: "flex", gap: "1rem" }}>
+                          <a href={activeSiteUrl} target="_blank" rel="noopener noreferrer" className="primary-action" style={{ flex: 1, justifyContent: "center" }}>
+                            Visit Live Site ↗
+                          </a>
+                          <button onClick={() => setPublishModalOpen(false)} className="secondary-action" style={{ flex: 1, justifyContent: "center" }}>
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    )}
+        
+                    {publishResult === "error" && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                        <div style={{ padding: "1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem", textAlign: "center" }}>
+                          ❌ <strong>Publishing Aborted</strong>
+                          <p style={{ margin: "0.25rem 0 0 0", color: "#cbd5e1" }}>One or more system route checks returned error states.</p>
+                        </div>
+                        <div style={{ display: "flex", gap: "1rem" }}>
+                          <button onClick={handlePublish} className="primary-action" style={{ flex: 1, justifyContent: "center" }}>
+                            Retry Checks
+                          </button>
+                          <button onClick={() => setPublishModalOpen(false)} className="secondary-action" style={{ flex: 1, justifyContent: "center" }}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+        
+                  </div>
+                </div>
+              )}
+        
+              {/* 4. Upgrade Subscription plans modal */}
+              {/* 4. Upgrade Subscription plans modal */}
+              {upgradeModalOpen && (
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(7, 11, 19, 0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: "1.5rem", overflowY: "auto" }}>
+                  <div className="glass-panel" style={{ width: "100%", maxWidth: "600px", padding: "2.5rem", borderRadius: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem", maxHeight: "90vh", overflowY: "auto", margin: "auto" }}>
+                    <div>
+                      <span className="eyebrow" style={{ color: "#c084fc" }}>Billing Portal</span>
+                      <h3 style={{ margin: 0, color: "#fff", fontSize: "1.35rem" }}>
+                        {isAgency ? "Buy Extra Credits" : "SaaS Account Upgrade & Billing"}
+                      </h3>
+                      <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>
+                        {isAgency 
+                          ? "Purchase extra credit packs to keep generating websites on your Agency plan." 
+                          : "Choose a pricing plan to increase your AI credits quota or purchase extra credits."}
+                      </p>
+                    </div>
+        
+                    {/* Referral Discount Banner */}
+                    {!!user.referredBy && (
+                      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", background: "rgba(34, 197, 94, 0.1)", border: "1px solid rgba(34, 197, 94, 0.2)", borderRadius: "0.5rem", padding: "0.75rem 1rem", color: "#4ade80", fontSize: "0.85rem", fontWeight: 600 }}>
+                        <Sparkles size={16} />
+                        <span>10% Referral Discount Applied! Discount is automatically subtracted from payment totals.</span>
+                      </div>
+                    )}
+        
+                    {/* Current Active Plan & Refund Section */}
+                    {tenant.subscription && tenant.subscription.planId !== "free-plan" && tenant.subscription.planId !== "starter" && (
+                      <div style={{ background: "rgba(255, 255, 255, 0.02)", padding: "1.25rem", borderRadius: "0.75rem", border: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <span style={{ fontSize: "0.75rem", color: "#9ca3af", display: "block" }}>CURRENT ACTIVE PLAN</span>
+                            <strong style={{ color: "#fff", display: "block", fontSize: "1.1rem", textTransform: "capitalize" }}>
+                              {tenant.subscription.planId.replace("-plan", "").replace("-annual", " Annual")}
+                            </strong>
+                            <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                              Credits: {tenant.subscription.creditsUsed} / {tenant.subscription.creditsLimit} used
+                            </span>
+                          </div>
+                          <div>
+                            {refundEligibility && refundEligibility.eligible && (
+                              <button
+                                type="button"
+                                onClick={handleRefundSubmit}
+                                disabled={submittingRefund}
+                                className="danger-action"
+                                style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 700 }}
+                              >
+                                {submittingRefund ? "Processing..." : "Cancel & Refund"}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+        
+                        {/* Refund quote calculations display */}
+                        {refundEligibility && refundEligibility.eligible && (
+                          <div style={{ background: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.1)", borderRadius: "0.5rem", padding: "0.75rem 1rem", fontSize: "0.75rem", color: "#f87171" }}>
+                            <div style={{ fontWeight: 700, marginBottom: "0.25rem" }}>Eligible for cancellation & credit-deducted refund:</div>
+                            <ul style={{ margin: 0, paddingLeft: "1.2rem", lineHeight: 1.4 }}>
+                              <li>Original payment: ₹{refundEligibility.amountPaid}</li>
+                              <li>Credits used: {refundEligibility.creditsUsed} (deducted at ₹{Math.round(refundEligibility.deductAmount / (refundEligibility.creditsUsed || 1))} per credit)</li>
+                              <li>Deduction amount: -₹{refundEligibility.deductAmount}</li>
+                              <li>Estimated net refund: <strong>₹{refundEligibility.refundAmount}</strong></li>
+                              <li>Refund window expires in: <strong>{refundEligibility.daysRemaining} days</strong></li>
+                            </ul>
+                          </div>
+                        )}
+        
+                        {refundMessage && (
+                          <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem" }}>
+                            {refundMessage}
+                          </div>
+                        )}
+        
+                        {refundError && (
+                          <div style={{ padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem" }}>
+                            {refundError}
+                          </div>
+                        )}
+                      </div>
+                    )}
+        
+                    {upgradeMessage && (
+                      <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem" }}>
+                        {upgradeMessage}
+                      </div>
+                    )}
+        
+                    {upgradeError && (
+                      <div style={{ padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem" }}>
+                        {upgradeError}
+                      </div>
+                    )}
+        
+                    {!selectedUpgradePlan ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                        
+                        {/* Tab Selector: Only show if user can buy credits and is NOT on agency plan (since Agency has only credits purchase anyway) */}
+                        {canBuyCredits && !isAgency && (
+                          <div style={{ display: "flex", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "0.5rem", padding: "0.25rem" }}>
+                            <button 
+                              type="button"
+                              onClick={() => setBuyCreditsView(false)}
+                              style={{
+                                flex: 1,
+                                padding: "0.5rem",
+                                background: !buyCreditsView ? "rgba(129, 140, 248, 0.15)" : "transparent",
+                                border: "none",
+                                color: !buyCreditsView ? "#fff" : "#9ca3af",
+                                borderRadius: "0.35rem",
+                                fontSize: "0.85rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                transition: "all 0.2s"
+                              }}
+                            >
+                              Subscription Plans
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={() => setBuyCreditsView(true)}
+                              style={{
+                                flex: 1,
+                                padding: "0.5rem",
+                                background: buyCreditsView ? "rgba(168, 85, 247, 0.15)" : "transparent",
+                                border: "none",
+                                color: buyCreditsView ? "#fff" : "#9ca3af",
+                                borderRadius: "0.35rem",
+                                fontSize: "0.85rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                transition: "all 0.2s"
+                              }}
+                            >
+                              Buy Extra Credits
+                            </button>
+                          </div>
+                        )}
+        
+                        {/* Billing Cycle Switcher: Only show when looking at Subscription Plans and NOT in buy credits view */}
+                        {!buyCreditsView && (
+                          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.75rem" }}>
+                            <span style={{ fontSize: "0.85rem", color: billingCycle === "monthly" ? "#fff" : "#9ca3af" }}>Monthly</span>
+                            <button
+                              type="button"
+                              onClick={() => setBillingCycle(billingCycle === "monthly" ? "annually" : "monthly")}
+                              style={{
+                                width: "48px",
+                                height: "24px",
+                                borderRadius: "12px",
+                                background: billingCycle === "annually" ? "#818cf8" : "rgba(255,255,255,0.15)",
+                                border: "none",
+                                position: "relative",
+                                cursor: "pointer",
+                                padding: 0,
+                                transition: "background 0.2s"
+                              }}
+                            >
+                              <div style={{
+                                width: "18px",
+                                height: "18px",
+                                borderRadius: "50%",
+                                background: "#fff",
+                                position: "absolute",
+                                top: "3px",
+                                left: billingCycle === "annually" ? "27px" : "3px",
+                                transition: "left 0.2s"
+                              }} />
+                            </button>
+                            <span style={{ fontSize: "0.85rem", color: billingCycle === "annually" ? "#fff" : "#9ca3af", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+                              Annually <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.35rem", borderRadius: "10px", background: "rgba(34, 197, 94, 0.15)", color: "#4ade80", fontWeight: 700 }}>Save up to 15%</span>
+                            </span>
+                          </div>
+                        )}
+        
+                        {/* Cards Display List */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                          {buyCreditsView ? (
+                            // Display Extra Credit Packs
+                            <>
+                              {[
+                                { id: "credits-10", name: "10 Credits Pack", creditsLimit: 10, price: 99, features: "Adds 10 AI generation credits to your account immediately" },
+                                { id: "credits-50", name: "50 Credits Pack", creditsLimit: 50, price: 399, features: "Adds 50 AI generation credits to your account immediately" },
+                                { id: "credits-100", name: "100 Credits Pack", creditsLimit: 100, price: 699, features: "Adds 100 AI generation credits to your account immediately" },
+                              ].map((pack) => (
+                                <div key={pack.id} style={{ padding: "1.25rem", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                  <div>
+                                    <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>
+                                      {pack.name}
+                                    </strong>
+                                    <span style={{ fontSize: "0.85rem", color: "#cbd5e1", display: "block", margin: "0.2rem 0" }}>₹{pack.price} • {pack.creditsLimit} Credits</span>
+                                    <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{pack.features}</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedUpgradePlan(pack)}
+                                    className="glow-btn"
+                                    style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", fontWeight: 700 }}
+                                  >
+                                    Buy Pack
+                                  </button>
+                                </div>
+                              ))}
+                            </>
+                          ) : (
+                            // Display Subscription Plans
+                            initialPlans.map((plan: any) => {
+                              const planKey = plan.name.toLowerCase().replace(/\s+/g, "-");
+                              const isCurrent = tenant.subscription?.planId === planKey;
+        
+                              // Starter has no annual version or discount
+                              if (planKey === "starter") {
+                                if (billingCycle === "annually") return null; // hide starter on annual view
+                                return (
+                                  <div key={plan.id} style={{ padding: "1.25rem", background: "rgba(255,255,255,0.01)", border: isCurrent ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <div>
+                                      <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>
+                                        {plan.name} {isCurrent && <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.3rem", borderRadius: "0.25rem", background: "rgba(129,140,248,0.15)", color: "#818cf8", marginLeft: "0.5rem" }}>Current Plan</span>}
+                                      </strong>
+                                      <span style={{ fontSize: "0.85rem", color: "#cbd5e1", display: "block", margin: "0.2rem 0" }}>Free • {plan.creditsLimit} monthly credits</span>
+                                      <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{plan.features}</span>
+                                    </div>
+                                    {!isCurrent && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedUpgradePlan({ ...plan, id: planKey })}
+                                        className="glow-btn"
+                                        style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", fontWeight: 700 }}
+                                      >
+                                        Select Plan
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              }
+        
+                              // Adjust name, pricing, and note for billing cycle
+                              let displayPrice = `₹${plan.price}/month`;
+                              let amount = plan.price;
+                              let planName = plan.name;
+                              let discountBadge = null;
+                              let customId = planKey;
+        
+                              if (billingCycle === "annually") {
+                                if (planKey === "pro-plan") {
+                                  displayPrice = "₹6,468/year";
+                                  amount = 6468;
+                                  planName = "Pro Plan (Annually)";
+                                  discountBadge = "10% Discount Applied";
+                                  customId = "pro-plan-annual";
+                                } else if (planKey === "agency") {
+                                  displayPrice = "₹25,488/year";
+                                  amount = 25488;
+                                  planName = "Agency (Annually)";
+                                  discountBadge = "15% Discount Applied";
+                                  customId = "agency-annual";
+                                }
+                              }
+        
+                              return (
+                                <div key={plan.id} style={{ padding: "1.25rem", background: "rgba(255,255,255,0.01)", border: isCurrent ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                  <div>
+                                    <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>
+                                      {planName} {isCurrent && <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.3rem", borderRadius: "0.25rem", background: "rgba(129,140,248,0.15)", color: "#818cf8", marginLeft: "0.5rem" }}>Current Plan</span>}
+                                      {discountBadge && <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.4rem", borderRadius: "0.25rem", background: "rgba(34,197,94,0.15)", color: "#4ade80", marginLeft: "0.5rem", fontWeight: 700 }}>{discountBadge}</span>}
+                                    </strong>
+                                    <span style={{ fontSize: "0.85rem", color: "#cbd5e1", display: "block", margin: "0.2rem 0" }}>
+                                      {displayPrice} • {plan.creditsLimit} monthly credits
+                                      {billingCycle === "annually" && (
+                                        <span style={{ color: "#9ca3af", display: "block", fontSize: "0.75rem", marginTop: "0.1rem" }}>
+                                          Equivalent to ₹{planKey === "pro-plan" ? "539" : "2124"}/month
+                                        </span>
+                                      )}
+                                    </span>
+                                    <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{plan.features}</span>
+                                  </div>
+                                  {!isCurrent && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedUpgradePlan({ ...plan, id: customId, price: amount, name: planName })}
+                                      className="glow-btn"
+                                      style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", fontWeight: 700 }}
+                                    >
+                                      Select Plan
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+        
+                        <button
+                          type="button"
+                          onClick={() => setUpgradeModalOpen(false)}
+                          className="secondary-action"
+                          style={{ width: "100%", justifyContent: "center", marginTop: "0.5rem" }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <form onSubmit={handleConfirmUpgrade} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                        {(() => {
+                          const hasReferrer = !!user.referredBy;
+                          const finalPrice = hasReferrer ? Math.round(selectedUpgradePlan.price * 0.9) : selectedUpgradePlan.price;
+                          return (
+                            <>
+                              <div style={{ background: "rgba(255,255,255,0.02)", padding: "1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.04)" }}>
+                                <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>SELECTED PLAN</span>
+                                <strong style={{ color: "#fff", display: "block", fontSize: "1.1rem" }}>{selectedUpgradePlan.name}</strong>
+                                <span style={{ fontSize: "0.9rem", color: "#818cf8", display: "block" }}>
+                                  Amount to Pay: <strong>₹{finalPrice}</strong>
+                                  {hasReferrer && <span style={{ color: "#4ade80", fontSize: "0.75rem", marginLeft: "0.5rem" }}>(10% Referrer Discount Applied)</span>}
+                                </span>
+                              </div>
+        
+                              {selectedUpgradePlan.price > 0 ? (
+                                <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center" }}>
+                                  <span style={{ fontSize: "0.85rem", color: "#cbd5e1", textAlign: "center" }}>
+                                    Scan the QR code below using any UPI app (GPay, PhonePe, Paytm, BHIM, etc.) to complete payment:
+                                  </span>
+                                  
+                                  {/* Dynamic QR Code Render */}
+                                  <div style={{ background: "#fff", padding: "1rem", borderRadius: "1rem", display: "inline-flex" }}>
+                                    <img
+                                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+                                        `upi://pay?pa=${upiId}&pn=Webbing&am=${finalPrice}&cu=INR&tn=Webbing%20Upgrade%20${selectedUpgradePlan.id || selectedUpgradePlan.name}`
+                                      )}`}
+                                      alt="UPI QR Code"
+                                      style={{ width: "180px", height: "180px" }}
+                                    />
+                                  </div>
+                                  
+                                  <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>UPI ID: <strong>{upiId}</strong></span>
+        
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", width: "100%" }}>
+                                    <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>UPI TRANSACTION REFERENCE ID (UTR - 12 DIGITS)</label>
+                                    <input
+                                      type="text"
+                                      className="premium-input"
+                                      placeholder="e.g. 625123956841"
+                                      value={utrCode}
+                                      onChange={(e) => setUtrCode(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                                      required
+                                      pattern="\d{12}"
+                                      style={{ width: "100%" }}
+                                      disabled={submittingRequest}
+                                    />
+                                  </div>
+                                </div>
+                              ) : (
+                                <p style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>Are you sure you want to downgrade/switch to the free Starter plan?</p>
+                              )}
+                            </>
+                          );
+                        })()}
+        
+                        <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "1rem" }}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedUpgradePlan(null)}
+                            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.6rem 1.2rem", borderRadius: "0.5rem", fontSize: "0.8rem", cursor: "pointer" }}
+                            disabled={submittingRequest}
+                          >
+                            Back to Plans
+                          </button>
+                          <button
+                            type="submit"
+                            className="glow-btn"
+                            style={{ background: "linear-gradient(to right, #6366f1, #d946ef)", color: "#fff", padding: "0.6rem 1.5rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}
+                            disabled={submittingRequest}
+                          >
+                            {submittingRequest ? "Submitting..." : "Confirm payment"}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              )}
+        
+              {/* Feedback / Bug Report Modal */}
+              {feedbackModalOpen && (
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(7, 11, 19, 0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: "1.5rem" }}>
+                  <div className="glass-panel" style={{ width: "100%", maxWidth: "500px", padding: "2.5rem", borderRadius: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                    <div>
+                      <span className="eyebrow" style={{ color: "#c084fc" }}>Support & Suggestions</span>
+                      <h3 style={{ margin: 0, color: "#fff", fontSize: "1.35rem" }}>Submit Feedback or Bug</h3>
+                      <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Help us improve Webbing. Report bugs or suggest new product features.</p>
+                    </div>
+        
+                    {feedbackSuccessMsg && (
+                      <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem" }}>
+                        {feedbackSuccessMsg}
+                      </div>
+                    )}
+        
+                    {feedbackErrorMsg && (
+                      <div style={{ padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem" }}>
+                        {feedbackErrorMsg}
+                      </div>
+                    )}
+        
+                    <form onSubmit={handleSubmitFeedback} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>REPORT TYPE</label>
+                        <select
+                          className="premium-input"
+                          value={feedbackType}
+                          onChange={(e: any) => setFeedbackType(e.target.value)}
+                          style={{ width: "100%" }}
+                        >
+                          <option value="FEEDBACK">Suggestion / Feedback</option>
+                          <option value="BUG">Bug Report</option>
+                        </select>
+                      </div>
+        
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>TITLE</label>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={feedbackTitle}
+                          onChange={(e) => setFeedbackTitle(e.target.value)}
+                          placeholder="e.g. Broken links in ecommerce settings"
+                          required
+                          style={{ width: "100%" }}
+                          disabled={submittingFeedback}
+                        />
+                      </div>
+        
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>MESSAGE / DETAILS</label>
+                        <textarea
+                          className="premium-input"
+                          value={feedbackMessage}
+                          onChange={(e) => setFeedbackMessage(e.target.value)}
+                          placeholder="Describe the issue or feedback in detail..."
+                          required
+                          rows={4}
+                          style={{ width: "100%", resize: "none" }}
+                          disabled={submittingFeedback}
+                        />
+                      </div>
+        
+                      <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "0.5rem" }}>
+                        <button
+                          type="button"
+                          onClick={() => setFeedbackModalOpen(false)}
+                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.6rem 1.2rem", borderRadius: "0.5rem", fontSize: "0.8rem", cursor: "pointer" }}
+                          disabled={submittingFeedback}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="glow-btn"
+                          style={{ background: "linear-gradient(to right, #6366f1, #d946ef)", color: "#fff", padding: "0.6rem 1.5rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}
+                          disabled={submittingFeedback}
+                        >
+                          {submittingFeedback ? "Submitting..." : "Submit Report"}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+        
+              {/* Change Password Modal */}
+              {changePasswordOpen && (
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(7, 11, 19, 0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: "1.5rem" }}>
+                  <div className="glass-panel" style={{ width: "100%", maxWidth: "450px", padding: "2.5rem", borderRadius: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                    <div>
+                      <span className="eyebrow" style={{ color: "#818cf8" }}>Security settings</span>
+                      <h3 style={{ margin: 0, color: "#fff", fontSize: "1.35rem" }}>Change Password</h3>
+                      <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Update your password to secure your Webbing account.</p>
+                    </div>
+        
+                    {changePasswordSuccess && (
+                      <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem" }}>
+                        {changePasswordSuccess}
+                      </div>
+                    )}
+        
+                    {changePasswordError && (
+                      <div style={{ padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem" }}>
+                        {changePasswordError}
+                      </div>
+                    )}
+        
+                    <form onSubmit={handleChangePasswordSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>CURRENT PASSWORD</label>
+                        <input
+                          type="password"
+                          className="premium-input"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          placeholder="Enter current password"
+                          required
+                          style={{ width: "100%" }}
+                          disabled={changePasswordLoading}
+                        />
+                      </div>
+        
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>NEW PASSWORD</label>
+                        <input
+                          type="password"
+                          className="premium-input"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="At least 6 characters"
+                          required
+                          style={{ width: "100%" }}
+                          disabled={changePasswordLoading}
+                        />
+                      </div>
+        
+                      <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "0.5rem" }}>
+                        <button
+                          type="button"
+                          onClick={() => setChangePasswordOpen(false)}
+                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.6rem 1.2rem", borderRadius: "0.5rem", fontSize: "0.8rem", cursor: "pointer" }}
+                          disabled={changePasswordLoading}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="glow-btn"
+                          style={{ background: "linear-gradient(to right, #6366f1, #d946ef)", color: "#fff", padding: "0.6rem 1.5rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}
+                          disabled={changePasswordLoading}
+                        >
+                          {changePasswordLoading ? "Updating..." : "Update Password"}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+        
+      </>
+    );
+  };
+
   // ----------------------------------------------------
   // HOMEPAGE VIEW RENDER
   // ----------------------------------------------------
@@ -1804,6 +2416,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
         </main>
       )}
+      {renderModals()}
       </div>
       </div>
     );
@@ -3395,610 +4008,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
       )}
       </div>
 
-      {/* 3. Publishing Checks overlay modal */}
-      {publishModalOpen && currentProject && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(7, 11, 19, 0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
-          <div className="glass-panel" style={{ width: "90%", maxWidth: "520px", padding: "2.5rem", borderRadius: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            <div>
-              <h3 style={{ margin: 0, color: "#fff", fontSize: "1.25rem" }}>Deploying Web Project</h3>
-              <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Verifying SSL certificates, active routing pathways, and assets check.</p>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {publishProgress.map((step, idx) => (
-                <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem 1rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.5rem" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                    {step.status === "running" && <RefreshCw size={16} className="animate-spin" color="#818cf8" />}
-                    {step.status === "success" && <CheckCircle size={16} color="#34d399" />}
-                    {step.status === "error" && <AlertTriangle size={16} color="#ef4444" />}
-                    {step.status === "pending" && <div style={{ width: "16px", height: "16px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.2)" }}></div>}
-                    <span style={{ fontSize: "0.85rem", color: "#e2e8f0" }}>{step.name}</span>
-                  </div>
-                  {step.error && <span style={{ fontSize: "0.75rem", color: "#f87171" }}>{step.error}</span>}
-                </div>
-              ))}
-            </div>
-
-            {/* Publishing result card */}
-            {publishResult === "success" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <div style={{ padding: "1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem", textAlign: "center" }}>
-                  🎉 <strong>Website Published Successfully!</strong>
-                  <p style={{ margin: "0.25rem 0 0 0", color: "#cbd5e1" }}>Your production routing SSL certificates are validated.</p>
-                </div>
-                <div style={{ display: "flex", gap: "1rem" }}>
-                  <a href={activeSiteUrl} target="_blank" rel="noopener noreferrer" className="primary-action" style={{ flex: 1, justifyContent: "center" }}>
-                    Visit Live Site ↗
-                  </a>
-                  <button onClick={() => setPublishModalOpen(false)} className="secondary-action" style={{ flex: 1, justifyContent: "center" }}>
-                    Close
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {publishResult === "error" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <div style={{ padding: "1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem", textAlign: "center" }}>
-                  ❌ <strong>Publishing Aborted</strong>
-                  <p style={{ margin: "0.25rem 0 0 0", color: "#cbd5e1" }}>One or more system route checks returned error states.</p>
-                </div>
-                <div style={{ display: "flex", gap: "1rem" }}>
-                  <button onClick={handlePublish} className="primary-action" style={{ flex: 1, justifyContent: "center" }}>
-                    Retry Checks
-                  </button>
-                  <button onClick={() => setPublishModalOpen(false)} className="secondary-action" style={{ flex: 1, justifyContent: "center" }}>
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-
-          </div>
-        </div>
-      )}
-
-      {/* 4. Upgrade Subscription plans modal */}
-      {/* 4. Upgrade Subscription plans modal */}
-      {upgradeModalOpen && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(7, 11, 19, 0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: "1.5rem", overflowY: "auto" }}>
-          <div className="glass-panel" style={{ width: "100%", maxWidth: "600px", padding: "2.5rem", borderRadius: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem", maxHeight: "90vh", overflowY: "auto", margin: "auto" }}>
-            <div>
-              <span className="eyebrow" style={{ color: "#c084fc" }}>Billing Portal</span>
-              <h3 style={{ margin: 0, color: "#fff", fontSize: "1.35rem" }}>
-                {isAgency ? "Buy Extra Credits" : "SaaS Account Upgrade & Billing"}
-              </h3>
-              <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>
-                {isAgency 
-                  ? "Purchase extra credit packs to keep generating websites on your Agency plan." 
-                  : "Choose a pricing plan to increase your AI credits quota or purchase extra credits."}
-              </p>
-            </div>
-
-            {/* Referral Discount Banner */}
-            {!!user.referredBy && (
-              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", background: "rgba(34, 197, 94, 0.1)", border: "1px solid rgba(34, 197, 94, 0.2)", borderRadius: "0.5rem", padding: "0.75rem 1rem", color: "#4ade80", fontSize: "0.85rem", fontWeight: 600 }}>
-                <Sparkles size={16} />
-                <span>10% Referral Discount Applied! Discount is automatically subtracted from payment totals.</span>
-              </div>
-            )}
-
-            {/* Current Active Plan & Refund Section */}
-            {tenant.subscription && tenant.subscription.planId !== "free-plan" && tenant.subscription.planId !== "starter" && (
-              <div style={{ background: "rgba(255, 255, 255, 0.02)", padding: "1.25rem", borderRadius: "0.75rem", border: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <span style={{ fontSize: "0.75rem", color: "#9ca3af", display: "block" }}>CURRENT ACTIVE PLAN</span>
-                    <strong style={{ color: "#fff", display: "block", fontSize: "1.1rem", textTransform: "capitalize" }}>
-                      {tenant.subscription.planId.replace("-plan", "").replace("-annual", " Annual")}
-                    </strong>
-                    <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>
-                      Credits: {tenant.subscription.creditsUsed} / {tenant.subscription.creditsLimit} used
-                    </span>
-                  </div>
-                  <div>
-                    {refundEligibility && refundEligibility.eligible && (
-                      <button
-                        type="button"
-                        onClick={handleRefundSubmit}
-                        disabled={submittingRefund}
-                        className="danger-action"
-                        style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 700 }}
-                      >
-                        {submittingRefund ? "Processing..." : "Cancel & Refund"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Refund quote calculations display */}
-                {refundEligibility && refundEligibility.eligible && (
-                  <div style={{ background: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.1)", borderRadius: "0.5rem", padding: "0.75rem 1rem", fontSize: "0.75rem", color: "#f87171" }}>
-                    <div style={{ fontWeight: 700, marginBottom: "0.25rem" }}>Eligible for cancellation & credit-deducted refund:</div>
-                    <ul style={{ margin: 0, paddingLeft: "1.2rem", lineHeight: 1.4 }}>
-                      <li>Original payment: ₹{refundEligibility.amountPaid}</li>
-                      <li>Credits used: {refundEligibility.creditsUsed} (deducted at ₹{Math.round(refundEligibility.deductAmount / (refundEligibility.creditsUsed || 1))} per credit)</li>
-                      <li>Deduction amount: -₹{refundEligibility.deductAmount}</li>
-                      <li>Estimated net refund: <strong>₹{refundEligibility.refundAmount}</strong></li>
-                      <li>Refund window expires in: <strong>{refundEligibility.daysRemaining} days</strong></li>
-                    </ul>
-                  </div>
-                )}
-
-                {refundMessage && (
-                  <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem" }}>
-                    {refundMessage}
-                  </div>
-                )}
-
-                {refundError && (
-                  <div style={{ padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem" }}>
-                    {refundError}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {upgradeMessage && (
-              <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem" }}>
-                {upgradeMessage}
-              </div>
-            )}
-
-            {upgradeError && (
-              <div style={{ padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem" }}>
-                {upgradeError}
-              </div>
-            )}
-
-            {!selectedUpgradePlan ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                
-                {/* Tab Selector: Only show if user can buy credits and is NOT on agency plan (since Agency has only credits purchase anyway) */}
-                {canBuyCredits && !isAgency && (
-                  <div style={{ display: "flex", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "0.5rem", padding: "0.25rem" }}>
-                    <button 
-                      type="button"
-                      onClick={() => setBuyCreditsView(false)}
-                      style={{
-                        flex: 1,
-                        padding: "0.5rem",
-                        background: !buyCreditsView ? "rgba(129, 140, 248, 0.15)" : "transparent",
-                        border: "none",
-                        color: !buyCreditsView ? "#fff" : "#9ca3af",
-                        borderRadius: "0.35rem",
-                        fontSize: "0.85rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        transition: "all 0.2s"
-                      }}
-                    >
-                      Subscription Plans
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setBuyCreditsView(true)}
-                      style={{
-                        flex: 1,
-                        padding: "0.5rem",
-                        background: buyCreditsView ? "rgba(168, 85, 247, 0.15)" : "transparent",
-                        border: "none",
-                        color: buyCreditsView ? "#fff" : "#9ca3af",
-                        borderRadius: "0.35rem",
-                        fontSize: "0.85rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        transition: "all 0.2s"
-                      }}
-                    >
-                      Buy Extra Credits
-                    </button>
-                  </div>
-                )}
-
-                {/* Billing Cycle Switcher: Only show when looking at Subscription Plans and NOT in buy credits view */}
-                {!buyCreditsView && (
-                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.75rem" }}>
-                    <span style={{ fontSize: "0.85rem", color: billingCycle === "monthly" ? "#fff" : "#9ca3af" }}>Monthly</span>
-                    <button
-                      type="button"
-                      onClick={() => setBillingCycle(billingCycle === "monthly" ? "annually" : "monthly")}
-                      style={{
-                        width: "48px",
-                        height: "24px",
-                        borderRadius: "12px",
-                        background: billingCycle === "annually" ? "#818cf8" : "rgba(255,255,255,0.15)",
-                        border: "none",
-                        position: "relative",
-                        cursor: "pointer",
-                        padding: 0,
-                        transition: "background 0.2s"
-                      }}
-                    >
-                      <div style={{
-                        width: "18px",
-                        height: "18px",
-                        borderRadius: "50%",
-                        background: "#fff",
-                        position: "absolute",
-                        top: "3px",
-                        left: billingCycle === "annually" ? "27px" : "3px",
-                        transition: "left 0.2s"
-                      }} />
-                    </button>
-                    <span style={{ fontSize: "0.85rem", color: billingCycle === "annually" ? "#fff" : "#9ca3af", display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
-                      Annually <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.35rem", borderRadius: "10px", background: "rgba(34, 197, 94, 0.15)", color: "#4ade80", fontWeight: 700 }}>Save up to 15%</span>
-                    </span>
-                  </div>
-                )}
-
-                {/* Cards Display List */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  {buyCreditsView ? (
-                    // Display Extra Credit Packs
-                    <>
-                      {[
-                        { id: "credits-10", name: "10 Credits Pack", creditsLimit: 10, price: 99, features: "Adds 10 AI generation credits to your account immediately" },
-                        { id: "credits-50", name: "50 Credits Pack", creditsLimit: 50, price: 399, features: "Adds 50 AI generation credits to your account immediately" },
-                        { id: "credits-100", name: "100 Credits Pack", creditsLimit: 100, price: 699, features: "Adds 100 AI generation credits to your account immediately" },
-                      ].map((pack) => (
-                        <div key={pack.id} style={{ padding: "1.25rem", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div>
-                            <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>
-                              {pack.name}
-                            </strong>
-                            <span style={{ fontSize: "0.85rem", color: "#cbd5e1", display: "block", margin: "0.2rem 0" }}>₹{pack.price} • {pack.creditsLimit} Credits</span>
-                            <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{pack.features}</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedUpgradePlan(pack)}
-                            className="glow-btn"
-                            style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", fontWeight: 700 }}
-                          >
-                            Buy Pack
-                          </button>
-                        </div>
-                      ))}
-                    </>
-                  ) : (
-                    // Display Subscription Plans
-                    initialPlans.map((plan: any) => {
-                      const planKey = plan.name.toLowerCase().replace(/\s+/g, "-");
-                      const isCurrent = tenant.subscription?.planId === planKey;
-
-                      // Starter has no annual version or discount
-                      if (planKey === "starter") {
-                        if (billingCycle === "annually") return null; // hide starter on annual view
-                        return (
-                          <div key={plan.id} style={{ padding: "1.25rem", background: "rgba(255,255,255,0.01)", border: isCurrent ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <div>
-                              <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>
-                                {plan.name} {isCurrent && <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.3rem", borderRadius: "0.25rem", background: "rgba(129,140,248,0.15)", color: "#818cf8", marginLeft: "0.5rem" }}>Current Plan</span>}
-                              </strong>
-                              <span style={{ fontSize: "0.85rem", color: "#cbd5e1", display: "block", margin: "0.2rem 0" }}>Free • {plan.creditsLimit} monthly credits</span>
-                              <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{plan.features}</span>
-                            </div>
-                            {!isCurrent && (
-                              <button
-                                type="button"
-                                onClick={() => setSelectedUpgradePlan({ ...plan, id: planKey })}
-                                className="glow-btn"
-                                style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", fontWeight: 700 }}
-                              >
-                                Select Plan
-                              </button>
-                            )}
-                          </div>
-                        );
-                      }
-
-                      // Adjust name, pricing, and note for billing cycle
-                      let displayPrice = `₹${plan.price}/month`;
-                      let amount = plan.price;
-                      let planName = plan.name;
-                      let discountBadge = null;
-                      let customId = planKey;
-
-                      if (billingCycle === "annually") {
-                        if (planKey === "pro-plan") {
-                          displayPrice = "₹6,468/year";
-                          amount = 6468;
-                          planName = "Pro Plan (Annually)";
-                          discountBadge = "10% Discount Applied";
-                          customId = "pro-plan-annual";
-                        } else if (planKey === "agency") {
-                          displayPrice = "₹25,488/year";
-                          amount = 25488;
-                          planName = "Agency (Annually)";
-                          discountBadge = "15% Discount Applied";
-                          customId = "agency-annual";
-                        }
-                      }
-
-                      return (
-                        <div key={plan.id} style={{ padding: "1.25rem", background: "rgba(255,255,255,0.01)", border: isCurrent ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div>
-                            <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>
-                              {planName} {isCurrent && <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.3rem", borderRadius: "0.25rem", background: "rgba(129,140,248,0.15)", color: "#818cf8", marginLeft: "0.5rem" }}>Current Plan</span>}
-                              {discountBadge && <span style={{ fontSize: "0.7rem", padding: "0.1rem 0.4rem", borderRadius: "0.25rem", background: "rgba(34,197,94,0.15)", color: "#4ade80", marginLeft: "0.5rem", fontWeight: 700 }}>{discountBadge}</span>}
-                            </strong>
-                            <span style={{ fontSize: "0.85rem", color: "#cbd5e1", display: "block", margin: "0.2rem 0" }}>
-                              {displayPrice} • {plan.creditsLimit} monthly credits
-                              {billingCycle === "annually" && (
-                                <span style={{ color: "#9ca3af", display: "block", fontSize: "0.75rem", marginTop: "0.1rem" }}>
-                                  Equivalent to ₹{planKey === "pro-plan" ? "539" : "2124"}/month
-                                </span>
-                              )}
-                            </span>
-                            <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{plan.features}</span>
-                          </div>
-                          {!isCurrent && (
-                            <button
-                              type="button"
-                              onClick={() => setSelectedUpgradePlan({ ...plan, id: customId, price: amount, name: planName })}
-                              className="glow-btn"
-                              style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", fontWeight: 700 }}
-                            >
-                              Select Plan
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setUpgradeModalOpen(false)}
-                  className="secondary-action"
-                  style={{ width: "100%", justifyContent: "center", marginTop: "0.5rem" }}
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleConfirmUpgrade} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-                {(() => {
-                  const hasReferrer = !!user.referredBy;
-                  const finalPrice = hasReferrer ? Math.round(selectedUpgradePlan.price * 0.9) : selectedUpgradePlan.price;
-                  return (
-                    <>
-                      <div style={{ background: "rgba(255,255,255,0.02)", padding: "1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.04)" }}>
-                        <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>SELECTED PLAN</span>
-                        <strong style={{ color: "#fff", display: "block", fontSize: "1.1rem" }}>{selectedUpgradePlan.name}</strong>
-                        <span style={{ fontSize: "0.9rem", color: "#818cf8", display: "block" }}>
-                          Amount to Pay: <strong>₹{finalPrice}</strong>
-                          {hasReferrer && <span style={{ color: "#4ade80", fontSize: "0.75rem", marginLeft: "0.5rem" }}>(10% Referrer Discount Applied)</span>}
-                        </span>
-                      </div>
-
-                      {selectedUpgradePlan.price > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center" }}>
-                          <span style={{ fontSize: "0.85rem", color: "#cbd5e1", textAlign: "center" }}>
-                            Scan the QR code below using any UPI app (GPay, PhonePe, Paytm, BHIM, etc.) to complete payment:
-                          </span>
-                          
-                          {/* Dynamic QR Code Render */}
-                          <div style={{ background: "#fff", padding: "1rem", borderRadius: "1rem", display: "inline-flex" }}>
-                            <img
-                              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                                `upi://pay?pa=${upiId}&pn=Webbing&am=${finalPrice}&cu=INR&tn=Webbing%20Upgrade%20${selectedUpgradePlan.id || selectedUpgradePlan.name}`
-                              )}`}
-                              alt="UPI QR Code"
-                              style={{ width: "180px", height: "180px" }}
-                            />
-                          </div>
-                          
-                          <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>UPI ID: <strong>{upiId}</strong></span>
-
-                          <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", width: "100%" }}>
-                            <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>UPI TRANSACTION REFERENCE ID (UTR - 12 DIGITS)</label>
-                            <input
-                              type="text"
-                              className="premium-input"
-                              placeholder="e.g. 625123956841"
-                              value={utrCode}
-                              onChange={(e) => setUtrCode(e.target.value.replace(/\D/g, "").slice(0, 12))}
-                              required
-                              pattern="\d{12}"
-                              style={{ width: "100%" }}
-                              disabled={submittingRequest}
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <p style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>Are you sure you want to downgrade/switch to the free Starter plan?</p>
-                      )}
-                    </>
-                  );
-                })()}
-
-                <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "1rem" }}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedUpgradePlan(null)}
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.6rem 1.2rem", borderRadius: "0.5rem", fontSize: "0.8rem", cursor: "pointer" }}
-                    disabled={submittingRequest}
-                  >
-                    Back to Plans
-                  </button>
-                  <button
-                    type="submit"
-                    className="glow-btn"
-                    style={{ background: "linear-gradient(to right, #6366f1, #d946ef)", color: "#fff", padding: "0.6rem 1.5rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}
-                    disabled={submittingRequest}
-                  >
-                    {submittingRequest ? "Submitting..." : "Confirm payment"}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Feedback / Bug Report Modal */}
-      {feedbackModalOpen && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(7, 11, 19, 0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: "1.5rem" }}>
-          <div className="glass-panel" style={{ width: "100%", maxWidth: "500px", padding: "2.5rem", borderRadius: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            <div>
-              <span className="eyebrow" style={{ color: "#c084fc" }}>Support & Suggestions</span>
-              <h3 style={{ margin: 0, color: "#fff", fontSize: "1.35rem" }}>Submit Feedback or Bug</h3>
-              <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Help us improve Webbing. Report bugs or suggest new product features.</p>
-            </div>
-
-            {feedbackSuccessMsg && (
-              <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem" }}>
-                {feedbackSuccessMsg}
-              </div>
-            )}
-
-            {feedbackErrorMsg && (
-              <div style={{ padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem" }}>
-                {feedbackErrorMsg}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmitFeedback} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>REPORT TYPE</label>
-                <select
-                  className="premium-input"
-                  value={feedbackType}
-                  onChange={(e: any) => setFeedbackType(e.target.value)}
-                  style={{ width: "100%" }}
-                >
-                  <option value="FEEDBACK">Suggestion / Feedback</option>
-                  <option value="BUG">Bug Report</option>
-                </select>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>TITLE</label>
-                <input
-                  type="text"
-                  className="premium-input"
-                  value={feedbackTitle}
-                  onChange={(e) => setFeedbackTitle(e.target.value)}
-                  placeholder="e.g. Broken links in ecommerce settings"
-                  required
-                  style={{ width: "100%" }}
-                  disabled={submittingFeedback}
-                />
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>MESSAGE / DETAILS</label>
-                <textarea
-                  className="premium-input"
-                  value={feedbackMessage}
-                  onChange={(e) => setFeedbackMessage(e.target.value)}
-                  placeholder="Describe the issue or feedback in detail..."
-                  required
-                  rows={4}
-                  style={{ width: "100%", resize: "none" }}
-                  disabled={submittingFeedback}
-                />
-              </div>
-
-              <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "0.5rem" }}>
-                <button
-                  type="button"
-                  onClick={() => setFeedbackModalOpen(false)}
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.6rem 1.2rem", borderRadius: "0.5rem", fontSize: "0.8rem", cursor: "pointer" }}
-                  disabled={submittingFeedback}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="glow-btn"
-                  style={{ background: "linear-gradient(to right, #6366f1, #d946ef)", color: "#fff", padding: "0.6rem 1.5rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}
-                  disabled={submittingFeedback}
-                >
-                  {submittingFeedback ? "Submitting..." : "Submit Report"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Change Password Modal */}
-      {changePasswordOpen && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(7, 11, 19, 0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: "1.5rem" }}>
-          <div className="glass-panel" style={{ width: "100%", maxWidth: "450px", padding: "2.5rem", borderRadius: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            <div>
-              <span className="eyebrow" style={{ color: "#818cf8" }}>Security settings</span>
-              <h3 style={{ margin: 0, color: "#fff", fontSize: "1.35rem" }}>Change Password</h3>
-              <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Update your password to secure your Webbing account.</p>
-            </div>
-
-            {changePasswordSuccess && (
-              <div style={{ padding: "0.75rem 1rem", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "0.5rem", color: "#34d399", fontSize: "0.85rem" }}>
-                {changePasswordSuccess}
-              </div>
-            )}
-
-            {changePasswordError && (
-              <div style={{ padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "0.5rem", color: "#f87171", fontSize: "0.85rem" }}>
-                {changePasswordError}
-              </div>
-            )}
-
-            <form onSubmit={handleChangePasswordSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>CURRENT PASSWORD</label>
-                <input
-                  type="password"
-                  className="premium-input"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Enter current password"
-                  required
-                  style={{ width: "100%" }}
-                  disabled={changePasswordLoading}
-                />
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>NEW PASSWORD</label>
-                <input
-                  type="password"
-                  className="premium-input"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="At least 6 characters"
-                  required
-                  style={{ width: "100%" }}
-                  disabled={changePasswordLoading}
-                />
-              </div>
-
-              <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "0.5rem" }}>
-                <button
-                  type="button"
-                  onClick={() => setChangePasswordOpen(false)}
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.6rem 1.2rem", borderRadius: "0.5rem", fontSize: "0.8rem", cursor: "pointer" }}
-                  disabled={changePasswordLoading}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="glow-btn"
-                  style={{ background: "linear-gradient(to right, #6366f1, #d946ef)", color: "#fff", padding: "0.6rem 1.5rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}
-                  disabled={changePasswordLoading}
-                >
-                  {changePasswordLoading ? "Updating..." : "Update Password"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            {renderModals()}
 
     </div>
   );
