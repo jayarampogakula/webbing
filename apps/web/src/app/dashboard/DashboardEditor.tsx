@@ -1163,34 +1163,6 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
             <button
               onClick={() => {
-                setActiveView("homepage");
-                setHomeSubView("affiliate");
-                setIsCreatingNew(false);
-                if (isMobile) setSidebarCollapsed(true);
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-                width: "100%",
-                padding: "0.6rem 0.8rem",
-                borderRadius: "0.375rem",
-                background: (activeView === "homepage" && homeSubView === "affiliate") ? "rgba(129, 140, 248, 0.08)" : "none",
-                border: "none",
-                color: (activeView === "homepage" && homeSubView === "affiliate") ? "#818cf8" : "#9ca3af",
-                cursor: "pointer",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                textAlign: "left",
-                transition: "all 0.2s"
-              }}
-            >
-              <Percent size={16} />
-              {!sidebarCollapsed && <span>Affiliate Program</span>}
-            </button>
-
-            <button
-              onClick={() => {
                 setIsCreatingNew(true);
                 setActiveView("builder");
                 if (isMobile) setSidebarCollapsed(true);
@@ -1240,6 +1212,36 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                 {!sidebarCollapsed && <span>Admin Console</span>}
               </a>
             )}
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+            <button
+              onClick={() => {
+                setActiveView("homepage");
+                setHomeSubView("affiliate");
+                setIsCreatingNew(false);
+                if (isMobile) setSidebarCollapsed(true);
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                width: "100%",
+                padding: "0.6rem 0.8rem",
+                borderRadius: "0.375rem",
+                background: (activeView === "homepage" && homeSubView === "affiliate") ? "rgba(129, 140, 248, 0.08)" : "none",
+                border: "none",
+                color: (activeView === "homepage" && homeSubView === "affiliate") ? "#818cf8" : "#9ca3af",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                textAlign: "left",
+                transition: "all 0.2s"
+              }}
+            >
+              <Percent size={16} />
+              {!sidebarCollapsed && <span>Affiliate Program</span>}
+            </button>
 
             <button
               type="button"
@@ -1271,60 +1273,60 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
               <MessageSquare size={16} />
               {!sidebarCollapsed && <span>Submit Feedback</span>}
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setChangePasswordOpen(true);
+                setChangePasswordError("");
+                setChangePasswordSuccess("");
+                setCurrentPassword("");
+                setNewPassword("");
+                if (isMobile) setSidebarCollapsed(true);
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                width: "100%",
+                padding: "0.6rem 0.8rem",
+                borderRadius: "0.375rem",
+                background: "none",
+                border: "none",
+                color: "#9ca3af",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                textAlign: "left",
+                transition: "all 0.2s"
+              }}
+            >
+              <Shield size={16} />
+              {!sidebarCollapsed && <span>Change Password</span>}
+            </button>
+
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                width: "100%",
+                padding: "0.6rem 0.8rem",
+                borderRadius: "0.375rem",
+                background: "none",
+                border: "none",
+                color: "#6b7280",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                transition: "all 0.2s"
+              }}
+            >
+              {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              {!sidebarCollapsed && <span>Collapse Sidebar</span>}
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              setChangePasswordOpen(true);
-              setChangePasswordError("");
-              setChangePasswordSuccess("");
-              setCurrentPassword("");
-              setNewPassword("");
-              if (isMobile) setSidebarCollapsed(true);
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.75rem",
-              width: "100%",
-              padding: "0.6rem 0.8rem",
-              borderRadius: "0.375rem",
-              background: "none",
-              border: "none",
-              color: "#9ca3af",
-              cursor: "pointer",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              textAlign: "left",
-              transition: "all 0.2s"
-            }}
-          >
-            <Shield size={16} />
-            {!sidebarCollapsed && <span>Change Password</span>}
-          </button>
-
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.75rem",
-              width: "100%",
-              padding: "0.6rem 0.8rem",
-              borderRadius: "0.375rem",
-              background: "none",
-              border: "none",
-              color: "#6b7280",
-              cursor: "pointer",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              transition: "all 0.2s"
-            }}
-          >
-            {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-            {!sidebarCollapsed && <span>Collapse Sidebar</span>}
-          </button>
         </div>
 
         <div style={{ flexGrow: 1, padding: isMobile ? "1.25rem" : "2.5rem", background: "#0a0e17", overflowY: "auto" }}>
