@@ -373,8 +373,6 @@ Choose an appropriate ID based on the niche:
       Business Name: ${metadata?.businessName || "My Brand"}
       Description: ${prompt}
       Keywords: ${metadata?.keywords || ""}
-      Industry: ${metadata?.industry || ""}
-      Target Audience: ${metadata?.targetAudience || ""}
       Style Preferences: ${style}
 
       Your response MUST follow this JSON structure exactly:

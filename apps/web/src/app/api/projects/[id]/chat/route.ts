@@ -47,6 +47,9 @@ export async function POST(
     const project = await prisma.project.findFirst({
       where: { id: projectId, tenantId: user.tenantId },
       include: {
+        tenant: {
+          include: { subscription: true }
+        },
         pages: {
           include: {
             sections: { orderBy: { order: "asc" } }
@@ -61,6 +64,22 @@ export async function POST(
 
     if (user.role !== "ADMIN" && project.userId && project.userId !== user.userId) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    // Verify tenant exists and check credits quota
+    const tenant = project.tenant;
+    if (!tenant) {
+      return NextResponse.json({ error: "Tenant/Workspace not found" }, { status: 404 });
+    }
+
+    if (tenant.subscription) {
+      const { creditsLimit, creditsUsed } = tenant.subscription;
+      if (creditsUsed + 1 > creditsLimit) {
+        return NextResponse.json(
+          { error: "Insufficient AI credits. Please upgrade your plan to unlock more edits." },
+          { status: 403 }
+        );
+      }
     }
 
     const page = project.pages[0];
@@ -212,6 +231,14 @@ Choose an appropriate ID based on the niche:
             content: sec.content || {},
             styles: sec.styles || {}
           }
+        });
+      }
+
+      // Increment Tenant credits count
+      if (tenant.subscription) {
+        await tx.subscription.update({
+          where: { tenantId: user.tenantId },
+          data: { creditsUsed: { increment: 1 } }
         });
       }
     });

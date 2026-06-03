@@ -6,11 +6,11 @@ import { verifySession } from "@/lib/session";
 import * as z from "zod";
 
 const generationSchema = z.object({
-  name: z.string().min(1),
-  businessName: z.string().min(1),
+  name: z.string().optional().or(z.literal("")).transform(val => !val || val.trim() === "" ? "My Website" : val).default("My Website"),
+  businessName: z.string().optional().or(z.literal("")).transform(val => !val || val.trim() === "" ? "My Business" : val).default("My Business"),
   prompt: z.string().min(5),
   keywords: z.string().default(""),
-  niche: z.string().min(2), // Industry
+  niche: z.string().default(""), // Industry (optional)
   targetAudience: z.string().default(""),
   style: z.string().default("Modern Startup"),
   ecommerce: z.boolean().default(false),

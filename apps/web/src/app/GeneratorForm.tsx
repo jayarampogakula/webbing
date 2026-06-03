@@ -29,10 +29,8 @@ export default function GeneratorForm({ user, onSuccess }: GeneratorFormProps) {
   // Form Fields
   const [name, setName] = useState("");
   const [businessName, setBusinessName] = useState("");
-  const [niche, setNiche] = useState(""); // Industry
   const [prompt, setPrompt] = useState(""); // Description
   const [keywords, setKeywords] = useState("");
-  const [targetAudience, setTargetAudience] = useState("");
   const [style, setStyle] = useState("Modern Startup");
   const [ecommerce, setEcommerce] = useState(false);
 
@@ -53,9 +51,6 @@ export default function GeneratorForm({ user, onSuccess }: GeneratorFormProps) {
   }, [success]);
 
   const validateStep1 = () => {
-    if (!name.trim()) return "Please enter a website name.";
-    if (!businessName.trim()) return "Please enter your business name.";
-    if (!niche.trim()) return "Please specify the industry or category.";
     if (prompt.trim().length < 5) return "Please write a brief description (at least 5 characters).";
     return "";
   };
@@ -98,8 +93,8 @@ export default function GeneratorForm({ user, onSuccess }: GeneratorFormProps) {
           businessName: businessName.trim(),
           prompt: prompt.trim(),
           keywords: keywords.trim(),
-          niche: niche.trim(),
-          targetAudience: targetAudience.trim(),
+          niche: "",
+          targetAudience: "",
           style,
           ecommerce,
         }),
@@ -146,23 +141,12 @@ export default function GeneratorForm({ user, onSuccess }: GeneratorFormProps) {
         <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
           <div className="form-grid">
             <div className="field-group">
-              <label>Website Name</label>
+              <label>Website Name <span style={{ color: "var(--muted)", fontWeight: "normal", fontSize: "0.8rem" }}>(Optional)</span></label>
               <input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Nova Tech Solutions" />
             </div>
             <div className="field-group">
-              <label>Business Name</label>
+              <label>Business Name <span style={{ color: "var(--muted)", fontWeight: "normal", fontSize: "0.8rem" }}>(Optional)</span></label>
               <input className="field" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="e.g. Nova Tech" />
-            </div>
-          </div>
-
-          <div className="form-grid">
-            <div className="field-group">
-              <label>Industry / Niche</label>
-              <input className="field" value={niche} onChange={(e) => setNiche(e.target.value)} placeholder="e.g. Gaming, SaaS, Creator" />
-            </div>
-            <div className="field-group">
-              <label>Target Audience</label>
-              <input className="field" value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} placeholder="e.g. Esports fans, players" />
             </div>
           </div>
 
