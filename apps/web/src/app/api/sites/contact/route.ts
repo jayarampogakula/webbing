@@ -67,19 +67,19 @@ export async function POST(req: Request) {
 
     console.log(`[Contact API] Routing form submission to: ${recipientEmail}`);
 
-    const emailSent = await sendContactFormEmail(
-      recipientEmail,
-      project.name,
-      name,
-      email,
-      message
-    );
-
-    if (!emailSent) {
-      return NextResponse.json(
-        { error: "Failed to send email. Please try again later." },
-        { status: 500 }
+    try {
+      const emailSent = await sendContactFormEmail(
+        recipientEmail,
+        project.name,
+        name,
+        email,
+        message
       );
+      if (!emailSent) {
+        console.warn(`[Contact API] SMTP delivery failed for: ${recipientEmail}`);
+      }
+    } catch (emailError) {
+      console.error("[Contact API] SMTP exception during send:", emailError);
     }
 
     return NextResponse.json({ success: true, recipient: recipientEmail });

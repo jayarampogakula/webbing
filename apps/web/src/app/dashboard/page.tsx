@@ -66,6 +66,9 @@ export default async function DashboardPage() {
             },
             include: {
               customDomain: true,
+              contactSubmissions: {
+                orderBy: { createdAt: "desc" }
+              },
               pages: {
                 include: {
                   sections: { orderBy: { order: "asc" } }
