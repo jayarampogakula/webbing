@@ -219,6 +219,82 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   // Iframe Refresh Key
   const [iframeKey, setIframeKey] = useState(0);
 
+  // Load state from URL parameters on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const projectParam = params.get("project");
+      const viewParam = params.get("view");
+      const tabParam = params.get("tab");
+      const newParam = params.get("new");
+      const subviewParam = params.get("subview");
+      
+      if (projectParam) {
+        setSelectedProjectId(projectParam);
+        setIsCreatingNew(false);
+      }
+      if (viewParam === "builder" || viewParam === "homepage") {
+        setActiveView(viewParam);
+      }
+      if (newParam === "true") {
+        setIsCreatingNew(true);
+      }
+      if (tabParam && ["chat", "layers", "properties", "assets", "settings", "leads"].includes(tabParam)) {
+        setBuilderTab(tabParam as any);
+      }
+      if (subviewParam === "affiliate" || subviewParam === "projects") {
+        setHomeSubView(subviewParam as any);
+      }
+    }
+  }, []);
+
+  // Sync state back to URL parameters
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      
+      if (selectedProjectId) {
+        params.set("project", selectedProjectId);
+      } else {
+        params.delete("project");
+      }
+      
+      if (activeView) {
+        params.set("view", activeView);
+      } else {
+        params.delete("view");
+      }
+      
+      if (activeView === "builder") {
+        if (isCreatingNew) {
+          params.set("new", "true");
+          params.delete("project");
+        } else {
+          params.delete("new");
+        }
+        
+        if (builderTab) {
+          params.set("tab", builderTab);
+        } else {
+          params.delete("tab");
+        }
+      } else {
+        params.delete("new");
+        params.delete("tab");
+      }
+      
+      if (activeView === "homepage" && homeSubView) {
+        params.set("subview", homeSubView);
+      } else {
+        params.delete("subview");
+      }
+      
+      const newSearch = params.toString();
+      const newUrl = `${window.location.pathname}${newSearch ? "?" + newSearch : ""}`;
+      window.history.replaceState(null, "", newUrl);
+    }
+  }, [selectedProjectId, activeView, builderTab, isCreatingNew, homeSubView]);
+
   // --- AI Chat states ---
   const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "ai"; text: string }>>([
     { sender: "ai", text: "Welcome to the AI Assistant! Type below to edit headings, add sections, adjust styles, or transition themes in real time." }
