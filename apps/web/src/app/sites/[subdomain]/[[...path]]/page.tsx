@@ -1,7 +1,7 @@
 import React from "react";
 import { notFound } from "next/navigation";
 import { prisma } from "@webbing/db";
-import { CheckCircle2, Mail, ArrowRight, Zap, Star, ArrowUpRight, Phone } from "lucide-react";
+import { CheckCircle2, Mail, ArrowRight, Zap, Star, ArrowUpRight, Phone, Clock } from "lucide-react";
 import EcommerceStore from "@/components/EcommerceStore";
 import ClientEffects from "@/components/ClientEffects";
 import ContactForm from "@/components/ContactForm";
@@ -606,6 +606,14 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
                           <a href={`tel:${rawPhone}`} style={{ color: "#fff", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
                             <Phone size={14} color="#818cf8" /> {rawPhone}
                           </a>
+                        </div>
+                      )}
+                      {(content.timings || content.hours || content.officeHours) && (
+                        <div>
+                          <h3 style={{ margin: "0 0 0.5rem 0", color: "#fff", fontSize: "1.1rem" }}>Office Hours</h3>
+                          <span style={{ color: "#9ca3af", display: "inline-flex", alignItems: "center", gap: "0.5rem", fontSize: "0.95rem" }}>
+                            <Clock size={14} color="#818cf8" /> {renderText(content.timings || content.hours || content.officeHours)}
+                          </span>
                         </div>
                       )}
                     </div>

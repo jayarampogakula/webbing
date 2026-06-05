@@ -129,6 +129,21 @@ Your response MUST match this structure:
 
 You MUST return the COMPLETE, updated list of ALL sections for the page. Preserve all unmodified sections as-is in the list, and modify, add, or delete sections as requested by the user. Make sure the "order" fields are sequential (starting from 1).
 
+Here is the exact schema representation of the content for each section type:
+- HEADER: { brandName: string, logoUrl?: string, ctaText?: string, ctaUrl?: string }
+- HERO: { heading: string, subheading: string, ctaText?: string, ctaUrl?: string, imageUrl?: string }
+- FEATURES: { heading: string, items: Array<{ title: string, description: string, icon?: string }> }
+- SERVICES: { heading: string, items: Array<{ title: string, description: string, icon?: string, price?: string }> }
+- TESTIMONIALS: { heading: string, items: Array<{ quote: string, author: string, role?: string, avatar?: string }> }
+- PRICING: { heading: string, plans: Array<{ name: string, price: string, period: string, features: string[], buttonText: string, featured?: boolean }> }
+- FAQS: { heading: string, faqs: Array<{ q: string, a: string }> }
+- CTA: { heading: string, subheading: string, ctaText: string, ctaUrl: string }
+- ABOUT: { heading: string, body: string, imageUrl?: string }
+- CONTACT: { heading: string, email: string, phone?: string, timings?: string }
+- FOOTER: { brandingText?: string }
+
+If the user asks to add or change details like office hours, timings, or opening times, you MUST set or modify the 'timings' field of the CONTACT section. Do not invent custom properties outside this schema.
+
 IMPORTANT FOR IMAGES:
 If the user requests to add, edit, or modify images, or for any new section that requires an image, choose a highly relevant high-resolution image URL from Unsplash. Use this format: \`https://images.unsplash.com/photo-[UNSPLASH_ID]?auto=format&fit=crop&w=1200&q=80\`.
 Choose an appropriate ID based on the niche:
