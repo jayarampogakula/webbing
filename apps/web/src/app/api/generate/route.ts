@@ -68,7 +68,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Tenant/Workspace not found" }, { status: 404 });
     }
 
-    const requiredCredits = validated.ecommerce ? 25 : 1;
+    const requiredCredits = validated.ecommerce ? 25 : 5;
 
     // Enforce active website count limit based on the subscription plan
     const activeProjectsCount = await prisma.project.count({
