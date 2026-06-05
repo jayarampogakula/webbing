@@ -3082,7 +3082,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
       {isCreatingNew ? (
         <div style={{ flexGrow: 1, padding: "2.5rem", background: "#0a0e17", overflowY: "auto" }}>
-          <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+          <div style={{ maxWidth: "850px", margin: "0 auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
               <div>
                 <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#fff", margin: 0 }}>Create a new website with AI</h2>
@@ -3121,55 +3121,65 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
               flexShrink: 0,
               display: "flex",
               flexDirection: "column",
-              overflowY: "auto",
+              overflowY: builderTab === "chat" ? "hidden" : "auto",
               background: "rgba(10, 14, 23, 0.55)",
               borderRight: "1px solid rgba(255,255,255,0.06)",
-              padding: "1.5rem"
+              padding: "1.5rem",
+              height: "100%",
+              boxSizing: "border-box"
             }}>
                 
                 {/* Error / Success alert display banner */}
-                {error && <div style={{ background: "rgba(239, 68, 68, 0.08)", borderBottom: "1px solid rgba(239, 68, 68, 0.15)", color: "#f87171", padding: "0.6rem 1rem", borderRadius: "0.4rem", fontSize: "0.8rem", marginBottom: "1rem" }}>{error}</div>}
-                {success && <div style={{ background: "rgba(16, 185, 129, 0.08)", borderBottom: "1px solid rgba(16, 185, 129, 0.15)", color: "#34d399", padding: "0.6rem 1rem", borderRadius: "0.4rem", fontSize: "0.8rem", marginBottom: "1rem" }}>{success}</div>}
+                {error && <div style={{ background: "rgba(239, 68, 68, 0.08)", borderBottom: "1px solid rgba(239, 68, 68, 0.15)", color: "#f87171", padding: "0.6rem 1rem", borderRadius: "0.4rem", fontSize: "0.8rem", marginBottom: "1rem", flexShrink: 0 }}>{error}</div>}
+                {success && <div style={{ background: "rgba(16, 185, 129, 0.08)", borderBottom: "1px solid rgba(16, 185, 129, 0.15)", color: "#34d399", padding: "0.6rem 1rem", borderRadius: "0.4rem", fontSize: "0.8rem", marginBottom: "1rem", flexShrink: 0 }}>{success}</div>}
 
                 {/* TAB CONTENT: AI CHAT EDITOR */}
                 {builderTab === "chat" && (
-                  <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
-                    <div>
+                  <div style={{ display: "flex", flexDirection: "column", flexGrow: 1, overflow: "hidden" }}>
+                    <div style={{ flexShrink: 0 }}>
                       <h3 style={{ margin: "0 0 0.5rem 0", color: "#fff", fontSize: "1.1rem" }}>AI Edit Workspace Chat</h3>
                       <p style={{ color: "#9ca3af", fontSize: "0.8rem", margin: "0 0 1.5rem 0" }}>
                         Ask AI to modify hero text, append pages, adjust theme palettes, or add services/pricing blocks instantly.
                       </p>
+                    </div>
 
-                      {/* Chat Messages container */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: "1rem", maxHeight: "380px", overflowY: "auto", paddingRight: "0.5rem" }}>
-                        {chatMessages.map((msg, i) => (
-                          <div
-                            key={i}
-                            style={{
-                              alignSelf: msg.sender === "user" ? "flex-end" : "flex-start",
-                              background: msg.sender === "user" ? "rgba(99, 102, 241, 0.15)" : "rgba(255,255,255,0.03)",
-                              border: msg.sender === "user" ? "1px solid rgba(99, 102, 241, 0.3)" : "1px solid rgba(255,255,255,0.06)",
-                              padding: "0.8rem 1rem",
-                              borderRadius: "0.6rem",
-                              fontSize: "0.85rem",
-                              color: "#e2e8f0",
-                              maxWidth: "85%",
-                              lineHeight: 1.5
-                            }}
-                          >
-                            {msg.text}
-                          </div>
-                        ))}
-                        {chatLoading && (
-                          <div style={{ alignSelf: "flex-start", background: "rgba(255,255,255,0.02)", padding: "0.8rem 1rem", borderRadius: "0.6rem", fontSize: "0.8rem", color: "#9ca3af", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            <span className="animate-spin">◌</span> Generating dynamic code layout...
-                          </div>
-                        )}
-                      </div>
+                    {/* Chat Messages container */}
+                    <div style={{ 
+                      flexGrow: 1, 
+                      display: "flex", 
+                      flexDirection: "column", 
+                      gap: "1rem", 
+                      overflowY: "auto", 
+                      paddingRight: "0.5rem",
+                      marginBottom: "1rem"
+                    }}>
+                      {chatMessages.map((msg, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            alignSelf: msg.sender === "user" ? "flex-end" : "flex-start",
+                            background: msg.sender === "user" ? "rgba(99, 102, 241, 0.15)" : "rgba(255,255,255,0.03)",
+                            border: msg.sender === "user" ? "1px solid rgba(99, 102, 241, 0.3)" : "1px solid rgba(255,255,255,0.06)",
+                            padding: "0.8rem 1rem",
+                            borderRadius: "0.6rem",
+                            fontSize: "0.85rem",
+                            color: "#e2e8f0",
+                            maxWidth: "85%",
+                            lineHeight: 1.5
+                          }}
+                        >
+                          {msg.text}
+                        </div>
+                      ))}
+                      {chatLoading && (
+                        <div style={{ alignSelf: "flex-start", background: "rgba(255,255,255,0.02)", padding: "0.8rem 1rem", borderRadius: "0.6rem", fontSize: "0.8rem", color: "#9ca3af", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          <span className="animate-spin">◌</span> Generating dynamic code layout...
+                        </div>
+                      )}
                     </div>
 
                     {/* Chat Prompt input Form */}
-                    <form onSubmit={handleChatSubmit} style={{ marginTop: "1.5rem" }}>
+                    <form onSubmit={handleChatSubmit} style={{ marginTop: "auto", flexShrink: 0 }}>
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           className="field"
