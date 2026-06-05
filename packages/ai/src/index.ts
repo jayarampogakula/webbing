@@ -150,7 +150,15 @@ export class GeminiProvider implements AIProvider {
           responseMimeType: "application/json",
         }
       });
-      const text = response.text || "{}";
+      let text = response.text || "{}";
+      // Sanitize markdown code blocks if present
+      if (text.includes("```")) {
+        const startIdx = text.indexOf("{");
+        const endIdx = text.lastIndexOf("}");
+        if (startIdx !== -1 && endIdx !== -1) {
+          text = text.substring(startIdx, endIdx + 1);
+        }
+      }
       return JSON.parse(text) as T;
     } catch (err: any) {
       const isQuotaOrNotFound = err?.message?.toLowerCase().includes("quota") || 

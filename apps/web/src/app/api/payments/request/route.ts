@@ -56,7 +56,8 @@ export async function POST(req: Request) {
     // Resolve expected price
     const cleanPlanId = planId.replace("-annual", "");
     let lookupName = cleanPlanId;
-    if (cleanPlanId === "pro-plan") lookupName = "Pro Plan";
+    if (cleanPlanId === "individual" || cleanPlanId === "individual-plan") lookupName = "Individual Plan";
+    else if (cleanPlanId === "pro-plan") lookupName = "Pro Plan";
     else if (cleanPlanId === "agency") lookupName = "Agency";
     else if (cleanPlanId === "starter") lookupName = "Starter";
 
@@ -74,7 +75,8 @@ export async function POST(req: Request) {
       if (plan) {
         expectedAmount = plan.price;
         if (planId.endsWith("-annual")) {
-          if (cleanPlanId === "pro-plan") expectedAmount = 6468;
+          if (cleanPlanId === "individual" || cleanPlanId === "individual-plan") expectedAmount = 2040;
+          else if (cleanPlanId === "pro-plan") expectedAmount = 6468;
           else if (cleanPlanId === "agency") expectedAmount = 25488;
         }
       }

@@ -1,3 +1,6 @@
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, "../../../.env") });
+
 const { PrismaClient, Role, SubscriptionStatus } = require("@prisma/client");
 const { hashPassword } = require("../dist/auth");
 
@@ -122,8 +125,9 @@ async function main() {
   console.log("Seeding default plans...");
   const defaultPlans = [
     { name: "Starter", price: 0, creditsLimit: 3, features: "1 Active Site, Webbing Subdomain only, Webbing Branding Footer" },
+    { name: "Individual Plan", price: 179, creditsLimit: 10, features: "2 Sites, Webbing Subdomain only, 10 Credits/month" },
     { name: "Pro Plan", price: 599, creditsLimit: 100, features: "10 Sites, Custom Domain, White-labeled, Priority Support" },
-    { name: "Agency", price: 2499, creditsLimit: 500, features: "Unlimited Sites, White-labeled, Dedicated APIs, Priority Support" }
+    { name: "Agency", price: 2499, creditsLimit: 500, features: "50 Sites, White-labeled, Dedicated APIs, Priority Support" }
   ];
   for (const plan of defaultPlans) {
     await prisma.plan.upsert({

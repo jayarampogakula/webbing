@@ -70,6 +70,28 @@ export async function POST(req: Request) {
 
     const requiredCredits = validated.ecommerce ? 25 : 1;
 
+    // Enforce active website count limit based on the subscription plan
+    const activeProjectsCount = await prisma.project.count({
+      where: { tenantId: tenantId }
+    });
+
+    const planId = tenant.subscription?.planId?.toLowerCase() || "free-plan";
+    let maxWebsites = 1;
+    if (planId.includes("individual")) {
+      maxWebsites = 2;
+    } else if (planId.includes("pro-plan")) {
+      maxWebsites = 10;
+    } else if (planId.includes("agency")) {
+      maxWebsites = 50;
+    }
+
+    if (activeProjectsCount >= maxWebsites) {
+      return NextResponse.json(
+        { error: `Website limit reached. Your current plan allows a maximum of ${maxWebsites} active website(s). Please delete an existing website first or upgrade your plan.` },
+        { status: 403 }
+      );
+    }
+
     if (tenant.subscription) {
       const { creditsLimit, creditsUsed } = tenant.subscription;
       if (creditsUsed + requiredCredits > creditsLimit) {

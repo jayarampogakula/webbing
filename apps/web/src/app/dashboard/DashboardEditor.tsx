@@ -181,6 +181,8 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
   // Left Panel Sidebar Tabs
   const [builderTab, setBuilderTab] = useState<"chat" | "layers" | "properties" | "assets" | "settings" | "leads">("chat");
+  const [customAssets, setCustomAssets] = useState<any[]>([]);
+  const [uploadingAsset, setUploadingAsset] = useState(false);
   // Settings sub-tab
   const [settingsTab, setSettingsTab] = useState<"general" | "domains" | "seo" | "analytics" | "keys" | "devkeys" | "policies">("general");
 
@@ -386,6 +388,22 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
       setAnalyticsTag(currentProject.theme?.analyticsTag || "");
     }
   }, [selectedProjectId, projects]);
+
+  // Load custom assets
+  useEffect(() => {
+    if (selectedProjectId) {
+      fetch(`/api/projects/${selectedProjectId}/assets`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.assets) {
+            setCustomAssets(data.assets);
+          }
+        })
+        .catch((err) => console.error("Failed to fetch custom assets:", err));
+    } else {
+      setCustomAssets([]);
+    }
+  }, [selectedProjectId]);
 
   // Poll for generating projects status updates
   useEffect(() => {
@@ -1397,9 +1415,15 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                               let planName = plan.name;
                               let discountBadge = null;
                               let customId = planKey;
-        
+         
                               if (billingCycle === "annually") {
-                                if (planKey === "pro-plan") {
+                                if (planKey === "individual-plan") {
+                                  displayPrice = "₹2,040/year";
+                                  amount = 2040;
+                                  planName = "Individual Plan (Annually)";
+                                  discountBadge = "5% Discount Applied";
+                                  customId = "individual-plan-annual";
+                                } else if (planKey === "pro-plan") {
                                   displayPrice = "₹6,468/year";
                                   amount = 6468;
                                   planName = "Pro Plan (Annually)";
@@ -1413,7 +1437,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                                   customId = "agency-annual";
                                 }
                               }
-        
+         
                               return (
                                 <div key={plan.id} style={{ padding: "1.25rem", background: "rgba(255,255,255,0.01)", border: isCurrent ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                   <div>
@@ -1425,7 +1449,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                                       {displayPrice} • {plan.creditsLimit} monthly credits
                                       {billingCycle === "annually" && (
                                         <span style={{ color: "#9ca3af", display: "block", fontSize: "0.75rem", marginTop: "0.1rem" }}>
-                                          Equivalent to ₹{planKey === "pro-plan" ? "539" : "2124"}/month
+                                          Equivalent to ₹{planKey === "individual-plan" ? "170" : (planKey === "pro-plan" ? "539" : "2124")}/month
                                         </span>
                                       )}
                                     </span>
@@ -2717,6 +2741,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
           )}
         </div>
 
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
           <button
             type="button"
             onClick={() => {
@@ -2748,28 +2773,29 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             {!sidebarCollapsed && <span>Change Password</span>}
           </button>
 
-        <button
-          type="button"
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.75rem",
-            width: "100%",
-            padding: "0.6rem 0.8rem",
-            borderRadius: "0.375rem",
-            background: "none",
-            border: "none",
-            color: "#6b7280",
-            cursor: "pointer",
-            fontSize: "0.85rem",
-            fontWeight: 600,
-            transition: "all 0.2s"
-          }}
-        >
-          {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-          {!sidebarCollapsed && <span>Collapse Sidebar</span>}
-        </button>
+          <button
+            type="button"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              width: "100%",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "0.375rem",
+              background: "none",
+              border: "none",
+              color: "#6b7280",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              transition: "all 0.2s"
+            }}
+          >
+            {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            {!sidebarCollapsed && <span>Collapse Sidebar</span>}
+          </button>
+        </div>
       </div>
 
       {/* Main content display container */}
@@ -3488,12 +3514,93 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                       High-resolution visual assets. Copy any URL to update image fields inside AI edit chat or section settings.
                     </p>
 
+                    {/* Upload custom assets */}
+                    <div className="glass-panel" style={{ padding: "1rem", borderRadius: "0.5rem", marginBottom: "1.5rem" }}>
+                      <label style={{ display: "block", color: "#fff", fontSize: "0.85rem", fontWeight: 700, marginBottom: "0.5rem" }}>Upload Custom Image</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setUploadingAsset(true);
+                          const formData = new FormData();
+                          formData.append("file", file);
+                          formData.append("filename", file.name);
+                          try {
+                            const res = await fetch(`/api/projects/${currentProject.id}/assets`, {
+                              method: "POST",
+                              body: formData
+                            });
+                            const data = await res.json();
+                            if (data.success && data.asset) {
+                              setCustomAssets(prev => [data.asset, ...prev]);
+                              setSuccess("Uploaded custom image successfully!");
+                              setTimeout(() => setSuccess(""), 2000);
+                            } else {
+                              setError(data.error || "Upload failed");
+                              setTimeout(() => setError(""), 3000);
+                            }
+                          } catch (err: any) {
+                            setError(err.message || "Upload error");
+                            setTimeout(() => setError(""), 3000);
+                          } finally {
+                            setUploadingAsset(false);
+                            // Clear input
+                            e.target.value = "";
+                          }
+                        }}
+                        style={{
+                          fontSize: "0.8rem",
+                          color: "#9ca3af",
+                          background: "rgba(255,255,255,0.03)",
+                          border: "1px dashed rgba(255,255,255,0.15)",
+                          borderRadius: "0.375rem",
+                          padding: "0.5rem",
+                          width: "100%",
+                          cursor: "pointer"
+                        }}
+                        disabled={uploadingAsset}
+                      />
+                      {uploadingAsset && <span style={{ fontSize: "0.75rem", color: "#818cf8", display: "block", marginTop: "0.5rem" }}>Uploading image...</span>}
+                    </div>
+
                     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                      {/* Render custom assets */}
+                      {customAssets.map((asset) => (
+                        <div key={asset.id} className="glass-panel" style={{ padding: "1rem", borderRadius: "0.5rem", display: "flex", gap: "1rem", alignItems: "center" }}>
+                          <img src={asset.url} alt="Custom Asset" style={{ width: "4rem", height: "4rem", borderRadius: "0.4rem", objectFit: "cover" }} />
+                          <div style={{ flexGrow: 1 }}>
+                            <strong style={{ display: "block", color: "#fff", fontSize: "0.85rem", wordBreak: "break-all" }}>{asset.key.replace("uploads/", "")}</strong>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(asset.url);
+                                setSuccess("Copied Image URL!");
+                                setTimeout(() => setSuccess(""), 1500);
+                              }}
+                              style={{ background: "none", border: "none", color: "#818cf8", fontSize: "0.75rem", fontWeight: 700, padding: 0, marginTop: "0.2rem", cursor: "pointer" }}
+                            >
+                              Copy Image URL
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Default Hardcoded Assets */}
                       <div className="glass-panel" style={{ padding: "1rem", borderRadius: "0.5rem", display: "flex", gap: "1rem", alignItems: "center" }}>
                         <div style={{ width: "4rem", height: "4rem", background: "linear-gradient(to right, #6366f1, #d946ef)", borderRadius: "0.4rem" }}></div>
                         <div>
                           <strong style={{ display: "block", color: "#fff", fontSize: "0.85rem" }}>Gradient Vector Background</strong>
-                          <code style={{ fontSize: "0.7rem", color: "#818cf8" }}>/assets/vector-gradient.png</code>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText("/assets/vector-gradient.png");
+                              setSuccess("Copied Image URL!");
+                              setTimeout(() => setSuccess(""), 1500);
+                            }}
+                            style={{ background: "none", border: "none", color: "#818cf8", fontSize: "0.75rem", fontWeight: 700, padding: 0, marginTop: "0.2rem", cursor: "pointer" }}
+                          >
+                            Copy Image URL
+                          </button>
                         </div>
                       </div>
 

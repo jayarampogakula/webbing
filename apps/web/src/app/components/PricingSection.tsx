@@ -24,6 +24,24 @@ export default function PricingSection() {
       signUpUrl: "/signup?plan=starter"
     },
     {
+      id: "individual",
+      name: "Individual Plan",
+      priceDisplay: billingCycle === "monthly" ? "₹179" : "₹2,040",
+      period: billingCycle === "monthly" ? "/ month" : "/ year",
+      text: "For personal use",
+      items: [
+        "2 active websites",
+        "10 credits per month",
+        "Webbing subdomain only",
+        "Webbing branding footer"
+      ],
+      featured: false,
+      buttonText: "Choose Individual",
+      signUpUrl: billingCycle === "monthly" ? "/signup?plan=individual" : "/signup?plan=individual-annual",
+      discountBadge: billingCycle === "annually" ? "Save 5%" : null,
+      subText: billingCycle === "annually" ? "Equivalent to ₹170/month" : null
+    },
+    {
       id: "pro-plan",
       name: "Pro Plan",
       priceDisplay: billingCycle === "monthly" ? "₹599" : "₹6,468",
@@ -50,7 +68,7 @@ export default function PricingSection() {
       period: billingCycle === "monthly" ? "/ month" : "/ year",
       text: "For client production",
       items: [
-        "Unlimited projects",
+        "50 active websites",
         "500 credits per month",
         "Custom domains support",
         "White-labeled workspace",

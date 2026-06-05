@@ -127,7 +127,7 @@ Your response MUST match this structure:
   ]
 }
 
-Only return the updated sections matching the user's intent. Preserve unmodified sections. If the user asks to add a section, create a new section object with the appropriate structure and values.
+You MUST return the COMPLETE, updated list of ALL sections for the page. Preserve all unmodified sections as-is in the list, and modify, add, or delete sections as requested by the user. Make sure the "order" fields are sequential (starting from 1).
 
 IMPORTANT FOR IMAGES:
 If the user requests to add, edit, or modify images, or for any new section that requires an image, choose a highly relevant high-resolution image URL from Unsplash. Use this format: \`https://images.unsplash.com/photo-[UNSPLASH_ID]?auto=format&fit=crop&w=1200&q=80\`.
@@ -188,9 +188,9 @@ Choose an appropriate ID based on the niche:
     // Filter out invalid items and format them
     const updatedSections = rawSections
       .filter((s: any) => s && typeof s === "object" && typeof s.type === "string")
-      .map((s: any) => ({
+      .map((s: any, index: number) => ({
         type: s.type.toUpperCase(),
-        order: Number(s.order) || 0,
+        order: index + 1,
         content: s.content || {},
         styles: s.styles || {}
       }));
@@ -199,19 +199,7 @@ Choose an appropriate ID based on the niche:
       throw new Error("No valid sections found in the LLM response.");
     }
 
-    // Merge updated sections with existing page sections to protect against partial updates
-    const existingSectionsMap = new Map(page.sections.map(s => [s.type.toUpperCase(), {
-      type: s.type.toUpperCase(),
-      order: s.order,
-      content: s.content as any,
-      styles: s.styles as any
-    }]));
-
-    for (const sec of updatedSections) {
-      existingSectionsMap.set(sec.type, sec);
-    }
-
-    const finalSections = Array.from(existingSectionsMap.values()).sort((a, b) => a.order - b.order);
+    const finalSections = updatedSections;
 
     // 4. Update database transactionally
     await prisma.$transaction(async (tx) => {

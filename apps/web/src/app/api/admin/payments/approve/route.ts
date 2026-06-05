@@ -98,7 +98,8 @@ export async function POST(req: Request) {
       // 2. Regular plan upgrade lookup (handling annual billing variations)
       const cleanPlanId = request.planId.replace("-annual", "");
       let lookupName = cleanPlanId;
-      if (cleanPlanId === "pro-plan") lookupName = "Pro Plan";
+      if (cleanPlanId === "individual" || cleanPlanId === "individual-plan") lookupName = "Individual Plan";
+      else if (cleanPlanId === "pro-plan") lookupName = "Pro Plan";
       else if (cleanPlanId === "agency") lookupName = "Agency";
       else if (cleanPlanId === "starter") lookupName = "Starter";
 
