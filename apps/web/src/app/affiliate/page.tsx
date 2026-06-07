@@ -38,7 +38,7 @@ export default async function AffiliatePage() {
             Earn Up to <span style={{ background: "linear-gradient(to right, #818cf8, #c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{t3Rate}% Commission</span> Promoting {settings.appName}
           </h1>
           <p style={{ maxWidth: "650px", margin: "0 auto", fontSize: "1.1rem", color: "#9ca3af", lineHeight: "1.6" }}>
-            Introduce clients and audiences to our prompt-driven AI website builder. Get rewarded with tiered first-purchase payouts and {recRate}% recurring lifetime commissions on renewals.
+            Introduce clients and audiences to our prompt-driven AI website builder. Get rewarded with tiered first-purchase payouts and {recRate}% recurring lifetime commissions on yearly plan purchases and renewals. Referred users receive a 20% discount on their initial yearly purchase.
           </p>
           <div style={{ marginTop: "2rem", display: "flex", gap: "1rem", justifyContent: "center" }}>
             <a href="/signup" className="primary-action" style={{ background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", padding: "0.75rem 2rem", borderRadius: "0.5rem", textDecoration: "none", display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 700, boxShadow: "0 4px 20px rgba(99,102,241,0.25)" }}>
@@ -120,7 +120,7 @@ export default async function AffiliatePage() {
             <span className="icon-box" style={{ background: "rgba(168, 85, 247, 0.1)", color: "#a855f7", width: "40px", height: "40px", borderRadius: "0.5rem", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}><DollarSign size={20} /></span>
             <h3 style={{ color: "#fff", margin: "0 0 0.5rem 0", fontSize: "1.1rem" }}>Lifetime Recurring Commissions</h3>
             <p style={{ margin: 0, color: "#9ca3af", fontSize: "0.9rem", lineHeight: "1.6" }}>
-              Every time a customer you referred renews their subscription (Pro or Agency, monthly or annual cycles), you receive a {recRate}% recurring payout. Build a steady stream of passive income.
+              Every time a customer you referred renews their subscription (Pro or Agency, annual cycles only), you receive a {recRate}% recurring payout. Build a steady stream of passive income.
             </p>
           </div>
         </section>
@@ -151,6 +151,22 @@ export default async function AffiliatePage() {
             </div>
             <div>
               <h3 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 700, display: "flex", gap: "0.5rem", alignItems: "center", margin: "0 0 0.5rem 0" }}>
+                <HelpCircle size={16} style={{ color: "#818cf8" }} /> What is the referee discount?
+              </h3>
+              <p style={{ margin: 0, paddingLeft: "1.5rem", color: "#9ca3af", fontSize: "0.95rem", lineHeight: "1.5" }}>
+                Referred users who sign up and purchase an annual plan using your code will receive a <strong>20% discount</strong> on their first year's checkout total.
+              </p>
+            </div>
+            <div>
+              <h3 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 700, display: "flex", gap: "0.5rem", alignItems: "center", margin: "0 0 0.5rem 0" }}>
+                <HelpCircle size={16} style={{ color: "#818cf8" }} /> Are monthly plans included?
+              </h3>
+              <p style={{ margin: 0, paddingLeft: "1.5rem", color: "#9ca3af", fontSize: "0.95rem", lineHeight: "1.5" }}>
+                No, the partner referral program is strictly valid for yearly plans. Monthly plans are excluded from referral discounts and commission rewards.
+              </p>
+            </div>
+            <div>
+              <h3 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: 700, display: "flex", gap: "0.5rem", alignItems: "center", margin: "0 0 0.5rem 0" }}>
                 <HelpCircle size={16} style={{ color: "#818cf8" }} /> What is the mature commission holding period?
               </h3>
               <p style={{ margin: 0, paddingLeft: "1.5rem", color: "#9ca3af", fontSize: "0.95rem", lineHeight: "1.5" }}>
@@ -164,12 +180,12 @@ export default async function AffiliatePage() {
 
       <footer className="footer" style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center", justifyContent: "center", padding: "3rem 2rem", marginTop: "auto" }}>
         <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", justifyContent: "center", marginBottom: "0.5rem" }}>
-          <a href="/terms" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.85rem", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = '#fff'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}>Terms & Conditions</a>
-          <a href="/privacy" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.85rem", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = '#fff'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}>Privacy Policy</a>
-          <a href="/cookies" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.85rem", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = '#fff'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}>Cookies Policy</a>
-          <a href="/refund" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.85rem", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = '#fff'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}>Refund Policy</a>
+          <a href="/terms" className="footer-link">Terms & Conditions</a>
+          <a href="/privacy" className="footer-link">Privacy Policy</a>
+          <a href="/cookies" className="footer-link">Cookies Policy</a>
+          <a href="/refund" className="footer-link">Refund Policy</a>
           {settings.affiliateEnabled === "true" && (
-            <a href="/affiliate" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.85rem", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = '#fff'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}>Affiliate Program</a>
+            <a href="/affiliate" className="footer-link">Affiliate Program</a>
           )}
         </div>
         <div style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "0.8rem" }}>

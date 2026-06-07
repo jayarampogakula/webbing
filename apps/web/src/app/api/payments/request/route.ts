@@ -89,7 +89,7 @@ export async function POST(req: Request) {
       select: { referredBy: true }
     });
 
-    if (dbUserReferrer?.referredBy && expectedAmount > 0) {
+    if (dbUserReferrer?.referredBy && expectedAmount > 0 && planId.endsWith("-annual")) {
       const settings = await getSystemSettings();
       if (settings.affiliateEnabled === "true") {
         const referrerUser = await prisma.user.findUnique({
@@ -101,7 +101,7 @@ export async function POST(req: Request) {
           });
           const isPaid = referrerSub && referrerSub.status === "ACTIVE" && referrerSub.planId !== "free-plan" && referrerSub.planId !== "starter";
           if (isPaid) {
-            expectedAmount = Math.round(expectedAmount * 0.9);
+            expectedAmount = Math.round(expectedAmount * 0.8);
           }
         }
       }

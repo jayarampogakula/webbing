@@ -2140,11 +2140,11 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                     </div>
                     <div style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.06)", padding: "1.5rem", borderRadius: "0.75rem" }}>
                       <span style={{ color: "#a855f7", display: "block", marginBottom: "0.5rem", fontSize: "1.25rem", fontWeight: 700 }}>10% recurring lifetime</span>
-                      <span style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>Earn commission on monthly and annual plan renewals as long as they stay subscribed.</span>
+                      <span style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>Earn commission on annual plan renewals as long as they stay subscribed.</span>
                     </div>
                     <div style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.06)", padding: "1.5rem", borderRadius: "0.75rem" }}>
-                      <span style={{ color: "#34d399", display: "block", marginBottom: "0.5rem", fontSize: "1.25rem", fontWeight: 700 }}>10% discount for referees</span>
-                      <span style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>Give your audience a compelling reason to use your code with an instant discount.</span>
+                      <span style={{ color: "#34d399", display: "block", marginBottom: "0.5rem", fontSize: "1.25rem", fontWeight: 700 }}>20% discount for referees</span>
+                      <span style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>Give your audience a compelling reason to use your code with an instant yearly discount.</span>
                     </div>
                   </div>
 
@@ -2163,8 +2163,8 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                   <div style={{ marginBottom: "2rem" }}>
                     <span className="eyebrow" style={{ color: "#818cf8" }}>Partner Program</span>
                     <h1 style={{ fontSize: "2.25rem", fontWeight: 850, margin: "0.25rem 0", color: "#fff" }}>{appName} Affiliate Center</h1>
-                    <p style={{ color: "#9ca3af", fontSize: "0.95rem", margin: 0 }}>
-                      Refer users to {appName}. They get <strong style={{ color: "#34d399" }}>10% discount</strong> on any purchase/renewal. You earn commission on their first purchase and <strong style={{ color: "#818cf8" }}>{initialSettings?.affiliateRecurringRate || "10"}% recurring commission</strong> on all renewals!
+                    <p style={{ color: "#9ca3af", fontSize: "0.95rem", margin: 0, lineHeight: "1.6" }}>
+                      Refer users to {appName} yearly plans (monthly plans are excluded). Referred users get a <strong style={{ color: "#34d399" }}>20% discount</strong> on their first year. You earn tiered commissions on their first year (20%, 25%, or 30%) and a <strong style={{ color: "#818cf8" }}>{initialSettings?.affiliateRecurringRate || "10"}% recurring commission</strong> on all yearly renewals!
                     </p>
                   </div>
 

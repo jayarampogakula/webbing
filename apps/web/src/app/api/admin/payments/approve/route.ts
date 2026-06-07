@@ -167,7 +167,7 @@ export async function POST(req: Request) {
 
           if (referrerIsPaid) {
             const planKey = plan.name.toLowerCase().replace(/\s+/g, "-");
-            if (planKey !== "starter" && !request.planId.startsWith("credits-")) {
+            if (planKey !== "starter" && !request.planId.startsWith("credits-") && request.planId.endsWith("-annual")) {
               // Check if there are any existing non-cancelled commissions for this referee
               const previousCommission = await tx.affiliateCommission.findFirst({
                 where: {
