@@ -5,6 +5,8 @@ import GeneratorForm from "./GeneratorForm";
 import MarketingHeader from "./components/MarketingHeader";
 import { CheckCircle2, Compass, Globe2, Layers3, Mail, ShieldCheck, Sparkles, Zap, ShoppingCart, MessageSquare, Code, DollarSign } from "lucide-react";
 import PricingSection from "./components/PricingSection";
+import { getSystemSettings } from "@/lib/settings";
+import * as Icons from "lucide-react";
 
 const features = [
   { icon: Sparkles, title: "AI copy and layout", text: "Generate structured pages, hero copy, pricing blocks, feature grids, and contact sections from one prompt." },
@@ -17,23 +19,43 @@ const features = [
   { icon: MessageSquare, title: "Integrated Feedback System", text: "Submit suggestions or report bugs directly from the dashboard panel. View resolved support tickets instantly." }
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
   const sessionToken = cookies().get("webbing-session")?.value;
   const user = sessionToken ? verifySession(sessionToken) : null;
+  const settings = await getSystemSettings();
+
+  let parsedFeatures = features;
+  if (settings.landingFeatures) {
+    try {
+      const rawList = JSON.parse(settings.landingFeatures);
+      if (Array.isArray(rawList)) {
+        parsedFeatures = rawList.map((f: any) => {
+          let IconComp = Sparkles;
+          if (f.icon && (Icons as any)[f.icon]) {
+            IconComp = (Icons as any)[f.icon];
+          }
+          return {
+            icon: IconComp,
+            title: f.title,
+            text: f.text
+          };
+        });
+      }
+    } catch (e) {
+      console.error("Failed to parse custom landing features JSON:", e);
+    }
+  }
 
   return (
     <div className="app-shell">
-      <MarketingHeader user={user} />
+      <MarketingHeader user={user} appName={settings.appName} appLogo={settings.appLogo} />
 
       <main id="home">
         <section className="hero">
           <div>
             <span className="eyebrow"><Zap size={14} /> AI website SaaS</span>
-            <h1>Build polished websites with AI in one flow.</h1>
-            <p>
-              Describe the business once and Webbing assembles a modern site with home, features, pricing,
-              about, contact, hosting, and provider-aware AI routing.
-            </p>
+            <h1>{settings.landingHeroTitle}</h1>
+            <p>{settings.landingHeroSubtitle}</p>
             <div className="hero-stats">
               <div className="stat-tile"><strong>60s</strong><span>first draft</span></div>
               <div className="stat-tile"><strong>6+</strong><span>LLM providers</span></div>
@@ -50,7 +72,7 @@ export default function LandingPage() {
             <p>The builder, pricing, account pages, generated websites, and LLM settings share one restrained product interface.</p>
           </div>
           <div className="feature-grid">
-            {features.map((feature) => {
+            {parsedFeatures.map((feature) => {
               const Icon = feature.icon;
               return (
                 <article className="feature-card" key={feature.title}>
@@ -70,17 +92,14 @@ export default function LandingPage() {
           <div className="about-contact-grid">
             <div className="surface-panel">
               <span className="eyebrow"><Compass size={14} /> About us</span>
-              <h2>Webbing is built for fast, useful site production.</h2>
-              <p style={{ color: "#9aa7bd" }}>
-                The platform combines prompt-driven generation, reusable page sections, publishing workflows,
-                and admin-level provider controls so teams can build without wrestling with scattered tools.
-              </p>
+              <h2>{settings.landingAboutTitle}</h2>
+              <p style={{ color: "#9aa7bd" }}>{settings.landingAboutText}</p>
             </div>
             <div id="contact" className="surface-panel">
               <span className="eyebrow"><Mail size={14} /> Contact us</span>
-              <h2>Need a custom workflow?</h2>
-              <p style={{ color: "#9aa7bd" }}>Reach the Webbing team for provider setup, agency plans, domain support, and enterprise onboarding.</p>
-              <a className="primary-action" href="mailto:support@webbing.in">support@webbing.in</a>
+              <h2>{settings.landingContactTitle}</h2>
+              <p style={{ color: "#9aa7bd" }}>{settings.landingContactText}</p>
+              <a className="primary-action" href={`mailto:${settings.landingContactEmail}`}>{settings.landingContactEmail}</a>
             </div>
           </div>
         </section>
@@ -94,7 +113,7 @@ export default function LandingPage() {
           <a href="/refund" className="footer-link">Refund Policy</a>
         </div>
         <div style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "0.8rem" }}>
-          © {new Date().getFullYear()} Webbing Platforms Inc. All rights reserved.
+          © {new Date().getFullYear()} {settings.appName} Platforms Inc. All rights reserved.
         </div>
       </footer>
     </div>

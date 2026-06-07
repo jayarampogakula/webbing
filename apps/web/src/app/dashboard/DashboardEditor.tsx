@@ -70,6 +70,7 @@ interface DashboardEditorProps {
   protocol: string;
   initialPlans?: any[];
   upiId?: string;
+  initialSettings?: any;
 }
 
 const GenerationProgress = ({ createdAt }: { createdAt: string }) => {
@@ -118,7 +119,9 @@ const GenerationProgress = ({ createdAt }: { createdAt: string }) => {
   );
 };
 
-export default function DashboardEditor({ user, tenant, baseDomain, protocol, initialPlans = [], upiId = "pogakula@ybl" }: DashboardEditorProps) {
+export default function DashboardEditor({ user, tenant, baseDomain, protocol, initialPlans = [], upiId = "pogakula@ybl", initialSettings }: DashboardEditorProps) {
+  const appName = initialSettings?.appName || "Webbing";
+  const appLogo = initialSettings?.appLogo || "";
   const [projects, setProjects] = useState<Project[]>(tenant.projects);
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [activeView, setActiveView] = useState<"homepage" | "builder">("homepage");
@@ -1621,7 +1624,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                                   <div style={{ background: "#fff", padding: "1rem", borderRadius: "1rem", display: "inline-flex" }}>
                                     <img
                                       src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                                        `upi://pay?pa=${upiId}&pn=Webbing&am=${finalPrice}&cu=INR&tn=Webbing%20Upgrade%20${selectedUpgradePlan.id || selectedUpgradePlan.name}`
+                                        `upi://pay?pa=${upiId}&pn=${encodeURIComponent(appName)}&am=${finalPrice}&cu=INR&tn=${encodeURIComponent(appName + " Upgrade " + (selectedUpgradePlan.id || selectedUpgradePlan.name))}`
                                       )}`}
                                       alt="UPI QR Code"
                                       style={{ width: "180px", height: "180px" }}
@@ -1683,7 +1686,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                     <div>
                       <span className="eyebrow" style={{ color: "#c084fc" }}>Support & Suggestions</span>
                       <h3 style={{ margin: 0, color: "#fff", fontSize: "1.35rem" }}>Submit Feedback or Bug</h3>
-                      <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Help us improve Webbing. Report bugs or suggest new product features.</p>
+                      <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Help us improve {appName}. Report bugs or suggest new product features.</p>
                     </div>
         
                     {feedbackSuccessMsg && (
@@ -1770,7 +1773,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                     <div>
                       <span className="eyebrow" style={{ color: "#818cf8" }}>Security settings</span>
                       <h3 style={{ margin: 0, color: "#fff", fontSize: "1.35rem" }}>Change Password</h3>
-                      <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Update your password to secure your Webbing account.</p>
+                      <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.25rem 0 0 0" }}>Update your password to secure your {appName} account.</p>
                     </div>
         
                     {changePasswordSuccess && (
@@ -1850,8 +1853,12 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
         {/* Persistent Site Header (Main Menu) */}
         <header className="site-nav dashboard-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: 0, background: "rgba(10, 14, 23, 0.95)", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 1.5rem", height: "70px", flexShrink: 0 }}>
           <a className="brand" href="/">
-            <span className="brand-mark"><Sparkles size={18} /></span>
-            Webbing
+            {appLogo ? (
+              <img src={appLogo} alt={appName} style={{ height: "24px", maxWidth: "100px", objectFit: "contain", marginRight: "0.25rem" }} />
+            ) : (
+              <span className="brand-mark"><Sparkles size={18} /></span>
+            )}
+            {appName}
           </a>
           
           <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
@@ -2116,9 +2123,9 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
               {/* Affiliate Dashboard header */}
               <div style={{ marginBottom: "2rem" }}>
                 <span className="eyebrow" style={{ color: "#818cf8" }}>Partner Program</span>
-                <h1 style={{ fontSize: "2.25rem", fontWeight: 850, margin: "0.25rem 0", color: "#fff" }}>Webbing Affiliate Center</h1>
+                <h1 style={{ fontSize: "2.25rem", fontWeight: 850, margin: "0.25rem 0", color: "#fff" }}>{appName} Affiliate Center</h1>
                 <p style={{ color: "#9ca3af", fontSize: "0.95rem", margin: 0 }}>
-                  Refer users to Webbing. They get <strong style={{ color: "#34d399" }}>10% discount</strong> on any purchase/renewal. You earn <strong style={{ color: "#818cf8" }}>20% commission</strong> on their first purchase and <strong style={{ color: "#818cf8" }}>10% recurring commission</strong> on all renewals!
+                  Refer users to {appName}. They get <strong style={{ color: "#34d399" }}>10% discount</strong> on any purchase/renewal. You earn <strong style={{ color: "#818cf8" }}>20% commission</strong> on their first purchase and <strong style={{ color: "#818cf8" }}>10% recurring commission</strong> on all renewals!
                 </p>
               </div>
 
@@ -2600,8 +2607,12 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
       {/* Persistent Site Header (Main Menu) */}
       <header className="site-nav dashboard-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: 0, background: "rgba(10, 14, 23, 0.95)", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 1.5rem", height: "70px", flexShrink: 0 }}>
         <a className="brand" href="/">
-          <span className="brand-mark"><Sparkles size={18} /></span>
-          Webbing
+          {appLogo ? (
+            <img src={appLogo} alt={appName} style={{ height: "24px", maxWidth: "100px", objectFit: "contain", marginRight: "0.25rem" }} />
+          ) : (
+            <span className="brand-mark"><Sparkles size={18} /></span>
+          )}
+          {appName}
         </a>
         
         <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>

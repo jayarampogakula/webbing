@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Check, X, Shield, Plus, Trash2, Edit2, Sparkles, DollarSign, Layers, Users, Key, ChevronLeft, ChevronRight, Home, MessageSquare, Mail } from "lucide-react";
+import { Check, X, Shield, Plus, Trash2, Edit2, Sparkles, DollarSign, Layers, Users, Key, ChevronLeft, ChevronRight, Home, MessageSquare, Mail, Sliders } from "lucide-react";
 import PlanEditor from "./PlanEditor";
 import LlmKeyManager from "../components/LlmKeyManager";
 
@@ -85,6 +85,7 @@ interface AdminConsoleProps {
   initialRefunds?: any[];
   baseDomain: string;
   protocol: string;
+  initialSettings?: any;
 }
 
 const emailTemplates = {
@@ -242,16 +243,48 @@ export default function AdminConsole({
   initialRefunds = [],
   baseDomain,
   protocol,
+  initialSettings,
 }: AdminConsoleProps) {
   // States
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "keys" | "plans" | "payments" | "feedback" | "emails" | "payouts" | "refunds">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "keys" | "plans" | "payments" | "feedback" | "emails" | "payouts" | "refunds" | "branding">("dashboard");
   const [upiId, setUpiId] = useState(initialUpiId);
   const [plans, setPlans] = useState<Plan[]>(initialPlans);
   const [requests, setRequests] = useState<PaymentRequest[]>(initialRequests);
   const [feedbacks, setFeedbacks] = useState<any[]>(initialFeedbacks);
   const [payouts, setPayouts] = useState<any[]>(initialPayouts);
   const [refunds, setRefunds] = useState<any[]>(initialRefunds);
+
+  // System branding states
+  const [appName, setAppName] = useState(initialSettings?.appName || "Webbing");
+  const [appLogo, setAppLogo] = useState(initialSettings?.appLogo || "");
+  const [appEmail, setAppEmail] = useState(initialSettings?.appEmail || "support@webbing.in");
+  const [landingHeroTitle, setLandingHeroTitle] = useState(initialSettings?.landingHeroTitle || "Build polished websites with AI in one flow.");
+  const [landingHeroSubtitle, setLandingHeroSubtitle] = useState(initialSettings?.landingHeroSubtitle || "Describe the business once and Webbing assembles a modern site with home, features, pricing, about, contact, hosting, and provider-aware AI routing.");
+  const [landingAboutTitle, setLandingAboutTitle] = useState(initialSettings?.landingAboutTitle || "Webbing is built for fast, useful site production.");
+  const [landingAboutText, setLandingAboutText] = useState(initialSettings?.landingAboutText || "The platform combines prompt-driven generation, reusable page sections, publishing workflows, and admin-level provider controls so teams can build without wrestling with scattered tools.");
+  const [landingContactTitle, setLandingContactTitle] = useState(initialSettings?.landingContactTitle || "Need a custom workflow?");
+  const [landingContactText, setLandingContactText] = useState(initialSettings?.landingContactText || "Reach the Webbing team for provider setup, agency plans, domain support, and enterprise onboarding.");
+  const [landingContactEmail, setLandingContactEmail] = useState(initialSettings?.landingContactEmail || "support@webbing.in");
+  
+  const defaultFeatures = [
+    { "icon": "Sparkles", "title": "AI copy and layout", "text": "Generate structured pages, hero copy, pricing blocks, feature grids, and contact sections from one prompt." },
+    { "icon": "Layers3", "title": "Modern component system", "text": "Every website is composed from reusable sections that are easier to edit, inspect, and expand." },
+    { "icon": "Globe2", "title": "Subdomain publishing", "text": "Publish projects to instant subdomains with custom-domain workflows ready for paid plans." },
+    { "icon": "ShieldCheck", "title": "Provider key controls", "text": "Admins can configure global LLM keys while users can bring their own provider credentials." },
+    { "icon": "ShoppingCart", "title": "eCommerce Storefronts", "text": "Generate complete single-vendor stores with shopping carts, checkout logic, product variants, inventory, and payment setup." },
+    { "icon": "DollarSign", "title": "Annual Subscriptions", "text": "Switch to annual cycles to save up to 15% on paid plan quotas, making client sites highly affordable." },
+    { "icon": "Code", "title": "White-labeled ZIP Export", "text": "Download fully offline-ready HTML, CSS, and vanilla JS archives of your sites, free of engine tags or scripts." },
+    { "icon": "MessageSquare", "title": "Integrated Feedback System", "text": "Submit suggestions or report bugs directly from the dashboard panel. View resolved support tickets instantly." }
+  ];
+  
+  const [landingFeatures, setLandingFeatures] = useState(
+    initialSettings?.landingFeatures || JSON.stringify(defaultFeatures, null, 2)
+  );
+
+  const [policyPrivacy, setPolicyPrivacy] = useState(initialSettings?.policyPrivacy || "");
+  const [policyTerms, setPolicyTerms] = useState(initialSettings?.policyTerms || "");
+  const [policyRefund, setPolicyRefund] = useState(initialSettings?.policyRefund || "");
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<"welcome" | "payment_request" | "activation" | "credits">("welcome");
   const [testEmailAddress, setTestEmailAddress] = useState(user.email);
@@ -306,6 +339,65 @@ export default function AdminConsole({
       setMessage("Global UPI ID updated successfully!");
     } catch (err: any) {
       setError(err.message || "Failed to update UPI settings.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Save Settings
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+    setError("");
+
+    if (landingFeatures.trim()) {
+      try {
+        const parsed = JSON.parse(landingFeatures);
+        if (!Array.isArray(parsed)) {
+          throw new Error("Features must be a JSON array of objects.");
+        }
+        for (const item of parsed) {
+          if (typeof item !== "object" || !item.title || !item.text) {
+            throw new Error("Each feature object must contain at least 'title' and 'text' fields.");
+          }
+        }
+      } catch (err: any) {
+        setError(`Invalid Features JSON: ${err.message}`);
+        setLoading(false);
+        return;
+      }
+    }
+
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          settings: {
+            appName,
+            appLogo,
+            appEmail,
+            upiId,
+            landingHeroTitle,
+            landingHeroSubtitle,
+            landingAboutTitle,
+            landingAboutText,
+            landingContactTitle,
+            landingContactText,
+            landingContactEmail,
+            landingFeatures,
+            policyPrivacy,
+            policyTerms,
+            policyRefund
+          }
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save settings.");
+      setMessage("Platform Settings saved successfully!");
+    } catch (err: any) {
+      setError(err.message || "Failed to save settings.");
     } finally {
       setLoading(false);
     }
@@ -707,6 +799,35 @@ export default function AdminConsole({
           >
             <Mail size={16} />
             {!sidebarCollapsed && <span>Email Templates</span>}
+          </button>
+
+          {/* Platform Branding Settings Item */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("branding");
+              setMessage("");
+              setError("");
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              width: "100%",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "0.375rem",
+              background: activeTab === "branding" ? "rgba(129, 140, 248, 0.08)" : "none",
+              border: "none",
+              color: activeTab === "branding" ? "#818cf8" : "#9ca3af",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              textAlign: "left",
+              transition: "all 0.2s"
+            }}
+          >
+            <Sliders size={16} />
+            {!sidebarCollapsed && <span>Platform Settings</span>}
           </button>
 
           <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0.5rem 0" }} />
@@ -1653,6 +1774,284 @@ export default function AdminConsole({
                   </tbody>
                 </table>
               </div>
+            </section>
+          </div>
+        )}
+
+        {/* TAB 10: PLATFORM BRANDING AND POLICY SETTINGS */}
+        {activeTab === "branding" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+            <section className="surface-panel" style={{ height: "fit-content" }}>
+              <div style={{ marginBottom: "1.5rem" }}>
+                <span className="eyebrow">White-Label</span>
+                <h2 style={{ margin: 0, color: "#fff", fontSize: "1.25rem", fontWeight: 800 }}>Platform Branding Settings</h2>
+                <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.2rem 0 0 0" }}>
+                  Customize platform name, logo, and support emails. Changes propagate globally across headers, footers, auth panels, and automated emails.
+                </p>
+              </div>
+              
+              <form onSubmit={handleSaveSettings} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>APPLICATION NAME</label>
+                    <input
+                      type="text"
+                      className="premium-input"
+                      value={appName}
+                      onChange={(e) => setAppName(e.target.value)}
+                      placeholder="e.g. Webbing"
+                      required
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>SUPPORT / SENDER EMAIL</label>
+                    <input
+                      type="email"
+                      className="premium-input"
+                      value={appEmail}
+                      onChange={(e) => setAppEmail(e.target.value)}
+                      placeholder="e.g. support@webbing.in"
+                      required
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>PLATFORM LOGO (IMAGE URL OR BASE64 DATA URI)</label>
+                  <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                    <input
+                      type="text"
+                      className="premium-input"
+                      value={appLogo}
+                      onChange={(e) => setAppLogo(e.target.value)}
+                      placeholder="e.g. https://yoursite.com/logo.png or choose a local file"
+                      style={{ flex: 1 }}
+                    />
+                    <div style={{ position: "relative" }}>
+                      <button type="button" className="secondary-action" style={{ cursor: "pointer", height: "42px", margin: 0 }}>
+                        Upload File
+                      </button>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              if (event.target?.result) {
+                                setAppLogo(event.target.result as string);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          height: "100%",
+                          opacity: 0,
+                          cursor: "pointer"
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <p style={{ color: "#6b7280", fontSize: "0.75rem", margin: "0.2rem 0 0 0" }}>
+                    Recommended: Transparent PNG or SVG logo. Uploading a file will automatically convert it to a database-friendly Base64 Data URL.
+                  </p>
+                  {appLogo && (
+                    <div style={{ marginTop: "0.5rem", padding: "0.5rem", background: "rgba(255,255,255,0.02)", borderRadius: "0.375rem", border: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", gap: "1rem" }}>
+                      <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>Logo Preview:</span>
+                      <img src={appLogo} alt="Logo preview" style={{ height: "32px", maxWidth: "120px", objectFit: "contain" }} />
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1.5rem" }}>
+                  <span className="eyebrow">Homepage Sections</span>
+                  <h3 style={{ margin: "0 0 1rem 0", color: "#fff", fontSize: "1.1rem", fontWeight: 700 }}>Landing Page Copy</h3>
+                  
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1rem" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>HERO TITLE</label>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={landingHeroTitle}
+                          onChange={(e) => setLandingHeroTitle(e.target.value)}
+                          placeholder="Build polished websites with AI in one flow."
+                          required
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>HERO SUBTITLE / PARAGRAPH</label>
+                        <textarea
+                          className="premium-input"
+                          value={landingHeroSubtitle}
+                          onChange={(e) => setLandingHeroSubtitle(e.target.value)}
+                          placeholder="Describe the business once and..."
+                          style={{ minHeight: "80px", resize: "vertical", width: "100%" }}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>ABOUT US TITLE</label>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={landingAboutTitle}
+                          onChange={(e) => setLandingAboutTitle(e.target.value)}
+                          placeholder="Webbing is built for fast..."
+                          required
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>CONTACT US TITLE</label>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={landingContactTitle}
+                          onChange={(e) => setLandingContactTitle(e.target.value)}
+                          placeholder="Need a custom workflow?"
+                          required
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1rem" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>ABOUT US TEXT</label>
+                        <textarea
+                          className="premium-input"
+                          value={landingAboutText}
+                          onChange={(e) => setLandingAboutText(e.target.value)}
+                          style={{ minHeight: "80px", resize: "vertical", width: "100%" }}
+                          required
+                        />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>CONTACT US TEXT</label>
+                        <textarea
+                          className="premium-input"
+                          value={landingContactText}
+                          onChange={(e) => setLandingContactText(e.target.value)}
+                          style={{ minHeight: "80px", resize: "vertical", width: "100%" }}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>CONTACT EMAIL ADDRESS</label>
+                        <input
+                          type="email"
+                          className="premium-input"
+                          value={landingContactEmail}
+                          onChange={(e) => setLandingContactEmail(e.target.value)}
+                          placeholder="support@webbing.in"
+                          required
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>GATEWAY MERCHANT UPI ID</label>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={upiId}
+                          onChange={(e) => setUpiId(e.target.value.trim())}
+                          placeholder="e.g. pogakula@ybl"
+                          required
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>FEATURES LIST (JSON FORMAT)</label>
+                      <textarea
+                        className="premium-input"
+                        value={landingFeatures}
+                        onChange={(e) => setLandingFeatures(e.target.value)}
+                        placeholder="[ { 'icon': 'Sparkles', 'title': '...', 'text': '...' } ]"
+                        style={{ minHeight: "150px", fontFamily: "monospace", fontSize: "0.8rem", resize: "vertical", width: "100%" }}
+                      />
+                      <p style={{ color: "#6b7280", fontSize: "0.75rem", margin: "0.2rem 0 0 0" }}>
+                        Must be a valid JSON array of feature cards. Allowed icon string keys include: Sparkles, Layers3, Globe2, ShieldCheck, ShoppingCart, DollarSign, Code, MessageSquare, etc.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1.5rem" }}>
+                  <span className="eyebrow">Legal Pages</span>
+                  <h3 style={{ margin: "0 0 1rem 0", color: "#fff", fontSize: "1.1rem", fontWeight: 700 }}>User Policies Content</h3>
+                  
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>PRIVACY POLICY</label>
+                      <textarea
+                        className="premium-input"
+                        value={policyPrivacy}
+                        onChange={(e) => setPolicyPrivacy(e.target.value)}
+                        placeholder="Leave blank to use system defaults..."
+                        style={{ minHeight: "150px", resize: "vertical", width: "100%" }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>TERMS & CONDITIONS</label>
+                      <textarea
+                        className="premium-input"
+                        value={policyTerms}
+                        onChange={(e) => setPolicyTerms(e.target.value)}
+                        placeholder="Leave blank to use system defaults..."
+                        style={{ minHeight: "150px", resize: "vertical", width: "100%" }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>REFUND POLICY</label>
+                      <textarea
+                        className="premium-input"
+                        value={policyRefund}
+                        onChange={(e) => setPolicyRefund(e.target.value)}
+                        placeholder="Leave blank to use system defaults..."
+                        style={{ minHeight: "150px", resize: "vertical", width: "100%" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {message && <div className="form-alert" style={{ background: "rgba(52, 211, 153, 0.1)", border: "1px solid rgba(52, 211, 153, 0.2)", color: "#34d399" }}>{message}</div>}
+                {error && <div className="form-alert" style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#f87171" }}>{error}</div>}
+
+                <button
+                  type="submit"
+                  className="primary-action"
+                  style={{
+                    background: "linear-gradient(to right, #6366f1, #a855f7)",
+                    color: "#fff",
+                    width: "100%",
+                    justifyContent: "center",
+                    fontWeight: 700,
+                    height: "44px"
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? "Saving Platform Settings..." : "Save Platform Settings"}
+                </button>
+              </form>
             </section>
           </div>
         )}

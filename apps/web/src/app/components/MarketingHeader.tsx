@@ -6,10 +6,13 @@ import { Sparkles, Menu, X } from "lucide-react";
 interface MarketingHeaderProps {
   active?: "signin" | "signup";
   user?: { email: string; role: string } | null;
+  appName?: string;
+  appLogo?: string;
 }
 
-export default function MarketingHeader({ active, user }: MarketingHeaderProps) {
+export default function MarketingHeader({ active, user, appName: propAppName, appLogo: propAppLogo }: MarketingHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [clientSettings, setClientSettings] = useState<any>(null);
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -21,12 +24,32 @@ export default function MarketingHeader({ active, user }: MarketingHeaderProps) 
     }
   }, []);
 
+  React.useEffect(() => {
+    if (!propAppName) {
+      fetch("/api/settings")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.settings) {
+            setClientSettings(data.settings);
+          }
+        })
+        .catch((err) => console.error("Error loading header branding settings:", err));
+    }
+  }, [propAppName]);
+
+  const appName = propAppName || clientSettings?.appName || "Webbing";
+  const appLogo = propAppLogo || clientSettings?.appLogo || "";
+
   return (
     <header className="site-nav" style={{ position: "relative" }}>
       <div className="brand-wrapper">
         <a className="brand" href="/">
-          <span className="brand-mark"><Sparkles size={18} /></span>
-          Webbing
+          {appLogo ? (
+            <img src={appLogo} alt={appName} style={{ height: "24px", maxWidth: "100px", objectFit: "contain", marginRight: "0.25rem" }} />
+          ) : (
+            <span className="brand-mark"><Sparkles size={18} /></span>
+          )}
+          {appName}
         </a>
         
         {/* Mobile menu toggle button */}

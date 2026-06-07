@@ -5,6 +5,7 @@ import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
 import DashboardEditor from "./DashboardEditor";
 import { Sparkles } from "lucide-react";
+import { getSystemSettings } from "@/lib/settings";
 
 async function getLlmKeys(userId: string) {
   try {
@@ -50,9 +51,10 @@ export default async function DashboardPage() {
   let plans: any[] = [];
   let upiId = "pogakula@ybl";
   let dbUserObj = null;
+  let systemSettings: any = null;
 
   try {
-    const [dbTenant, dbLlmKeys, dbPlans, dbUpiSetting, dbUser] = await Promise.all([
+    const [dbTenant, dbLlmKeys, dbPlans, dbUpiSetting, dbUser, dbSettings] = await Promise.all([
       prisma.tenant.findUnique({
         where: { id: user.tenantId },
         include: {
@@ -83,12 +85,14 @@ export default async function DashboardPage() {
       prisma.plan.findMany({ orderBy: { price: "asc" } }),
       prisma.systemSetting.findUnique({ where: { key: "upiId" } }),
       prisma.user.findUnique({ where: { id: user.userId } }),
+      getSystemSettings(),
     ]);
     tenant = dbTenant;
     llmKeys = dbLlmKeys;
     plans = dbPlans;
     upiId = dbUpiSetting?.value || "pogakula@ybl";
     dbUserObj = dbUser;
+    systemSettings = dbSettings;
 
     // Auto-generate affiliateCode if missing
     if (dbUserObj && !dbUserObj.affiliateCode) {
@@ -147,6 +151,7 @@ export default async function DashboardPage() {
       protocol={protocol}
       initialPlans={plans}
       upiId={upiId}
+      initialSettings={systemSettings}
     />
   );
 }

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, UserPlus } from "lucide-react";
 import MarketingHeader from "../components/MarketingHeader";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function SignUpPage() {
   const [tenantName, setTenantName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { settings } = useSystemSettings();
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -65,8 +67,12 @@ export default function SignUpPage() {
       <div className="auth-shell">
         <div className="auth-copy">
           <a className="brand" href="/">
-            <span className="brand-mark"><Sparkles size={18} /></span>
-            Webbing
+            {settings.appLogo ? (
+              <img src={settings.appLogo} alt={settings.appName} style={{ height: "24px", maxWidth: "100px", objectFit: "contain", marginRight: "0.25rem" }} />
+            ) : (
+              <span className="brand-mark"><Sparkles size={18} /></span>
+            )}
+            {settings.appName}
           </a>
           <h1>Start your AI website workspace.</h1>
           <p>Create an account, generate your first site, and add your own LLM keys from the dashboard when you need custom routing.</p>

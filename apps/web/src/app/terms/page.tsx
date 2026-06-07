@@ -2,53 +2,64 @@ import React from "react";
 import MarketingHeader from "../components/MarketingHeader";
 import { cookies } from "next/headers";
 import { verifySession } from "@/lib/session";
+import { getSystemSettings } from "@/lib/settings";
 
-export default function TermsPage() {
+export default async function TermsPage() {
   const sessionToken = cookies().get("webbing-session")?.value;
   const user = sessionToken ? verifySession(sessionToken) : null;
+  const settings = await getSystemSettings();
 
   return (
     <div className="app-shell" style={{ background: "#0a0e17", minHeight: "100vh" }}>
-      <MarketingHeader user={user} />
+      <MarketingHeader user={user} appName={settings.appName} appLogo={settings.appLogo} />
       
       <main style={{ maxWidth: "800px", margin: "4rem auto", padding: "0 2rem", color: "#cbd5e1", lineHeight: "1.7" }}>
         <h1 style={{ color: "#fff", fontSize: "2.5rem", fontWeight: 850, marginBottom: "1rem" }}>Terms & Conditions</h1>
-        <p style={{ color: "#9ca3af", fontSize: "0.95rem", marginBottom: "2rem" }}>Last Updated: June 2, 2026</p>
+        
+        {settings.policyTerms ? (
+          <div style={{ whiteSpace: "pre-wrap", color: "#cbd5e1" }}>
+            {settings.policyTerms}
+          </div>
+        ) : (
+          <>
+            <p style={{ color: "#9ca3af", fontSize: "0.95rem", marginBottom: "2rem" }}>Last Updated: June 2, 2026</p>
 
-        <section style={{ marginBottom: "2rem" }}>
-          <h2 style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 700, margin: "1.5rem 0 0.5rem 0" }}>1. Acceptance of Terms</h2>
-          <p>
-            By accessing and using Webbing ("Service"), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the Service.
-          </p>
-        </section>
+            <section style={{ marginBottom: "2rem" }}>
+              <h2 style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 700, margin: "1.5rem 0 0.5rem 0" }}>1. Acceptance of Terms</h2>
+              <p>
+                By accessing and using Webbing ("Service"), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the Service.
+              </p>
+            </section>
 
-        <section style={{ marginBottom: "2rem" }}>
-          <h2 style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 700, margin: "1.5rem 0 0.5rem 0" }}>2. Use of Service & Accounts</h2>
-          <p>
-            You must provide accurate account information. You are solely responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. Webbing reserves the right to terminate accounts that violate platform policies.
-          </p>
-        </section>
+            <section style={{ marginBottom: "2rem" }}>
+              <h2 style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 700, margin: "1.5rem 0 0.5rem 0" }}>2. Use of Service & Accounts</h2>
+              <p>
+                You must provide accurate account information. You are solely responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. Webbing reserves the right to terminate accounts that violate platform policies.
+              </p>
+            </section>
 
-        <section style={{ marginBottom: "2rem" }}>
-          <h2 style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 700, margin: "1.5rem 0 0.5rem 0" }}>3. Affiliate Program Rules</h2>
-          <p>
-            Webbing offers an affiliate program where users can refer new users. Referrers receive a 20% commission on the referee's first paid plan purchase, and a 10% recurring commission on subsequent recurring renewals. Referees receive a 10% discount on purchase checkout. Commisions mature after a 10-day refund window. Attempting self-referrals or manipulating the discount systems is strictly prohibited and will result in commission cancellation and account suspension.
-          </p>
-        </section>
+            <section style={{ marginBottom: "2rem" }}>
+              <h2 style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 700, margin: "1.5rem 0 0.5rem 0" }}>3. Affiliate Program Rules</h2>
+              <p>
+                Webbing offers an affiliate program where users can refer new users. Referrers receive a 20% commission on the referee's first paid plan purchase, and a 10% recurring commission on subsequent recurring renewals. Referees receive a 10% discount on purchase checkout. Commisions mature after a 10-day refund window. Attempting self-referrals or manipulating the discount systems is strictly prohibited and will result in commission cancellation and account suspension.
+              </p>
+            </section>
 
-        <section style={{ marginBottom: "2rem" }}>
-          <h2 style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 700, margin: "1.5rem 0 0.5rem 0" }}>4. Intellectual Property</h2>
-          <p>
-            You retain ownership of all original content generated by you. Webbing retains all rights to the underlying templates, editor software, AI routing systems, and design tokens used to render the websites. You are permitted to download self-hosted white-labeled ZIP packages of your pages as allowed under your active subscription plans.
-          </p>
-        </section>
+            <section style={{ marginBottom: "2rem" }}>
+              <h2 style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 700, margin: "1.5rem 0 0.5rem 0" }}>4. Intellectual Property</h2>
+              <p>
+                You retain ownership of all original content generated by you. Webbing retains all rights to the underlying templates, editor software, AI routing systems, and design tokens used to render the websites. You are permitted to download self-hosted white-labeled ZIP packages of your pages as allowed under your active subscription plans.
+              </p>
+            </section>
 
-        <section style={{ marginBottom: "2rem" }}>
-          <h2 style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 700, margin: "1.5rem 0 0.5rem 0" }}>5. Limitation of Liability</h2>
-          <p>
-            Webbing is provided on an "as is" and "as available" basis without warranties of any kind. We do not guarantee uninterrupted, secure, or error-free operations of generated websites, custom domains, or e-commerce storefront database services.
-          </p>
-        </section>
+            <section style={{ marginBottom: "2rem" }}>
+              <h2 style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 700, margin: "1.5rem 0 0.5rem 0" }}>5. Limitation of Liability</h2>
+              <p>
+                Webbing is provided on an "as is" and "as available" basis without warranties of any kind. We do not guarantee uninterrupted, secure, or error-free operations of generated websites, custom domains, or e-commerce storefront database services.
+              </p>
+            </section>
+          </>
+        )}
       </main>
 
       <footer className="footer" style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center", justifyContent: "center", padding: "3rem 2rem", marginTop: "auto" }}>
@@ -59,7 +70,7 @@ export default function TermsPage() {
           <a href="/refund" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.85rem", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = '#fff'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}>Refund Policy</a>
         </div>
         <div style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "0.8rem" }}>
-          © {new Date().getFullYear()} Webbing Platforms Inc. All rights reserved.
+          © {new Date().getFullYear()} {settings.appName} Platforms Inc. All rights reserved.
         </div>
       </footer>
     </div>

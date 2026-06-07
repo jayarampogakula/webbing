@@ -7,6 +7,7 @@ import PlanEditor from "./PlanEditor";
 import LlmKeyManager from "../components/LlmKeyManager";
 import AdminConsole from "./AdminConsole";
 import { Sparkles } from "lucide-react";
+import { getSystemSettings } from "@/lib/settings";
 
 async function getLlmKeys() {
   try {
@@ -52,9 +53,10 @@ export default async function AdminPage() {
   let upiId = "pogakula@ybl";
   let payoutRequests: any[] = [];
   let refundRequests: any[] = [];
+  let systemSettings: any = null;
 
   try {
-    const [dbUsers, dbProjects, dbSubscriptions, dbTotalTenants, dbLlmKeys, dbPlans, dbRequests, dbUpiSetting, dbFeedbacks, dbPayouts, dbRefunds] = await Promise.all([
+    const [dbUsers, dbProjects, dbSubscriptions, dbTotalTenants, dbLlmKeys, dbPlans, dbRequests, dbSettings, dbFeedbacks, dbPayouts, dbRefunds] = await Promise.all([
       prisma.user.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
       prisma.project.findMany({ include: { tenant: true, customDomain: true, user: true }, orderBy: { createdAt: "desc" } }),
       prisma.subscription.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
@@ -62,7 +64,7 @@ export default async function AdminPage() {
       getLlmKeys(),
       prisma.plan.findMany({ orderBy: { price: "asc" } }),
       prisma.paymentRequest.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
-      prisma.systemSetting.findUnique({ where: { key: "upiId" } }),
+      getSystemSettings(),
       prisma.feedback.findMany({ orderBy: { createdAt: "desc" } }),
       prisma.payoutRequest.findMany({ include: { user: true }, orderBy: { createdAt: "desc" } }),
       prisma.refundRequest.findMany({ include: { tenant: true, paymentRequest: true }, orderBy: { createdAt: "desc" } }),
@@ -74,8 +76,9 @@ export default async function AdminPage() {
     llmKeys = dbLlmKeys;
     plans = dbPlans;
     paymentRequests = dbRequests;
+    systemSettings = dbSettings;
     feedbacks = dbFeedbacks;
-    upiId = dbUpiSetting?.value || "pogakula@ybl";
+    upiId = dbSettings.upiId || "pogakula@ybl";
     payoutRequests = dbPayouts;
     refundRequests = dbRefunds;
   } catch (error) {
@@ -138,6 +141,7 @@ export default async function AdminPage() {
         initialRefunds={refundRequests}
         baseDomain={baseDomain}
         protocol={protocol}
+        initialSettings={systemSettings}
       />
     </div>
   );

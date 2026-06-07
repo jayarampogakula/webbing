@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn, Sparkles } from "lucide-react";
 import MarketingHeader from "../components/MarketingHeader";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -11,6 +12,7 @@ export default function SignInPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { settings } = useSystemSettings();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,8 +48,12 @@ export default function SignInPage() {
       <div className="auth-shell">
         <div className="auth-copy">
           <a className="brand" href="/">
-            <span className="brand-mark"><Sparkles size={18} /></span>
-            Webbing
+            {settings.appLogo ? (
+              <img src={settings.appLogo} alt={settings.appName} style={{ height: "24px", maxWidth: "100px", objectFit: "contain", marginRight: "0.25rem" }} />
+            ) : (
+              <span className="brand-mark"><Sparkles size={18} /></span>
+            )}
+            {settings.appName}
           </a>
           <h1>Welcome back to your builder.</h1>
           <p>Sign in to manage generated websites, credits, provider keys, domains, and publishing status.</p>

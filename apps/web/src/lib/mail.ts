@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { prisma } from "@webbing/db";
 
 // Retrieve configuration from environment variables, defaulting to Hostinger SMTP configurations
 const host = process.env.SMTP_HOST || "smtp.hostinger.com";
@@ -6,7 +7,7 @@ const port = parseInt(process.env.SMTP_PORT || "465", 10);
 const secure = port === 465; // Use SSL for 465
 const user = process.env.SMTP_USER || "support@webbing.in";
 const pass = process.env.SMTP_PASS || ""; // User must set this in env
-const from = process.env.SMTP_FROM || `"Webbing Support" <support@webbing.in>`;
+const defaultFrom = process.env.SMTP_FROM || `"Webbing Support" <support@webbing.in>`;
 
 // Create SMTP Transporter
 const transporter = pass
@@ -21,15 +22,36 @@ const transporter = pass
     })
   : null;
 
-// Generic helper to send email safely without crashing the main application thread if SMTP is unconfigured or fails
-async function sendMailSafe(to: string, subject: string, html: string) {
+// Helper to query dynamic email branding settings
+async function getEmailBranding() {
+  try {
+    const settings = await prisma.systemSetting.findMany({
+      where: {
+        key: { in: ["appName", "appEmail"] }
+      }
+    });
+    const map = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+    return {
+      appName: map.appName || "Webbing",
+      appEmail: map.appEmail || "support@webbing.in"
+    };
+  } catch (err) {
+    return {
+      appName: "Webbing",
+      appEmail: "support@webbing.in"
+    };
+  }
+}
+
+// Generic helper to send email safely
+async function sendMailSafe(to: string, subject: string, html: string, customFrom?: string) {
   if (!transporter) {
     console.warn(`[Mail Service] SMTP is not configured (missing SMTP_PASS). Email to ${to} was not sent. Subject: "${subject}"`);
     return false;
   }
   try {
     const info = await transporter.sendMail({
-      from,
+      from: customFrom || defaultFrom,
       to,
       subject,
       html,
@@ -46,31 +68,33 @@ async function sendMailSafe(to: string, subject: string, html: string) {
  * Send Welcome Email on Signup
  */
 export async function sendWelcomeEmail(toEmail: string, name: string) {
-  const subject = "Welcome to Webbing! ✨";
+  const { appName, appEmail } = await getEmailBranding();
+  const subject = `Welcome to ${appName}! ✨`;
+  const customFrom = `"${appName} Support" <${appEmail}>`;
   const html = `
 <div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
-    <div style="text-align: center; margin-bottom: 30px;">
-      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">✨ Webbing</span>
-    </div>
-    <h1 style="font-size: 22px; font-weight: 700; color: #ffffff; margin-bottom: 20px;">Welcome to Webbing, ${name}!</h1>
-    <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
-      We're thrilled to have you join Webbing. Your account has been successfully created. You can now build, manage, and launch modern AI-powered websites in seconds.
-    </p>
-    <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 30px;">
-      Your registered email address is: <strong style="color: #ffffff;">${toEmail}</strong>
-    </p>
-    <div style="text-align: center; margin-bottom: 30px;">
-      <a href="https://webbing.in/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Dashboard</a>
-    </div>
-    <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
-    <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
-      If you did not sign up for this account, please contact us at support@webbing.in.
-    </p>
+     <div style="text-align: center; margin-bottom: 30px;">
+       <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">✨ ${appName}</span>
+     </div>
+     <h1 style="font-size: 22px; font-weight: 700; color: #ffffff; margin-bottom: 20px;">Welcome to ${appName}, ${name}!</h1>
+     <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
+       We're thrilled to have you join ${appName}. Your account has been successfully created. You can now build, manage, and launch modern AI-powered websites in seconds.
+     </p>
+     <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 30px;">
+       Your registered email address is: <strong style="color: #ffffff;">${toEmail}</strong>
+     </p>
+     <div style="text-align: center; margin-bottom: 30px;">
+       <a href="https://${appName.toLowerCase() === 'webbing' ? 'webbing.in' : 'localhost:3000'}/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Dashboard</a>
+     </div>
+     <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
+     <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
+       If you did not sign up for this account, please contact us at ${appEmail}.
+     </p>
   </div>
 </div>
   `;
-  return sendMailSafe(toEmail, subject, html);
+  return sendMailSafe(toEmail, subject, html, customFrom);
 }
 
 /**
@@ -83,7 +107,9 @@ export async function sendPaymentRequestEmail(
   amount: number,
   utr: string
 ) {
-  const subject = "Payment Verification Request Received - Webbing 💳";
+  const { appName, appEmail } = await getEmailBranding();
+  const subject = `Payment Verification Request Received - ${appName} 💳`;
+  const customFrom = `"${appName} Payments" <${appEmail}>`;
   const displayPlanName = planId.startsWith("credits-")
     ? `Extra Credits (${planId.split("-")[1]} credits)`
     : planId === "pro-plan"
@@ -96,7 +122,7 @@ export async function sendPaymentRequestEmail(
 <div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
     <div style="text-align: center; margin-bottom: 30px;">
-      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">💳 Webbing Payments</span>
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">💳 ${appName} Payments</span>
     </div>
     <h1 style="font-size: 22px; font-weight: 700; color: #ffffff; margin-bottom: 20px;">Payment Verification Under Review</h1>
     <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
@@ -128,24 +154,26 @@ export async function sendPaymentRequestEmail(
     </p>
     <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
     <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
-      If you have any questions or need urgent activation, email support@webbing.in.
+      If you have any questions or need urgent activation, email ${appEmail}.
     </p>
   </div>
 </div>
   `;
-  return sendMailSafe(toEmail, subject, html);
+  return sendMailSafe(toEmail, subject, html, customFrom);
 }
 
 /**
  * Send Account Activation / Plan Upgrade Confirmation Email
  */
 export async function sendPlanActivationEmail(toEmail: string, name: string, planName: string) {
-  const subject = "Your Webbing Account Plan is Activated! 🚀";
+  const { appName, appEmail } = await getEmailBranding();
+  const subject = `Your ${appName} Account Plan is Activated! 🚀`;
+  const customFrom = `"${appName} Support" <${appEmail}>`;
   const html = `
 <div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
     <div style="text-align: center; margin-bottom: 30px;">
-      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">🚀 Webbing Plan Activated</span>
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">🚀 ${appName} Plan Activated</span>
     </div>
     <h1 style="font-size: 22px; font-weight: 700; color: #34d399; margin-bottom: 20px;">Your Account is Activated!</h1>
     <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
@@ -158,16 +186,16 @@ export async function sendPlanActivationEmail(toEmail: string, name: string, pla
       </p>
     </div>
     <div style="text-align: center; margin-bottom: 30px;">
-      <a href="https://webbing.in/signin" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Start Building Now</a>
+      <a href="https://${appName.toLowerCase() === 'webbing' ? 'webbing.in' : 'localhost:3000'}/signin" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Start Building Now</a>
     </div>
     <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
     <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
-      Thank you for choosing Webbing. Let's make something amazing!
+      Thank you for choosing ${appName}. Let's make something amazing!
     </p>
   </div>
 </div>
   `;
-  return sendMailSafe(toEmail, subject, html);
+  return sendMailSafe(toEmail, subject, html, customFrom);
 }
 
 /**
@@ -179,12 +207,14 @@ export async function sendCreditsPurchaseEmail(
   creditCount: number,
   amount: number
 ) {
-  const subject = "Webbing Credits Purchased Successfully! ⚡";
+  const { appName, appEmail } = await getEmailBranding();
+  const subject = `${appName} Credits Purchased Successfully! ⚡`;
+  const customFrom = `"${appName} Support" <${appEmail}>`;
   const html = `
 <div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
     <div style="text-align: center; margin-bottom: 30px;">
-      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">⚡ Webbing Credits</span>
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">⚡ ${appName} Credits</span>
     </div>
     <h1 style="font-size: 22px; font-weight: 700; color: #818cf8; margin-bottom: 20px;">Credits Added Successfully!</h1>
     <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
@@ -198,16 +228,16 @@ export async function sendCreditsPurchaseEmail(
       These credits are now available for website generations, AI copy writes, or image updates inside your workspace.
     </p>
     <div style="text-align: center; margin-bottom: 30px;">
-      <a href="https://webbing.in/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Workspace</a>
+      <a href="https://${appName.toLowerCase() === 'webbing' ? 'webbing.in' : 'localhost:3000'}/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Workspace</a>
     </div>
     <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
     <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
-      If you have any questions or concerns, email support@webbing.in.
+      If you have any questions or concerns, email ${appEmail}.
     </p>
   </div>
 </div>
   `;
-  return sendMailSafe(toEmail, subject, html);
+  return sendMailSafe(toEmail, subject, html, customFrom);
 }
 
 /**
@@ -220,6 +250,7 @@ export async function sendContactFormEmail(
   senderEmail: string,
   message: string
 ) {
+  const { appName } = await getEmailBranding();
   const subject = `New message from ${senderName} via ${projectName} ✉️`;
   const html = `
 <div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center;">
@@ -253,11 +284,10 @@ export async function sendContactFormEmail(
     </div>
     <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
     <p style="font-size: 11px; color: #6b7280; text-align: center; margin: 0;">
-      This email was sent dynamically by Webbing AI on behalf of your hosted website.
+      This email was sent dynamically by ${appName} AI on behalf of your hosted website.
     </p>
   </div>
 </div>
   `;
   return sendMailSafe(toEmail, subject, html);
 }
-
