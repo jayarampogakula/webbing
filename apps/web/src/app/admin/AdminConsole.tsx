@@ -286,6 +286,14 @@ export default function AdminConsole({
   const [policyTerms, setPolicyTerms] = useState(initialSettings?.policyTerms || "");
   const [policyRefund, setPolicyRefund] = useState(initialSettings?.policyRefund || "");
 
+  const [affiliateEnabled, setAffiliateEnabled] = useState(initialSettings?.affiliateEnabled !== "false");
+  const [affiliateTier1Max, setAffiliateTier1Max] = useState(initialSettings?.affiliateTier1Max || "10");
+  const [affiliateTier1Rate, setAffiliateTier1Rate] = useState(initialSettings?.affiliateTier1Rate || "20");
+  const [affiliateTier2Max, setAffiliateTier2Max] = useState(initialSettings?.affiliateTier2Max || "50");
+  const [affiliateTier2Rate, setAffiliateTier2Rate] = useState(initialSettings?.affiliateTier2Rate || "25");
+  const [affiliateTier3Rate, setAffiliateTier3Rate] = useState(initialSettings?.affiliateTier3Rate || "30");
+  const [affiliateRecurringRate, setAffiliateRecurringRate] = useState(initialSettings?.affiliateRecurringRate || "10");
+
   const [selectedTemplateId, setSelectedTemplateId] = useState<"welcome" | "payment_request" | "activation" | "credits">("welcome");
   const [testEmailAddress, setTestEmailAddress] = useState(user.email);
   const [sendingTest, setSendingTest] = useState(false);
@@ -389,7 +397,14 @@ export default function AdminConsole({
             landingFeatures,
             policyPrivacy,
             policyTerms,
-            policyRefund
+            policyRefund,
+            affiliateEnabled: String(affiliateEnabled),
+            affiliateTier1Max,
+            affiliateTier1Rate,
+            affiliateTier2Max,
+            affiliateTier2Rate,
+            affiliateTier3Rate,
+            affiliateRecurringRate
           }
         })
       });
@@ -2031,6 +2046,107 @@ export default function AdminConsole({
                       />
                     </div>
                   </div>
+                </div>
+
+                {/* Affiliate Partner Program Settings */}
+                <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.08)", paddingTop: "1.5rem", marginTop: "0.5rem" }}>
+                  <h3 style={{ margin: "0 0 0.5rem 0", color: "#fff", fontSize: "1.05rem", fontWeight: 700 }}>Affiliate Partner Program Settings</h3>
+                  <p style={{ color: "#9ca3af", fontSize: "0.8rem", margin: "0 0 1rem 0" }}>
+                    Configure the global partner rewards, tiers, and referral commission rules.
+                  </p>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", background: "rgba(255,255,255,0.02)", padding: "0.75rem 1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.05)", marginBottom: "1.25rem" }}>
+                    <input
+                      type="checkbox"
+                      id="affiliateEnabled"
+                      checked={affiliateEnabled}
+                      onChange={(e) => setAffiliateEnabled(e.target.checked)}
+                      style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                    />
+                    <label htmlFor="affiliateEnabled" style={{ fontSize: "0.85rem", color: "#fff", fontWeight: 600, cursor: "pointer" }}>
+                      Enable Affiliate Partner Program & Referrals
+                    </label>
+                  </div>
+
+                  {affiliateEnabled && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                          <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>TIER 1 MAX REFERRALS</label>
+                          <input
+                            type="number"
+                            min="1"
+                            className="premium-input"
+                            value={affiliateTier1Max}
+                            onChange={(e) => setAffiliateTier1Max(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                          <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>TIER 1 RATE (%)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            className="premium-input"
+                            value={affiliateTier1Rate}
+                            onChange={(e) => setAffiliateTier1Rate(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                          <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>RECURRING RATE (%)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            className="premium-input"
+                            value={affiliateRecurringRate}
+                            onChange={(e) => setAffiliateRecurringRate(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                          <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>TIER 2 MAX REFERRALS</label>
+                          <input
+                            type="number"
+                            min={parseInt(affiliateTier1Max, 10) + 1}
+                            className="premium-input"
+                            value={affiliateTier2Max}
+                            onChange={(e) => setAffiliateTier2Max(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                          <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>TIER 2 RATE (%)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            className="premium-input"
+                            value={affiliateTier2Rate}
+                            onChange={(e) => setAffiliateTier2Rate(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                          <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>TIER 3 RATE (51+ REF) (%)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            className="premium-input"
+                            value={affiliateTier3Rate}
+                            onChange={(e) => setAffiliateTier3Rate(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {message && <div className="form-alert" style={{ background: "rgba(52, 211, 153, 0.1)", border: "1px solid rgba(52, 211, 153, 0.2)", color: "#34d399" }}>{message}</div>}

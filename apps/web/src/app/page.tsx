@@ -111,6 +111,9 @@ export default async function LandingPage() {
           <a href="/privacy" className="footer-link">Privacy Policy</a>
           <a href="/cookies" className="footer-link">Cookies Policy</a>
           <a href="/refund" className="footer-link">Refund Policy</a>
+          {settings.affiliateEnabled === "true" && (
+            <a href="/affiliate" className="footer-link">Affiliate Program</a>
+          )}
         </div>
         <div style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "0.8rem" }}>
           © {new Date().getFullYear()} {settings.appName} Platforms Inc. All rights reserved.

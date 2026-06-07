@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma, SubscriptionStatus } from "@webbing/db";
 import { verifySession } from "@/lib/session";
 import { sendPlanActivationEmail, sendCreditsPurchaseEmail } from "@/lib/mail";
+import { getSystemSettings } from "@/lib/settings";
 
 
 export async function POST(req: Request) {
@@ -111,6 +112,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: `Configured plan '${request.planId}' details not found in system. Add this plan first.` }, { status: 404 });
       }
 
+      // Fetch system settings
+      const settings = await getSystemSettings();
+
       // Start database transaction
       const result = await prisma.$transaction(async (tx) => {
         // 1. Approve Payment Request
@@ -151,32 +155,70 @@ export async function POST(req: Request) {
           orderBy: { createdAt: "asc" }
         });
 
-        if (payingUser && payingUser.referredBy) {
-          const planKey = plan.name.toLowerCase().replace(/\s+/g, "-");
-          if (planKey !== "starter" && !request.planId.startsWith("credits-")) {
-            // Check if there are any existing non-cancelled commissions for this referee
-            const previousCommission = await tx.affiliateCommission.findFirst({
-              where: {
-                refereeId: payingUser.id,
-                status: { not: "CANCELLED" }
-              }
-            });
+        if (payingUser && payingUser.referredBy && settings.affiliateEnabled === "true") {
+          // Check if referrer user is paid
+          const referrerUser = await tx.user.findUnique({
+            where: { id: payingUser.referredBy }
+          });
+          const referrerSub = referrerUser ? await tx.subscription.findUnique({
+            where: { tenantId: referrerUser.tenantId }
+          }) : null;
+          const referrerIsPaid = referrerSub && referrerSub.status === "ACTIVE" && referrerSub.planId !== "free-plan" && referrerSub.planId !== "starter";
 
-            // First purchase gets 20% commission; renewals get 10% commission
-            const rate = previousCommission ? 0.10 : 0.20;
-            const commissionAmount = Math.round(request.amount * rate);
-            const availableDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+          if (referrerIsPaid) {
+            const planKey = plan.name.toLowerCase().replace(/\s+/g, "-");
+            if (planKey !== "starter" && !request.planId.startsWith("credits-")) {
+              // Check if there are any existing non-cancelled commissions for this referee
+              const previousCommission = await tx.affiliateCommission.findFirst({
+                where: {
+                  refereeId: payingUser.id,
+                  status: { not: "CANCELLED" }
+                }
+              });
 
-            await tx.affiliateCommission.create({
-              data: {
-                referrerId: payingUser.referredBy,
-                refereeId: payingUser.id,
-                amount: commissionAmount,
-                paymentRequestId: requestId,
-                status: "PENDING",
-                availableAt: availableDate
+              // Fetch dynamic tier parameters
+              const t1Max = parseInt(settings.affiliateTier1Max || "10", 10);
+              const t2Max = parseInt(settings.affiliateTier2Max || "50", 10);
+              const t1Rate = parseFloat(settings.affiliateTier1Rate || "20") / 100.0;
+              const t2Rate = parseFloat(settings.affiliateTier2Rate || "25") / 100.0;
+              const t3Rate = parseFloat(settings.affiliateTier3Rate || "30") / 100.0;
+              const recRate = parseFloat(settings.affiliateRecurringRate || "10") / 100.0;
+
+              let rate = recRate;
+              if (!previousCommission) {
+                // Count unique referee IDs that have non-cancelled commissions for this referrer
+                const matureReferralsCount = await tx.affiliateCommission.groupBy({
+                  by: ['refereeId'],
+                  where: {
+                    referrerId: payingUser.referredBy,
+                    status: { not: "CANCELLED" }
+                  }
+                });
+                const referralCount = matureReferralsCount.length;
+
+                if (referralCount < t1Max) {
+                  rate = t1Rate;
+                } else if (referralCount < t2Max) {
+                  rate = t2Rate;
+                } else {
+                  rate = t3Rate;
+                }
               }
-            });
+
+              const commissionAmount = Math.round(request.amount * rate);
+              const availableDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+
+              await tx.affiliateCommission.create({
+                data: {
+                  referrerId: payingUser.referredBy,
+                  refereeId: payingUser.id,
+                  amount: commissionAmount,
+                  paymentRequestId: requestId,
+                  status: "PENDING",
+                  availableAt: availableDate
+                }
+              });
+            }
           }
         }
 

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma, hashPassword, Role, SubscriptionStatus } from "@webbing/db";
 import { signSession } from "@/lib/session";
 import { sendWelcomeEmail } from "@/lib/mail";
+import { getSystemSettings } from "@/lib/settings";
 
 
 export async function POST(req: Request) {
@@ -60,11 +61,20 @@ export async function POST(req: Request) {
     // Resolve referrer id if any
     let referrerId: string | undefined = undefined;
     if (referrerCode) {
-      const referrerUser = await prisma.user.findFirst({
-        where: { affiliateCode: referrerCode.trim().toUpperCase() }
-      });
-      if (referrerUser) {
-        referrerId = referrerUser.id;
+      const settings = await getSystemSettings();
+      if (settings.affiliateEnabled === "true") {
+        const referrerUser = await prisma.user.findFirst({
+          where: { affiliateCode: referrerCode.trim().toUpperCase() }
+        });
+        if (referrerUser) {
+          const referrerSub = await prisma.subscription.findUnique({
+            where: { tenantId: referrerUser.tenantId }
+          });
+          const isPaid = referrerSub && referrerSub.status === "ACTIVE" && referrerSub.planId !== "free-plan" && referrerSub.planId !== "starter";
+          if (isPaid) {
+            referrerId = referrerUser.id;
+          }
+        }
       }
     }
 

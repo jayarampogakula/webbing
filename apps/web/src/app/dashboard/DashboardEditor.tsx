@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Settings, Check, Server, RefreshCw, Sparkles, Globe, Edit2, Play, Download, Layout, ArrowLeft, Plus, MessageSquare, Layers, Sliders, Image, LogOut, CheckCircle, AlertTriangle, ExternalLink, Shield, ArrowRight, Trash2, ChevronLeft, ChevronRight, PlusCircle, Home, Menu, Mail, Users, DollarSign, Percent } from "lucide-react";
+import { Settings, Check, Server, RefreshCw, Sparkles, Globe, Edit2, Play, Download, Layout, ArrowLeft, Plus, MessageSquare, Layers, Sliders, Image, LogOut, CheckCircle, AlertTriangle, ExternalLink, Shield, ArrowRight, Trash2, ChevronLeft, ChevronRight, PlusCircle, Home, Menu, Mail, Users, DollarSign, Percent, Lock } from "lucide-react";
 import GeneratorForm from "../GeneratorForm";
 import LlmKeyManager, { LlmKeyView } from "../components/LlmKeyManager";
 
@@ -2003,33 +2003,35 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-            <button
-              onClick={() => {
-                setActiveView("homepage");
-                setHomeSubView("affiliate");
-                setIsCreatingNew(false);
-                if (isMobile) setSidebarCollapsed(true);
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-                width: "100%",
-                padding: "0.6rem 0.8rem",
-                borderRadius: "0.375rem",
-                background: (activeView === "homepage" && homeSubView === "affiliate") ? "rgba(129, 140, 248, 0.08)" : "none",
-                border: "none",
-                color: (activeView === "homepage" && homeSubView === "affiliate") ? "#818cf8" : "#9ca3af",
-                cursor: "pointer",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                textAlign: "left",
-                transition: "all 0.2s"
-              }}
-            >
-              <Percent size={16} />
-              {!sidebarCollapsed && <span>Affiliate Program</span>}
-            </button>
+            {initialSettings?.affiliateEnabled !== "false" && (
+              <button
+                onClick={() => {
+                  setActiveView("homepage");
+                  setHomeSubView("affiliate");
+                  setIsCreatingNew(false);
+                  if (isMobile) setSidebarCollapsed(true);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  width: "100%",
+                  padding: "0.6rem 0.8rem",
+                  borderRadius: "0.375rem",
+                  background: (activeView === "homepage" && homeSubView === "affiliate") ? "rgba(129, 140, 248, 0.08)" : "none",
+                  border: "none",
+                  color: (activeView === "homepage" && homeSubView === "affiliate") ? "#818cf8" : "#9ca3af",
+                  cursor: "pointer",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  textAlign: "left",
+                  transition: "all 0.2s"
+                }}
+              >
+                <Percent size={16} />
+                {!sidebarCollapsed && <span>Affiliate Program</span>}
+              </button>
+            )}
 
             <button
               type="button"
@@ -2120,14 +2122,51 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
         <div style={{ flexGrow: 1, padding: isMobile ? "1.25rem" : "2.5rem", background: "#0a0e17", overflowY: "auto" }}>
           {homeSubView === "affiliate" ? (
             <main style={{ maxWidth: "1000px", margin: "0 auto", color: "#fff" }}>
-              {/* Affiliate Dashboard header */}
-              <div style={{ marginBottom: "2rem" }}>
-                <span className="eyebrow" style={{ color: "#818cf8" }}>Partner Program</span>
-                <h1 style={{ fontSize: "2.25rem", fontWeight: 850, margin: "0.25rem 0", color: "#fff" }}>{appName} Affiliate Center</h1>
-                <p style={{ color: "#9ca3af", fontSize: "0.95rem", margin: 0 }}>
-                  Refer users to {appName}. They get <strong style={{ color: "#34d399" }}>10% discount</strong> on any purchase/renewal. You earn <strong style={{ color: "#818cf8" }}>20% commission</strong> on their first purchase and <strong style={{ color: "#818cf8" }}>10% recurring commission</strong> on all renewals!
-                </p>
-              </div>
+              {!(tenant.subscription && tenant.subscription.planId !== "free-plan" && tenant.subscription.planId !== "starter") ? (
+                <div style={{ padding: "4rem 2rem", textAlign: "center", background: "radial-gradient(circle at top, rgba(99, 102, 241, 0.15), transparent 60%)", borderRadius: "1rem", border: "1px solid rgba(255, 255, 255, 0.05)", position: "relative", overflow: "hidden" }}>
+                  <div style={{ display: "inline-flex", padding: "1rem", borderRadius: "50%", background: "rgba(129, 140, 248, 0.08)", color: "#818cf8", marginBottom: "1.5rem" }}>
+                    <Lock size={48} />
+                  </div>
+                  <h1 style={{ fontSize: "2.5rem", fontWeight: 850, marginBottom: "1rem", letterSpacing: "-0.04em" }}>Unlock the Affiliate Center</h1>
+                  <p style={{ color: "#9ca3af", fontSize: "1.1rem", maxWidth: "600px", margin: "0 auto 2.5rem auto", lineHeight: "1.6" }}>
+                    Promote {appName} and earn up to <strong style={{ color: "#818cf8" }}>30% commission</strong> on first-purchases and <strong style={{ color: "#c084fc" }}>10% recurring</strong> lifetime commissions. To participate in the partner program, you must hold an active Pro or Agency subscription.
+                  </p>
+                  
+                  {/* Premium Lock Benefits Cards */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.5rem", maxWidth: "800px", margin: "0 auto 3rem auto", textAlign: "left" }}>
+                    <div style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.06)", padding: "1.5rem", borderRadius: "0.75rem" }}>
+                      <span style={{ color: "#818cf8", display: "block", marginBottom: "0.5rem", fontSize: "1.25rem", fontWeight: 700 }}>20% - 30% first purchase</span>
+                      <span style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>Tiered payout rates. The more customers you refer, the higher your commission.</span>
+                    </div>
+                    <div style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.06)", padding: "1.5rem", borderRadius: "0.75rem" }}>
+                      <span style={{ color: "#a855f7", display: "block", marginBottom: "0.5rem", fontSize: "1.25rem", fontWeight: 700 }}>10% recurring lifetime</span>
+                      <span style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>Earn commission on monthly and annual plan renewals as long as they stay subscribed.</span>
+                    </div>
+                    <div style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.06)", padding: "1.5rem", borderRadius: "0.75rem" }}>
+                      <span style={{ color: "#34d399", display: "block", marginBottom: "0.5rem", fontSize: "1.25rem", fontWeight: 700 }}>10% discount for referees</span>
+                      <span style={{ color: "#cbd5e1", fontSize: "0.9rem" }}>Give your audience a compelling reason to use your code with an instant discount.</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setUpgradeModalOpen(true)}
+                    className="primary-action"
+                    style={{ background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", padding: "1rem 2.5rem", borderRadius: "0.5rem", border: "none", cursor: "pointer", fontSize: "1rem", fontWeight: 700, boxShadow: "0 4px 25px rgba(99, 102, 241, 0.3)", display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+                  >
+                    Upgrade Plan to Unlock <ArrowRight size={18} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Affiliate Dashboard header */}
+                  <div style={{ marginBottom: "2rem" }}>
+                    <span className="eyebrow" style={{ color: "#818cf8" }}>Partner Program</span>
+                    <h1 style={{ fontSize: "2.25rem", fontWeight: 850, margin: "0.25rem 0", color: "#fff" }}>{appName} Affiliate Center</h1>
+                    <p style={{ color: "#9ca3af", fontSize: "0.95rem", margin: 0 }}>
+                      Refer users to {appName}. They get <strong style={{ color: "#34d399" }}>10% discount</strong> on any purchase/renewal. You earn commission on their first purchase and <strong style={{ color: "#818cf8" }}>{initialSettings?.affiliateRecurringRate || "10"}% recurring commission</strong> on all renewals!
+                    </p>
+                  </div>
 
               {/* Referral Link & Code Panel */}
               <div className="glass-panel" style={{ padding: "1.5rem", borderRadius: "0.75rem", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", marginBottom: "2rem" }}>
@@ -2327,6 +2366,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                   </div>
                 </>
               )}
+              </>)}
             </main>
           ) : (
             <main style={{ maxWidth: "1200px", margin: "0 auto" }}>

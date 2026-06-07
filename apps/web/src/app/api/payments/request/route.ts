@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
 import { sendPaymentRequestEmail } from "@/lib/mail";
+import { getSystemSettings } from "@/lib/settings";
 
 
 // GET: List payment requests
@@ -89,7 +90,21 @@ export async function POST(req: Request) {
     });
 
     if (dbUserReferrer?.referredBy && expectedAmount > 0) {
-      expectedAmount = Math.round(expectedAmount * 0.9);
+      const settings = await getSystemSettings();
+      if (settings.affiliateEnabled === "true") {
+        const referrerUser = await prisma.user.findUnique({
+          where: { id: dbUserReferrer.referredBy }
+        });
+        if (referrerUser) {
+          const referrerSub = await prisma.subscription.findUnique({
+            where: { tenantId: referrerUser.tenantId }
+          });
+          const isPaid = referrerSub && referrerSub.status === "ACTIVE" && referrerSub.planId !== "free-plan" && referrerSub.planId !== "starter";
+          if (isPaid) {
+            expectedAmount = Math.round(expectedAmount * 0.9);
+          }
+        }
+      }
     }
 
     const submittedAmount = parseInt(String(amount), 10);

@@ -16,6 +16,14 @@ export interface SystemSettings {
   policyPrivacy: string;
   policyTerms: string;
   policyRefund: string;
+  // Affiliate Partner configurations
+  affiliateEnabled: string;
+  affiliateTier1Max: string;
+  affiliateTier1Rate: string;
+  affiliateTier2Max: string;
+  affiliateTier2Rate: string;
+  affiliateTier3Rate: string;
+  affiliateRecurringRate: string;
 }
 
 export async function getSystemSettings(): Promise<SystemSettings> {
@@ -39,6 +47,13 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       policyPrivacy: map.policyPrivacy || "",
       policyTerms: map.policyTerms || "",
       policyRefund: map.policyRefund || "",
+      affiliateEnabled: map.affiliateEnabled || "true",
+      affiliateTier1Max: map.affiliateTier1Max || "10",
+      affiliateTier1Rate: map.affiliateTier1Rate || "20",
+      affiliateTier2Max: map.affiliateTier2Max || "50",
+      affiliateTier2Rate: map.affiliateTier2Rate || "25",
+      affiliateTier3Rate: map.affiliateTier3Rate || "30",
+      affiliateRecurringRate: map.affiliateRecurringRate || "10",
     };
   } catch (error) {
     console.error("Error reading system settings from DB:", error);
@@ -58,6 +73,13 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       policyPrivacy: "",
       policyTerms: "",
       policyRefund: "",
+      affiliateEnabled: "true",
+      affiliateTier1Max: "10",
+      affiliateTier1Rate: "20",
+      affiliateTier2Max: "50",
+      affiliateTier2Rate: "25",
+      affiliateTier3Rate: "30",
+      affiliateRecurringRate: "10",
     };
   }
 }
