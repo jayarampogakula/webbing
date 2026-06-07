@@ -1854,23 +1854,25 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             Webbing
           </a>
           
-          {/* AI Credits remaining and Upgrade Option */}
-          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", background: "rgba(255, 255, 255, 0.02)", padding: "0.4rem 1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.05)", fontSize: "0.85rem", height: "34px", boxSizing: "border-box" }}>
-            <span style={{ color: "#9ca3af" }}>AI Credits: <strong style={{ color: "#818cf8" }}>{remainingCredits} left</strong></span>
-            <button
-              onClick={() => {
-                setUpgradeModalOpen(true);
-                setBuyCreditsView(isAgency);
-              }}
-              style={{ background: isAgency ? "rgba(168, 85, 247, 0.15)" : "rgba(129, 140, 248, 0.15)", border: isAgency ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(129, 140, 248, 0.3)", color: isAgency ? "#d8b4fe" : "#a5b4fc", padding: "0.2rem 0.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", marginLeft: "0.5rem" }}
-            >
-              {isAgency ? "Buy Credits" : "Upgrade"}
-            </button>
-          </div>
+          <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
+            {/* AI Credits remaining and Upgrade Option */}
+            <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", background: "rgba(255, 255, 255, 0.02)", padding: "0.4rem 1rem", borderRadius: "0.5rem", border: "1px solid rgba(255, 255, 255, 0.05)", fontSize: "0.85rem", height: "34px", boxSizing: "border-box" }}>
+              <span style={{ color: "#9ca3af" }}>AI Credits: <strong style={{ color: "#818cf8" }}>{remainingCredits} left</strong></span>
+              <button
+                onClick={() => {
+                  setUpgradeModalOpen(true);
+                  setBuyCreditsView(isAgency);
+                }}
+                style={{ background: isAgency ? "rgba(168, 85, 247, 0.15)" : "rgba(129, 140, 248, 0.15)", border: isAgency ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(129, 140, 248, 0.3)", color: isAgency ? "#d8b4fe" : "#a5b4fc", padding: "0.2rem 0.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", marginLeft: "0.5rem" }}
+              >
+                {isAgency ? "Buy Credits" : "Upgrade"}
+              </button>
+            </div>
 
-          <div className="nav-actions" style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-            <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>{user.email}</span>
-            <a className="danger-action" href="/api/auth/signout">Sign out</a>
+            <div className="nav-actions" style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+              <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>{user.email}</span>
+              <a className="danger-action" href="/api/auth/signout">Sign out</a>
+            </div>
           </div>
         </header>
 
@@ -2602,23 +2604,25 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
           Webbing
         </a>
         
-        {/* AI Credits remaining and Upgrade Option */}
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", background: "rgba(255, 255, 255, 0.02)", padding: "0.4rem 1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.05)", fontSize: "0.85rem", height: "34px", boxSizing: "border-box" }}>
-          <span style={{ color: "#9ca3af" }}>AI Credits: <strong style={{ color: "#818cf8" }}>{remainingCredits} left</strong></span>
-          <button
-            onClick={() => {
-              setUpgradeModalOpen(true);
-              setBuyCreditsView(isAgency);
-            }}
-            style={{ background: isAgency ? "rgba(168, 85, 247, 0.15)" : "rgba(129, 140, 248, 0.15)", border: isAgency ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(129, 140, 248, 0.3)", color: isAgency ? "#d8b4fe" : "#a5b4fc", padding: "0.2rem 0.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", marginLeft: "0.5rem" }}
-          >
-            {isAgency ? "Buy Credits" : "Upgrade"}
-          </button>
-        </div>
+        <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
+          {/* AI Credits remaining and Upgrade Option */}
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", background: "rgba(255, 255, 255, 0.02)", padding: "0.4rem 1rem", borderRadius: "0.5rem", border: "1px solid rgba(255, 255, 255, 0.05)", fontSize: "0.85rem", height: "34px", boxSizing: "border-box" }}>
+            <span style={{ color: "#9ca3af" }}>AI Credits: <strong style={{ color: "#818cf8" }}>{remainingCredits} left</strong></span>
+            <button
+              onClick={() => {
+                setUpgradeModalOpen(true);
+                setBuyCreditsView(isAgency);
+              }}
+              style={{ background: isAgency ? "rgba(168, 85, 247, 0.15)" : "rgba(129, 140, 248, 0.15)", border: isAgency ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(129, 140, 248, 0.3)", color: isAgency ? "#d8b4fe" : "#a5b4fc", padding: "0.2rem 0.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", marginLeft: "0.5rem" }}
+            >
+              {isAgency ? "Buy Credits" : "Upgrade"}
+            </button>
+          </div>
 
-        <div className="nav-actions" style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-          <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>{user.email}</span>
-          <a className="danger-action" href="/api/auth/signout">Sign out</a>
+          <div className="nav-actions" style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+            <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>{user.email}</span>
+            <a className="danger-action" href="/api/auth/signout">Sign out</a>
+          </div>
         </div>
       </header>
 
@@ -3020,7 +3024,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                   flexGrow: 1,
                   minHeight: "auto",
                   height: "30px",
-                  maxWidth: isMobile ? "180px" : "none"
+                  maxWidth: isMobile ? "180px" : "250px"
                 }}
                 value={selectedProjectId}
                 onChange={(e) => setSelectedProjectId(e.target.value)}
