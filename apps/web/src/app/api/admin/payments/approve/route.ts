@@ -154,7 +154,17 @@ export async function POST(req: Request) {
         if (payingUser && payingUser.referredBy) {
           const planKey = plan.name.toLowerCase().replace(/\s+/g, "-");
           if (planKey !== "starter" && !request.planId.startsWith("credits-")) {
-            const commissionAmount = Math.round(request.amount * 0.1);
+            // Check if there are any existing non-cancelled commissions for this referee
+            const previousCommission = await tx.affiliateCommission.findFirst({
+              where: {
+                refereeId: payingUser.id,
+                status: { not: "CANCELLED" }
+              }
+            });
+
+            // First purchase gets 20% commission; renewals get 10% commission
+            const rate = previousCommission ? 0.10 : 0.20;
+            const commissionAmount = Math.round(request.amount * rate);
             const availableDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
 
             await tx.affiliateCommission.create({

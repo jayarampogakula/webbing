@@ -126,6 +126,9 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [splitLayout, setSplitLayout] = useState<"split" | "editor-focus" | "preview-focus" | "editor-only" | "preview-only">("split");
   const [isMobile, setIsMobile] = useState(false);
+  const [editorWidth, setEditorWidth] = useState(50); // percentage (e.g. 50%)
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const prevProjectIdRef = useRef(selectedProjectId);
 
   useEffect(() => {
@@ -137,13 +140,49 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      let newWidthPercentage = (mouseX / rect.width) * 100;
+      
+      // Enforce bounds (20% to 80%)
+      if (newWidthPercentage < 20) newWidthPercentage = 20;
+      if (newWidthPercentage > 80) newWidthPercentage = 80;
+      
+      setEditorWidth(newWidthPercentage);
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
+
   useEffect(() => {
     if (isMobile) {
       if (splitLayout !== "editor-only" && splitLayout !== "preview-only") {
         setSplitLayout("editor-only");
       }
+    } else {
+      setSplitLayout("split");
     }
-  }, [isMobile, splitLayout]);
+  }, [isMobile]);
 
   // Upgrade Plan states
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
@@ -1807,7 +1846,35 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   // ----------------------------------------------------
   if (activeView === "homepage") {
     return (
-      <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "#070b13", overflow: "hidden", position: "relative" }}>
+      <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100vh", background: "#0a0e17", overflow: "hidden" }}>
+        {/* Persistent Site Header (Main Menu) */}
+        <header className="site-nav dashboard-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: 0, background: "rgba(10, 14, 23, 0.95)", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 1.5rem", height: "70px", flexShrink: 0 }}>
+          <a className="brand" href="/">
+            <span className="brand-mark"><Sparkles size={18} /></span>
+            Webbing
+          </a>
+          
+          {/* AI Credits remaining and Upgrade Option */}
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", background: "rgba(255, 255, 255, 0.02)", padding: "0.4rem 1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.05)", fontSize: "0.85rem", height: "34px", boxSizing: "border-box" }}>
+            <span style={{ color: "#9ca3af" }}>AI Credits: <strong style={{ color: "#818cf8" }}>{remainingCredits} left</strong></span>
+            <button
+              onClick={() => {
+                setUpgradeModalOpen(true);
+                setBuyCreditsView(isAgency);
+              }}
+              style={{ background: isAgency ? "rgba(168, 85, 247, 0.15)" : "rgba(129, 140, 248, 0.15)", border: isAgency ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(129, 140, 248, 0.3)", color: isAgency ? "#d8b4fe" : "#a5b4fc", padding: "0.2rem 0.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", marginLeft: "0.5rem" }}
+            >
+              {isAgency ? "Buy Credits" : "Upgrade"}
+            </button>
+          </div>
+
+          <div className="nav-actions" style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+            <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>{user.email}</span>
+            <a className="danger-action" href="/api/auth/signout">Sign out</a>
+          </div>
+        </header>
+
+        <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "#070b13", overflow: "hidden", position: "relative" }}>
         {/* Mobile sidebar backdrop mask */}
         {isMobile && !sidebarCollapsed && (
           <div 
@@ -2049,7 +2116,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                 <span className="eyebrow" style={{ color: "#818cf8" }}>Partner Program</span>
                 <h1 style={{ fontSize: "2.25rem", fontWeight: 850, margin: "0.25rem 0", color: "#fff" }}>Webbing Affiliate Center</h1>
                 <p style={{ color: "#9ca3af", fontSize: "0.95rem", margin: 0 }}>
-                  Refer users to Webbing. They get <strong style={{ color: "#34d399" }}>10% discount</strong> on any purchase/renewal, and you earn <strong style={{ color: "#818cf8" }}>10% lifetime recurring commission</strong>!
+                  Refer users to Webbing. They get <strong style={{ color: "#34d399" }}>10% discount</strong> on any purchase/renewal. You earn <strong style={{ color: "#818cf8" }}>20% commission</strong> on their first purchase and <strong style={{ color: "#818cf8" }}>10% recurring commission</strong> on all renewals!
                 </p>
               </div>
 
@@ -2519,6 +2586,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
       {renderModals()}
       </div>
       </div>
+      </div>
     );
   }
 
@@ -2526,7 +2594,35 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   // UNIFIED BUILDER WORKSPACE VIEW RENDER
   // ----------------------------------------------------
   return (
-    <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "#070b13", overflow: "hidden", position: "relative" }}>
+    <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100vh", background: "#0a0e17", overflow: "hidden" }}>
+      {/* Persistent Site Header (Main Menu) */}
+      <header className="site-nav dashboard-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: 0, background: "rgba(10, 14, 23, 0.95)", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 1.5rem", height: "70px", flexShrink: 0 }}>
+        <a className="brand" href="/">
+          <span className="brand-mark"><Sparkles size={18} /></span>
+          Webbing
+        </a>
+        
+        {/* AI Credits remaining and Upgrade Option */}
+        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", background: "rgba(255, 255, 255, 0.02)", padding: "0.4rem 1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.05)", fontSize: "0.85rem", height: "34px", boxSizing: "border-box" }}>
+          <span style={{ color: "#9ca3af" }}>AI Credits: <strong style={{ color: "#818cf8" }}>{remainingCredits} left</strong></span>
+          <button
+            onClick={() => {
+              setUpgradeModalOpen(true);
+              setBuyCreditsView(isAgency);
+            }}
+            style={{ background: isAgency ? "rgba(168, 85, 247, 0.15)" : "rgba(129, 140, 248, 0.15)", border: isAgency ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(129, 140, 248, 0.3)", color: isAgency ? "#d8b4fe" : "#a5b4fc", padding: "0.2rem 0.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", marginLeft: "0.5rem" }}
+          >
+            {isAgency ? "Buy Credits" : "Upgrade"}
+          </button>
+        </div>
+
+        <div className="nav-actions" style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>{user.email}</span>
+          <a className="danger-action" href="/api/auth/signout">Sign out</a>
+        </div>
+      </header>
+
+      <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "#070b13", overflow: "hidden", position: "relative" }}>
       {/* Mobile sidebar backdrop mask */}
       {isMobile && !sidebarCollapsed && (
         <div 
@@ -2878,156 +2974,116 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
       <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       
       {/* 1. Header Control Bar */}
-      <div className="builder-header-bar" style={{ flexWrap: "wrap", padding: isMobile ? "0.6rem 0.75rem" : "0.8rem 1.5rem", gap: "0.5rem" }}>
-        
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-          {isMobile && (
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "#fff",
-                padding: "0.4rem 0.6rem",
-                borderRadius: "0.4rem",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginRight: "0.25rem"
-              }}
-            >
-              <Menu size={16} />
-            </button>
-          )}
-          <button
-            onClick={() => {
-              setActiveView("homepage");
-              setIsCreatingNew(false);
-            }}
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: "#cbd5e1",
-              padding: "0.4rem 0.8rem",
-              borderRadius: "0.4rem",
-              fontSize: "0.8rem",
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.4rem"
-            }}
-          >
-            <ArrowLeft size={14} /> Dashboard
-          </button>
- 
-          <span style={{ color: "rgba(255,255,255,0.15)" }}>|</span>
- 
-          {currentProject && !isCreatingNew && (
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              {!isMobile && <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>Project:</span>}
+      <div className="builder-header-bar" style={{
+        flexDirection: isMobile ? "column" : "row",
+        alignItems: isMobile ? "stretch" : "center",
+        padding: isMobile ? "0.6rem" : "0.8rem 1.5rem",
+        gap: "0.5rem"
+      }}>
+        {/* Row 1: Sidebar Toggle, Project selector, Layout Toggles */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          justifyContent: "space-between",
+          width: "100%"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexGrow: 1 }}>
+            {isMobile && (
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "#fff",
+                  padding: "0.4rem 0.6rem",
+                  borderRadius: "0.4rem",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                <Menu size={16} />
+              </button>
+            )}
+            
+            {currentProject && !isCreatingNew && (
               <select
                 className="premium-input"
-                style={{ padding: "0.25rem 1.5rem 0.25rem 0.75rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.1)", fontSize: "0.8rem", width: isMobile ? "120px" : "auto", minHeight: "auto", height: "30px" }}
+                style={{
+                  padding: "0.25rem 1.5rem 0.25rem 0.5rem",
+                  background: "rgba(255,255,255,0.02)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  fontSize: "0.75rem",
+                  flexGrow: 1,
+                  minHeight: "auto",
+                  height: "30px",
+                  maxWidth: isMobile ? "180px" : "none"
+                }}
                 value={selectedProjectId}
                 onChange={(e) => setSelectedProjectId(e.target.value)}
               >
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} ({p.subdomain})
+                    {p.name}
                   </option>
                 ))}
               </select>
+            )}
+          </div>
+
+          {/* Editor/Preview toggles for Mobile */}
+          {isMobile && currentProject && !isCreatingNew && (
+            <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", background: "rgba(255,255,255,0.02)", padding: "0.2rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <button
+                type="button"
+                onClick={() => setSplitLayout("editor-only")}
+                style={{
+                  background: splitLayout === "editor-only" ? "rgba(129, 140, 248, 0.15)" : "none",
+                  border: "none",
+                  color: splitLayout === "editor-only" ? "#818cf8" : "#9ca3af",
+                  padding: "0.3rem 0.5rem",
+                  borderRadius: "0.25rem",
+                  fontSize: "0.7rem",
+                  fontWeight: 700,
+                  cursor: "pointer"
+                }}
+              >
+                Editor
+              </button>
+              <button
+                type="button"
+                onClick={() => setSplitLayout("preview-only")}
+                style={{
+                  background: splitLayout === "preview-only" ? "rgba(129, 140, 248, 0.15)" : "none",
+                  border: "none",
+                  color: splitLayout === "preview-only" ? "#818cf8" : "#9ca3af",
+                  padding: "0.3rem 0.5rem",
+                  borderRadius: "0.25rem",
+                  fontSize: "0.7rem",
+                  fontWeight: 700,
+                  cursor: "pointer"
+                }}
+              >
+                Preview
+              </button>
             </div>
           )}
         </div>
- 
-        {/* Action controls */}
-        {currentProject && !isCreatingNew && (
-          <div style={{ display: "flex", gap: "0.8rem", alignItems: "center", flexWrap: "wrap", width: isMobile ? "100%" : "auto", justifyContent: isMobile ? "space-between" : "flex-end" }}>
-            
-            {/* Split layout resizer control */}
-            {isMobile ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", background: "rgba(255,255,255,0.02)", padding: "0.2rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <button
-                  type="button"
-                  onClick={() => setSplitLayout("editor-only")}
-                  style={{ background: (splitLayout === "editor-only" || splitLayout === "split" || splitLayout === "editor-focus") ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: (splitLayout === "editor-only" || splitLayout === "split" || splitLayout === "editor-focus") ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
-                >
-                  Editor
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSplitLayout("preview-only")}
-                  style={{ background: (splitLayout === "preview-only" || splitLayout === "preview-focus") ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: (splitLayout === "preview-only" || splitLayout === "preview-focus") ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
-                >
-                  Preview
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", background: "rgba(255,255,255,0.02)", padding: "0.2rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <button
-                  type="button"
-                  onClick={() => setSplitLayout("split")}
-                  style={{ background: splitLayout === "split" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "split" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
-                  title="Split View (50/50)"
-                >
-                  50:50
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSplitLayout("editor-focus")}
-                  style={{ background: splitLayout === "editor-focus" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "editor-focus" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
-                  title="Focus Editor (70/30)"
-                >
-                  Editor Wide
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSplitLayout("preview-focus")}
-                  style={{ background: splitLayout === "preview-focus" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "preview-focus" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
-                  title="Focus Preview (30/70)"
-                >
-                  Preview Wide
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSplitLayout("editor-only")}
-                  style={{ background: splitLayout === "editor-only" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "editor-only" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
-                  title="Hide Preview"
-                >
-                  Hide Preview
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSplitLayout("preview-only")}
-                  style={{ background: splitLayout === "preview-only" ? "rgba(129, 140, 248, 0.15)" : "none", border: "none", color: splitLayout === "preview-only" ? "#818cf8" : "#9ca3af", padding: "0.3rem 0.6rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
-                  title="Hide Editor"
-                >
-                  Hide Editor
-                </button>
-              </div>
-            )}
-            
-            {/* AI Credits remaining */}
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-              <div style={{ fontSize: "0.8rem", color: "#9ca3af", background: "rgba(255, 255, 255, 0.02)", padding: "0.3rem 0.8rem", borderRadius: "0.4rem", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                {isMobile ? "" : "AI Credits: "}<strong style={{ color: "#a855f7" }}>{remainingCredits} {isMobile ? "Credits" : "left"}</strong>
-              </div>
-              <button
-                onClick={() => {
-                  setUpgradeModalOpen(true);
-                  setBuyCreditsView(isAgency);
-                }}
-                style={{ background: isAgency ? "rgba(168, 85, 247, 0.15)" : "rgba(129, 140, 248, 0.15)", border: isAgency ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(129, 140, 248, 0.3)", color: isAgency ? "#d8b4fe" : "#a5b4fc", padding: "0.3rem 0.6rem", borderRadius: "0.4rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", height: "26px" }}
-              >
-                {isAgency ? (isMobile ? "Credits" : "Buy Credits") : "Upgrade"}
-              </button>
-            </div>
 
-            {/* Export trigger dropdown */}
-            <div style={{ position: "relative" }}>
+        {/* Row 2: Download Options, Publish Button (Mobile) or Actions inline (Desktop) */}
+        {currentProject && !isCreatingNew && (
+          <div style={{
+            display: "flex",
+            gap: "0.5rem",
+            alignItems: "center",
+            width: isMobile ? "100%" : "auto",
+            justifyContent: "flex-end"
+          }}>
+            {/* Download Options */}
+            <div style={{ flexGrow: isMobile ? 1 : 0 }}>
               <select
                 onChange={(e) => {
                   if (e.target.value) {
@@ -3040,10 +3096,11 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                   background: "rgba(255,255,255,0.03)",
                   border: "1px solid rgba(255,255,255,0.08)",
                   color: "#fff",
-                  fontSize: "0.8rem",
+                  fontSize: "0.75rem",
                   fontWeight: 700,
                   height: "32px",
-                  padding: "0 1.5rem 0 0.75rem",
+                  width: "100%",
+                  padding: "0 1.5rem 0 0.5rem",
                   cursor: "pointer"
                 }}
               >
@@ -3054,30 +3111,32 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
               </select>
             </div>
 
-            {/* Publish Action button */}
+            {/* Publish Button */}
             <button
               onClick={handlePublish}
               className="glow-btn"
               style={{
                 background: "linear-gradient(to right, #10b981, #059669)",
                 color: "#fff",
-                padding: "0.4rem 1.2rem",
                 borderRadius: "0.4rem",
-                fontSize: "0.8rem",
+                fontSize: "0.75rem",
                 fontWeight: 800,
                 cursor: "pointer",
                 border: "none",
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: "0.4rem",
-                boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)"
+                height: "32px",
+                padding: "0 1.2rem",
+                boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)",
+                flexGrow: isMobile ? 1 : 0
               }}
             >
               Publish
             </button>
           </div>
         )}
-
       </div>
 
       {isCreatingNew ? (
@@ -3111,12 +3170,12 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
           Select or create a website project.
         </div>
       ) : (
-        <div className="builder-split-container">
+        <div ref={containerRef} className="builder-split-container">
           
           {/* Left Config Panel (Editor pane) */}
           {splitLayout !== "preview-only" && (
             <div style={{
-              width: isMobile ? "100%" : splitLayout === "editor-only" ? "100%" : splitLayout === "editor-focus" ? "70%" : splitLayout === "preview-focus" ? "30%" : "50%",
+              width: isMobile ? "100%" : splitLayout === "editor-only" ? "100%" : `${editorWidth}%`,
               flexGrow: 0,
               flexShrink: 0,
               display: "flex",
@@ -4104,31 +4163,79 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             </div>
           )}
 
+        {/* Draggable Divider (Desktop only, Split view) */}
+        {!isMobile && splitLayout !== "editor-only" && splitLayout !== "preview-only" && (
+          <div
+            onMouseDown={handleMouseDown}
+            style={{
+              width: "6px",
+              cursor: "col-resize",
+              background: isDragging ? "rgba(129, 140, 248, 0.4)" : "rgba(255, 255, 255, 0.04)",
+              transition: "background 0.2s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+              flexShrink: 0,
+              zIndex: 10,
+            }}
+            title="Drag to resize panels"
+          >
+            <div style={{
+              width: "2px",
+              height: "24px",
+              background: "rgba(255, 255, 255, 0.2)",
+              borderRadius: "1px"
+            }} />
+          </div>
+        )}
+
         {/* Right Iframe preview workspace */}
         {splitLayout !== "editor-only" && (
           <div className="builder-preview-container" style={{
-            width: isMobile ? "100%" : splitLayout === "preview-only" ? "100%" : splitLayout === "preview-focus" ? "70%" : splitLayout === "editor-focus" ? "30%" : "50%",
+            width: isMobile ? "100%" : splitLayout === "preview-only" ? "100%" : `${100 - editorWidth}%`,
             flexGrow: 1,
             display: "flex",
-            flexDirection: "column"
+            flexDirection: "column",
+            position: "relative"
           }}>
+            
+            {/* If dragging, render overlay to capture mouse events otherwise iframe absorbs them */}
+            {isDragging && (
+              <div style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 9999,
+                cursor: "col-resize",
+                background: "transparent"
+              }} />
+            )}
           
           {/* Preview address indicator header */}
-          <div style={{ padding: "0.5rem 1.5rem", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0b0f19" }}>
+          <div style={{ padding: isMobile ? "0.4rem 0.75rem" : "0.5rem 1.5rem", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0b0f19" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8rem", color: "#9ca3af" }}>
               <Layout size={14} />
-              <span>Interactive Live Preview Workspace</span>
+              {!isMobile && <span>Interactive Live Preview Workspace</span>}
               {currentProject && (
-                <span style={{ background: "rgba(255,255,255,0.05)", padding: "0.15rem 0.4rem", borderRadius: "0.25rem", color: currentProject.status === "PUBLISHED" ? "#34d399" : "#a855f7", fontSize: "0.75rem", fontWeight: 700 }}>
+                <span style={{ background: "rgba(255,255,255,0.05)", padding: "0.15rem 0.4rem", borderRadius: "0.25rem", color: currentProject.status === "PUBLISHED" ? "#34d399" : "#a855f7", fontSize: "0.72rem", fontWeight: 700 }}>
                   {currentProject.status}
                 </span>
               )}
             </div>
 
             {currentProject && !isCreatingNew && (
-              <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "0.6rem" : "1rem" }}>
                 <span style={{ fontSize: "0.75rem", color: "#cbd5e1" }}>
-                  Workspace URL: <a href={activeSiteUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#818cf8", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.2rem" }}>{currentProject.subdomain}.{baseDomain} <ExternalLink size={12} /></a>
+                  {isMobile ? (
+                    <a href={activeSiteUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#818cf8", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.2rem" }}>
+                      Open Link <ExternalLink size={11} />
+                    </a>
+                  ) : (
+                    <>Workspace URL: <a href={activeSiteUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#818cf8", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.2rem" }}>{currentProject.subdomain}.{baseDomain} <ExternalLink size={12} /></a></>
+                  )}
                 </span>
                 
                 <button
@@ -4199,6 +4306,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
       )}
       </div>
       )}
+      </div>
       </div>
 
             {renderModals()}

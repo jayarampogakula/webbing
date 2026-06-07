@@ -89,6 +89,22 @@ export default async function DashboardPage() {
     plans = dbPlans;
     upiId = dbUpiSetting?.value || "pogakula@ybl";
     dbUserObj = dbUser;
+
+    // Auto-generate affiliateCode if missing
+    if (dbUserObj && !dbUserObj.affiliateCode) {
+      const namePart = dbUserObj.name?.trim().split(" ")[0].replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase() || "USER";
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      const generatedCode = `${namePart}${randomSuffix}`;
+      try {
+        const updatedUser = await prisma.user.update({
+          where: { id: dbUserObj.id },
+          data: { affiliateCode: generatedCode }
+        });
+        dbUserObj = updatedUser;
+      } catch (dbErr) {
+        console.error("Failed to auto-generate and save affiliate code for user:", dbErr);
+      }
+    }
   } catch (error) {
     console.error("Dashboard data load failed:", error);
     return (
@@ -123,28 +139,14 @@ export default async function DashboardPage() {
 
   const mergedUser = { ...user, ...dbUserObj };
 
-
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0a0e17" }}>
-      <header className="site-nav dashboard-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: 0, background: "rgba(10, 14, 23, 0.95)" }}>
-        <a className="brand" href="/">
-          <span className="brand-mark"><Sparkles size={18} /></span>
-          Webbing
-        </a>
-        <div className="nav-actions">
-          <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>{user.email}</span>
-          <a className="danger-action" href="/api/auth/signout">Sign out</a>
-        </div>
-      </header>
-
-      <DashboardEditor
-        user={mergedUser as any}
-        tenant={tenant as any}
-        baseDomain={baseDomain}
-        protocol={protocol}
-        initialPlans={plans}
-        upiId={upiId}
-      />
-    </div>
+    <DashboardEditor
+      user={mergedUser as any}
+      tenant={tenant as any}
+      baseDomain={baseDomain}
+      protocol={protocol}
+      initialPlans={plans}
+      upiId={upiId}
+    />
   );
 }

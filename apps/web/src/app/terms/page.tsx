@@ -32,7 +32,7 @@ export default function TermsPage() {
         <section style={{ marginBottom: "2rem" }}>
           <h2 style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 700, margin: "1.5rem 0 0.5rem 0" }}>3. Affiliate Program Rules</h2>
           <p>
-            Webbing offers an affiliate program where users can refer new users. Referrers receive a 10% commission on the referee's paid plan purchases and recurring renewals. Referees receive a 10% discount on purchase checkout. Commisions mature after a 10-day refund window. Attempting self-referrals or manipulating the discount systems is strictly prohibited and will result in commission cancellation and account suspension.
+            Webbing offers an affiliate program where users can refer new users. Referrers receive a 20% commission on the referee's first paid plan purchase, and a 10% recurring commission on subsequent recurring renewals. Referees receive a 10% discount on purchase checkout. Commisions mature after a 10-day refund window. Attempting self-referrals or manipulating the discount systems is strictly prohibited and will result in commission cancellation and account suspension.
           </p>
         </section>
 
