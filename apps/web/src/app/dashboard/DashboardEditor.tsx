@@ -226,15 +226,21 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const [customAssets, setCustomAssets] = useState<any[]>([]);
   const [uploadingAsset, setUploadingAsset] = useState(false);
   // Settings sub-tab
-  const [settingsTab, setSettingsTab] = useState<"general" | "domains" | "seo" | "analytics" | "keys" | "devkeys" | "policies">("general");
+  const [settingsTab, setSettingsTab] = useState<"general" | "domains" | "seo" | "analytics" | "keys" | "devkeys" | "policies" | "clients">("general");
 
   // Policies settings state
   const [privacyPolicyEnabled, setPrivacyPolicyEnabled] = useState(false);
   const [privacyPolicyText, setPrivacyPolicyText] = useState("");
   const [termsEnabled, setTermsEnabled] = useState(false);
   const [termsText, setTermsText] = useState("");
-  const [refundPolicyEnabled, setRefundPolicyEnabled] = useState(false);
   const [refundPolicyText, setRefundPolicyText] = useState("");
+  const [refundPolicyEnabled, setRefundPolicyEnabled] = useState(false);
+
+  // Client Logins and Logo settings state
+  const [clientLogins, setClientLogins] = useState<Array<{ email: string; password: string }>>([]);
+  const [newClientEmail, setNewClientEmail] = useState("");
+  const [newClientPassword, setNewClientPassword] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
 
   // Affiliate & Payout states
   const [homeSubView, setHomeSubView] = useState<"projects" | "affiliate">("projects");
@@ -385,6 +391,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   const [devKeysLoading, setDevKeysLoading] = useState(false);
 
   const isAgencyOrAdmin = user.role === "ADMIN" || tenant.subscription?.planId === "agency" || tenant.subscription?.planId === "agency-plan";
+  const isProOrAgencyOrAdmin = user.role === "ADMIN" || tenant.subscription?.planId?.toLowerCase().includes("pro") || tenant.subscription?.planId?.toLowerCase().includes("agency");
 
   const handleGenerateDevKey = async () => {
     try {
@@ -669,6 +676,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          name: manualName,
           customDomain: customDomainName.trim() || "",
           subdomain: projectSubdomain.trim() || "",
           theme: {
@@ -677,6 +685,8 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             analyticsTag,
             metadata: {
               ...(currentProject.theme as any)?.metadata,
+              clientLogins,
+              logoUrl,
               policies: {
                 privacyPolicyEnabled,
                 privacyPolicyText,
@@ -979,7 +989,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
     }
   };
 
-  // Synchronize Policy Settings when currentProject changes
+  // Synchronize Policy and Client Logins Settings when currentProject changes
   useEffect(() => {
     if (currentProject) {
       const policies = (currentProject.theme as any)?.metadata?.policies || {};
@@ -989,6 +999,10 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
       setTermsText(policies.termsText || "");
       setRefundPolicyEnabled(!!policies.refundPolicyEnabled);
       setRefundPolicyText(policies.refundPolicyText || "");
+
+      const metadata = (currentProject.theme as any)?.metadata || {};
+      setClientLogins(metadata.clientLogins || []);
+      setLogoUrl(metadata.logoUrl || (currentProject.theme as any)?.logoUrl || "");
     }
   }, [selectedProjectId, projects]);
 
@@ -3905,6 +3919,9 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                       <button onClick={() => setSettingsTab("analytics")} style={{ background: "none", border: "none", color: settingsTab === "analytics" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>Analytics</button>
                       <button onClick={() => setSettingsTab("keys")} style={{ background: "none", border: "none", color: settingsTab === "keys" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>AI Keys</button>
                       <button onClick={() => setSettingsTab("policies")} type="button" style={{ background: "none", border: "none", color: settingsTab === "policies" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>Policies</button>
+                      {isProOrAgencyOrAdmin && (
+                        <button onClick={() => setSettingsTab("clients")} type="button" style={{ background: "none", border: "none", color: settingsTab === "clients" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>Client Logins</button>
+                      )}
                       {isAgencyOrAdmin && (
                         <button onClick={() => setSettingsTab("devkeys")} type="button" style={{ background: "none", border: "none", color: settingsTab === "devkeys" ? "#818cf8" : "#9ca3af", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}>Developer Keys</button>
                       )}
@@ -3917,6 +3934,44 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                       {settingsTab === "general" && (
                         <>
                           <h4 style={{ color: "#fff", margin: "0 0 0.5rem 0" }}>General Configuration</h4>
+                          
+                          <div className="field-group">
+                            <label>Website Name</label>
+                            <input 
+                              type="text" 
+                              className="field" 
+                              value={manualName} 
+                              onChange={(e) => setManualName(e.target.value)} 
+                              placeholder="My Website" 
+                              disabled={loading}
+                            />
+                          </div>
+
+                          <div className="field-group">
+                            <label>Website Logo</label>
+                            <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                              {logoUrl && (
+                                <img src={logoUrl} alt="Logo Preview" style={{ maxHeight: "40px", objectFit: "contain", background: "rgba(255,255,255,0.05)", padding: "0.25rem", borderRadius: "0.25rem" }} />
+                              )}
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                className="field" 
+                                style={{ padding: "0.25rem" }}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                      setLogoUrl(reader.result as string);
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                              />
+                            </div>
+                          </div>
+
                           <div className="field-group">
                             <label>Preferred LLM Routing Engine</label>
                             <select className="field" value={preferredProvider} onChange={(e) => setPreferredProvider(e.target.value)}>
@@ -4200,6 +4255,91 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                                 onChange={(e) => setRefundPolicyText(e.target.value)}
                                 style={{ fontSize: "0.8rem", width: "100%", padding: "0.6rem", background: "rgba(0,0,0,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "0.4rem" }}
                               />
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* CLIENT ACCESS LOGINS */}
+                      {settingsTab === "clients" && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                          <h4 style={{ color: "#fff", margin: "0 0 0.5rem 0" }}>Client Access Login IDs</h4>
+                          <p style={{ color: "#9ca3af", fontSize: "0.75rem", margin: 0, lineHeight: 1.4 }}>
+                            Provide credentials for your clients to log into this website's private admin page (at `/admin`).
+                          </p>
+                          
+                          <div style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255,255,255,0.06)", padding: "1.25rem", borderRadius: "0.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                            <strong style={{ fontSize: "0.85rem", color: "#fff" }}>Add New Client Account</strong>
+                            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "1rem" }}>
+                              <div className="field-group">
+                                <label>Client Email</label>
+                                <input 
+                                  type="email" 
+                                  className="field" 
+                                  value={newClientEmail} 
+                                  onChange={(e) => setNewClientEmail(e.target.value)} 
+                                  placeholder="client@example.com" 
+                                />
+                              </div>
+                              <div className="field-group">
+                                <label>Client Password</label>
+                                <input 
+                                  type="text" 
+                                  className="field" 
+                                  value={newClientPassword} 
+                                  onChange={(e) => setNewClientPassword(e.target.value)} 
+                                  placeholder="Password" 
+                                />
+                              </div>
+                            </div>
+                            <button 
+                              type="button" 
+                              onClick={() => {
+                                if (!newClientEmail.trim() || !newClientPassword.trim()) {
+                                  alert("Both email and password are required.");
+                                  return;
+                                }
+                                if (clientLogins.some(c => c.email.toLowerCase() === newClientEmail.trim().toLowerCase())) {
+                                  alert("This email is already added.");
+                                  return;
+                                }
+                                setClientLogins([...clientLogins, { email: newClientEmail.trim(), password: newClientPassword.trim() }]);
+                                setNewClientEmail("");
+                                setNewClientPassword("");
+                              }}
+                              className="primary-action"
+                              style={{ width: "fit-content", alignSelf: "flex-end", padding: "0.4rem 1rem", fontSize: "0.8rem", background: "#818cf8", color: "#fff", border: 0, borderRadius: "0.3rem", cursor: "pointer", fontWeight: 700 }}
+                            >
+                              Add Client
+                            </button>
+                          </div>
+
+                          <div style={{ marginTop: "1rem" }}>
+                            <strong style={{ fontSize: "0.85rem", color: "#fff", display: "block", marginBottom: "0.5rem" }}>Active Client Accounts</strong>
+                            {clientLogins.length === 0 ? (
+                              <div style={{ padding: "1rem", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "0.4rem", fontSize: "0.8rem", color: "#9ca3af", textAlign: "center" }}>
+                                No client accounts configured yet.
+                              </div>
+                            ) : (
+                              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                                {clientLogins.map((login, idx) => (
+                                  <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.6rem 1rem", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "0.4rem" }}>
+                                    <div style={{ fontSize: "0.8rem" }}>
+                                      <strong style={{ color: "#fff" }}>{login.email}</strong>
+                                      <span style={{ color: "#6b7280", marginLeft: "1rem" }}>Pass: {login.password}</span>
+                                    </div>
+                                    <button 
+                                      type="button" 
+                                      onClick={() => {
+                                        setClientLogins(clientLogins.filter((_, i) => i !== idx));
+                                      }}
+                                      style={{ background: "transparent", border: 0, color: "#f87171", cursor: "pointer", fontSize: "0.75rem", fontWeight: 700 }}
+                                    >
+                                      Remove
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
                             )}
                           </div>
                         </div>

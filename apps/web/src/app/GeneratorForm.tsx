@@ -183,7 +183,12 @@ export default function GeneratorForm({ user, onSuccess }: GeneratorFormProps) {
                 {stylesList.map((item) => (
                   <div
                     key={item.id}
-                    onClick={() => setStyle(item.id)}
+                    onClick={() => {
+                      setStyle(item.id);
+                      if (item.id === "Ecommerce") {
+                        setEcommerce(true);
+                      }
+                    }}
                     style={{
                       background: style === item.id ? "rgba(99, 102, 241, 0.12)" : "rgba(255, 255, 255, 0.02)",
                       border: style === item.id ? "1.5px solid #818cf8" : "1px solid rgba(255, 255, 255, 0.06)",

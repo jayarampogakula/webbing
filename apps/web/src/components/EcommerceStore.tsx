@@ -57,6 +57,8 @@ interface EcommerceStoreProps {
   initialSettings: any;
   initialPathSlug?: string;
   projectSubdomain?: string;
+  projectName?: string;
+  initialLogoUrl?: string;
 }
 
 export default function EcommerceStore({
@@ -64,7 +66,9 @@ export default function EcommerceStore({
   initialProducts,
   initialSettings,
   initialPathSlug = "index",
-  projectSubdomain = ""
+  projectSubdomain = "",
+  projectName = "",
+  initialLogoUrl = ""
 }: EcommerceStoreProps) {
   // Navigation Routing States: "home" | "shop" | "product" | "cart" | "checkout" | "account" | "admin"
   const [view, setView] = useState<string>("home");
@@ -74,6 +78,10 @@ export default function EcommerceStore({
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [settings, setSettings] = useState<any>(initialSettings);
   const [orders, setOrders] = useState<Order[]>([]);
+
+  // Branding States
+  const [storeName, setStoreName] = useState<string>(projectName);
+  const [logoUrl, setLogoUrl] = useState<string>(initialLogoUrl);
 
   // Client Interactivity States
   const [cart, setCart] = useState<Array<{ product: Product; quantity: number; selectedVariant?: string }>>([]);
@@ -89,6 +97,7 @@ export default function EcommerceStore({
   const [authError, setAuthError] = useState("");
   const [adminAuth, setAdminAuth] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
+  const [adminPasscode, setAdminPasscode] = useState("");
   const [adminError, setAdminError] = useState("");
 
   // Checkout Fields State
@@ -139,6 +148,22 @@ export default function EcommerceStore({
   // Customer/Checkout states
   const [paymentReference, setPaymentReference] = useState("");
 
+  // Helper for admin headers
+  const getAdminHeaders = (passcode?: string) => {
+    const activePasscode = passcode || adminPasscode || localStorage.getItem(`admin_auth_${projectId}`) || "";
+    return {
+      "Authorization": `Bearer ${activePasscode}`
+    };
+  };
+
+  const getAdminHeadersJson = (passcode?: string) => {
+    const activePasscode = passcode || adminPasscode || localStorage.getItem(`admin_auth_${projectId}`) || "";
+    return {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${activePasscode}`
+    };
+  };
+
   // Load state from local storage on mount
   useEffect(() => {
     // Determine view from URL path slug
@@ -161,7 +186,11 @@ export default function EcommerceStore({
     if (localCustomer) setCustomer(JSON.parse(localCustomer));
 
     const localAdmin = localStorage.getItem(`admin_auth_${projectId}`);
-    if (localAdmin) setAdminAuth(true);
+    if (localAdmin) {
+      setAdminAuth(true);
+      setAdminPasscode(localAdmin);
+      fetchAdminOrders(localAdmin);
+    }
 
     fetchProducts();
     fetchSettings();
@@ -205,12 +234,20 @@ export default function EcommerceStore({
           setCheckoutForm(prev => ({ ...prev, paymentMethod: activeGws[0] }));
         }
       }
+      if (data.projectName) {
+        setStoreName(data.projectName);
+      }
+      if (data.logoUrl !== undefined) {
+        setLogoUrl(data.logoUrl);
+      }
     } catch (e) { console.error("Error fetching settings:", e); }
   };
 
-  const fetchAdminOrders = async () => {
+  const fetchAdminOrders = async (passcode?: string) => {
     try {
-      const res = await fetch(`/api/projects/${projectId}/ecommerce/orders`);
+      const res = await fetch(`/api/projects/${projectId}/ecommerce/orders`, {
+        headers: getAdminHeaders(passcode)
+      });
       const data = await res.json();
       if (data.orders) setOrders(data.orders);
     } catch (e) { console.error("Error fetching orders:", e); }
@@ -440,8 +477,9 @@ export default function EcommerceStore({
     const customPassword = settings.adminPassword || "admin123";
     if (adminPassword === customPassword || adminPassword === projectId.slice(0, 8)) {
       setAdminAuth(true);
-      localStorage.setItem(`admin_auth_${projectId}`, "true");
-      fetchAdminOrders();
+      setAdminPasscode(adminPassword);
+      localStorage.setItem(`admin_auth_${projectId}`, adminPassword);
+      fetchAdminOrders(adminPassword);
       setAdminPassword("");
     } else {
       setAdminError("Invalid administrative password credentials.");
@@ -466,13 +504,15 @@ export default function EcommerceStore({
       };
       const res = await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAdminHeadersJson(),
         body: JSON.stringify({ settings: updatedSettings })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update password");
       
       setSettings(updatedSettings);
+      setAdminPasscode(newAdminPassword);
+      localStorage.setItem(`admin_auth_${projectId}`, newAdminPassword);
       setNewAdminPassword("");
       setConfirmAdminPassword("");
       alert("Admin password updated successfully!");
@@ -496,7 +536,7 @@ export default function EcommerceStore({
       };
       const res = await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAdminHeadersJson(),
         body: JSON.stringify({ settings: updatedSettings })
       });
       const data = await res.json();
@@ -511,6 +551,7 @@ export default function EcommerceStore({
 
   const handleAdminLogout = () => {
     setAdminAuth(false);
+    setAdminPasscode("");
     localStorage.removeItem(`admin_auth_${projectId}`);
     setOrders([]);
   };
@@ -524,7 +565,7 @@ export default function EcommerceStore({
     try {
       const res = await fetch(`/api/projects/${projectId}/ecommerce/orders`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAdminHeadersJson(),
         body: JSON.stringify({
           orderId,
           status,
@@ -567,7 +608,7 @@ export default function EcommerceStore({
 
       const res = await fetch(`/api/projects/${projectId}/ecommerce/products`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAdminHeadersJson(),
         body: JSON.stringify({
           name,
           description,
@@ -603,7 +644,8 @@ export default function EcommerceStore({
 
     try {
       const res = await fetch(`/api/projects/${projectId}/ecommerce/products?productId=${productId}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: getAdminHeaders()
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete product");
@@ -660,10 +702,16 @@ export default function EcommerceStore({
           <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
             <span 
               onClick={() => { setView("home"); setSelectedProductId(null); }}
-              style={{ cursor: "pointer", fontSize: "1.3rem", fontWeight: 800, background: "linear-gradient(to right, #6366f1, #a855f7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "flex", alignItems: "center", gap: "0.5rem" }}
+              style={{ cursor: "pointer", fontSize: "1.3rem", fontWeight: 800, display: "flex", alignItems: "center", gap: "0.5rem" }}
             >
-              <ShoppingBag size={20} style={{ stroke: "#818cf8" }} />
-              {settings.whatsapp?.phoneNumber ? projectSubdomain.toUpperCase() || "WEBBING SHOP" : "STORE PREVIEW"}
+              {logoUrl ? (
+                <img src={logoUrl} alt={storeName || "Logo"} style={{ height: "2rem", width: "auto", objectFit: "contain", borderRadius: "0.25rem" }} />
+              ) : (
+                <ShoppingBag size={20} style={{ stroke: "#818cf8" }} />
+              )}
+              <span style={{ background: "linear-gradient(to right, #6366f1, #a855f7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                {storeName || projectSubdomain.toUpperCase() || "STORE PREVIEW"}
+              </span>
             </span>
             <div style={{ display: "flex", gap: "1.2rem", fontSize: "0.9rem" }}>
               <span onClick={() => { setView("home"); setSelectedProductId(null); }} style={{ cursor: "pointer", color: view === "home" ? "#818cf8" : "#94a3b8", fontWeight: view === "home" ? 700 : 500 }}>Home</span>
@@ -1611,9 +1659,11 @@ export default function EcommerceStore({
                   </div>
                   
                   <button type="submit" className="primary-action" style={{ width: "100%", justifyContent: "center", background: "#a855f7" }}>Unlock Dashboard</button>
-                  <span style={{ fontSize: "0.7rem", color: "#64748b", textAlign: "center" }}>
-                    {settings.adminPassword ? "Hint: Password has been customized" : "Hint: Default password is `admin123`"}
-                  </span>
+                  {(!settings.adminPassword || settings.adminPassword === "admin123") && (
+                    <span style={{ fontSize: "0.7rem", color: "#64748b", textAlign: "center" }}>
+                      Hint: Default password is `admin123`
+                    </span>
+                  )}
                 </form>
               </div>
             ) : (
@@ -1761,10 +1811,49 @@ export default function EcommerceStore({
                           </div>
                         </div>
 
-                        <div className="field-group">
-                          <label>Image Unsplash/Web URL (Optional)</label>
-                          <input type="text" className="field" value={newProductForm.imageUrl} onChange={(e) => setNewProductForm({ ...newProductForm, imageUrl: e.target.value })} placeholder="https://images.unsplash.com/photo-..." />
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "1rem", alignItems: "end" }}>
+                          <div className="field-group" style={{ flex: 1 }}>
+                            <label>Image Unsplash/Web URL (Optional)</label>
+                            <input type="text" className="field" value={newProductForm.imageUrl} onChange={(e) => setNewProductForm({ ...newProductForm, imageUrl: e.target.value })} placeholder="https://images.unsplash.com/photo-..." />
+                          </div>
+                          <div className="field-group" style={{ width: "200px" }}>
+                            <label>Or Upload Local File</label>
+                            <input 
+                              type="file" 
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    setNewProductForm(prev => ({
+                                      ...prev,
+                                      imageUrl: reader.result as string
+                                    }));
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              style={{ 
+                                background: "rgba(255,255,255,0.05)", 
+                                border: "1px solid rgba(255,255,255,0.1)", 
+                                borderRadius: "0.4rem", 
+                                padding: "0.45rem", 
+                                color: "#fff", 
+                                fontSize: "0.8rem",
+                                width: "100%"
+                              }}
+                            />
+                          </div>
                         </div>
+                        {newProductForm.imageUrl && (
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", background: "rgba(255,255,255,0.02)", padding: "0.5rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.05)" }}>
+                            <img src={newProductForm.imageUrl} alt="Preview" style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "0.25rem" }} />
+                            <span style={{ fontSize: "0.75rem", color: newProductForm.imageUrl.startsWith("data:") ? "#34d399" : "#cbd5e1" }}>
+                              {newProductForm.imageUrl.startsWith("data:") ? "✓ Local image uploaded" : "Image URL Preview"}
+                            </span>
+                          </div>
+                        )}
 
                         <div style={{ display: "flex", gap: "1rem" }}>
                           <button type="button" onClick={() => setShowAddProductModal(false)} className="secondary-action" style={{ flex: 1, justifyContent: "center" }}>Cancel</button>
@@ -1938,7 +2027,7 @@ export default function EcommerceStore({
                                   setSettings(updatedSettings);
                                   await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
                                     method: "POST",
-                                    headers: { "Content-Type": "application/json" },
+                                    headers: getAdminHeadersJson(),
                                     body: JSON.stringify({ settings: updatedSettings })
                                   });
                                 }}
@@ -1960,7 +2049,7 @@ export default function EcommerceStore({
                                   setSettings(updatedSettings);
                                   await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
                                     method: "POST",
-                                    headers: { "Content-Type": "application/json" },
+                                    headers: getAdminHeadersJson(),
                                     body: JSON.stringify({ settings: updatedSettings })
                                   });
                                 }}
@@ -1982,7 +2071,7 @@ export default function EcommerceStore({
                                   setSettings(updatedSettings);
                                   await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
                                     method: "POST",
-                                    headers: { "Content-Type": "application/json" },
+                                    headers: getAdminHeadersJson(),
                                     body: JSON.stringify({ settings: updatedSettings })
                                   });
                                 }}
@@ -2080,6 +2169,95 @@ export default function EcommerceStore({
 
                       {/* Right column: WhatsApp & Password changes */}
                       <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                        {/* Website Branding Settings */}
+                        <form onSubmit={async (e) => {
+                          e.preventDefault();
+                          try {
+                            const res = await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
+                              method: "POST",
+                              headers: getAdminHeadersJson(),
+                              body: JSON.stringify({ 
+                                settings,
+                                projectName: storeName,
+                                logoUrl: logoUrl
+                              })
+                            });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.error || "Failed to save branding");
+                            if (data.name) setStoreName(data.name);
+                            if (data.logoUrl !== undefined) setLogoUrl(data.logoUrl);
+                            alert("Branding settings saved successfully!");
+                          } catch (err: any) {
+                            alert(err.message || "Error saving branding settings.");
+                          }
+                        }} className="glass-panel" style={{ padding: "1.25rem", borderRadius: "0.75rem", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                          <h4 style={{ margin: 0 }}>Website Branding Settings</h4>
+                          <div className="field-group">
+                            <label>Website Name</label>
+                            <input 
+                              type="text" 
+                              required
+                              className="field" 
+                              value={storeName} 
+                              onChange={(e) => setStoreName(e.target.value)} 
+                              placeholder="e.g. My Awesome Shop" 
+                            />
+                          </div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "1rem", alignItems: "end" }}>
+                            <div className="field-group" style={{ flex: 1 }}>
+                              <label>Logo Web URL</label>
+                              <input 
+                                type="text" 
+                                className="field" 
+                                value={logoUrl} 
+                                onChange={(e) => setLogoUrl(e.target.value)} 
+                                placeholder="https://example.com/logo.png" 
+                              />
+                            </div>
+                            <div className="field-group" style={{ width: "160px" }}>
+                              <label>Or Upload Local Logo</label>
+                              <input 
+                                type="file" 
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                      setLogoUrl(reader.result as string);
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                                style={{ 
+                                  background: "rgba(255,255,255,0.05)", 
+                                  border: "1px solid rgba(255,255,255,0.1)", 
+                                  borderRadius: "0.4rem", 
+                                  padding: "0.45rem", 
+                                  color: "#fff", 
+                                  fontSize: "0.8rem",
+                                  width: "100%"
+                                }}
+                              />
+                            </div>
+                          </div>
+                          {logoUrl && (
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", background: "rgba(255,255,255,0.02)", padding: "0.5rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.05)" }}>
+                              <img src={logoUrl} alt="Logo Preview" style={{ height: "30px", width: "auto", objectFit: "contain", borderRadius: "0.25rem" }} />
+                              <span style={{ fontSize: "0.75rem", color: logoUrl.startsWith("data:") ? "#34d399" : "#cbd5e1" }}>
+                                {logoUrl.startsWith("data:") ? "✓ Local logo uploaded" : "Logo URL Preview"}
+                              </span>
+                            </div>
+                          )}
+                          <button 
+                            type="submit" 
+                            className="primary-action" 
+                            style={{ width: "fit-content", alignSelf: "flex-end", padding: "0.4rem 1rem", fontSize: "0.8rem", background: "#a855f7" }}
+                          >
+                            Save Branding
+                          </button>
+                        </form>
+
                         {/* WhatsApp Business integrations */}
                         <div className="glass-panel" style={{ padding: "1.25rem", borderRadius: "0.75rem", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "1rem" }}>
                           <h4 style={{ margin: 0 }}>WhatsApp Business Notifications</h4>
@@ -2100,7 +2278,7 @@ export default function EcommerceStore({
                                 setSettings(updatedSettings);
                                 await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
                                   method: "POST",
-                                  headers: { "Content-Type": "application/json" },
+                                  headers: getAdminHeadersJson(),
                                   body: JSON.stringify({ settings: updatedSettings })
                                 });
                               }}
@@ -2122,7 +2300,7 @@ export default function EcommerceStore({
                                 setSettings(updatedSettings);
                                 await fetch(`/api/projects/${projectId}/ecommerce/settings`, {
                                   method: "POST",
-                                  headers: { "Content-Type": "application/json" },
+                                  headers: getAdminHeadersJson(),
                                   body: JSON.stringify({ settings: updatedSettings })
                                 });
                               }}
@@ -2195,7 +2373,7 @@ export default function EcommerceStore({
 
       {/* FOOTER */}
       <footer style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "2rem", background: "rgba(0,0,0,0.2)", marginTop: "auto", fontSize: "0.8rem", color: "#64748b", textAlign: "center" }}>
-        <p>© {new Date().getFullYear()} {settings.whatsapp?.phoneNumber ? projectSubdomain.toUpperCase() : "eCommerce Single Vendor Store"}. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} {storeName || projectSubdomain.toUpperCase() || "eCommerce Single Vendor Store"}. All rights reserved.</p>
         <p style={{ marginTop: "0.5rem" }}>
           Built with <span style={{ color: "#a855f7", fontWeight: 700 }}>Webbing AI Engine</span>
         </p>

@@ -37,7 +37,18 @@ export async function POST(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    const { customDomain, selfHosted, subdomain, theme, seo } = await req.json();
+    const { name, customDomain, selfHosted, subdomain, theme, seo } = await req.json();
+
+    // 0. Update project name
+    if (name !== undefined) {
+      const cleanName = name.trim();
+      if (cleanName) {
+        await prisma.project.update({
+          where: { id: projectId },
+          data: { name: cleanName },
+        });
+      }
+    }
 
     // 1. Update selfHosted status
     if (selfHosted !== undefined) {

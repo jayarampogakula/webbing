@@ -116,6 +116,8 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
           initialSettings={settings}
           initialPathSlug={pathSlug}
           projectSubdomain={project.subdomain}
+          projectName={project.name}
+          initialLogoUrl={themeObj.metadata?.logoUrl || ""}
         />
       );
     }

@@ -343,6 +343,59 @@ export class AIService {
     return this.providers[0];
   }
 
+  getOrderedProviders(preferred?: string): AIProvider[] {
+    const ordered: AIProvider[] = [];
+    if (preferred) {
+      const pName = preferred.toLowerCase();
+      const found = this.providers.find(p => p.name === pName || (pName === "claude" && p.name === "anthropic"));
+      if (found) {
+        ordered.push(found);
+      }
+    }
+    
+    // Add other providers in order
+    for (const p of this.providers) {
+      if (!ordered.includes(p)) {
+        ordered.push(p);
+      }
+    }
+
+    if (ordered.length === 0) {
+      throw new Error("No AI providers are configured.");
+    }
+    return ordered;
+  }
+
+  async generateJson<T>(params: GenerationParams, preferredProvider?: string): Promise<T> {
+    const ordered = this.getOrderedProviders(preferredProvider);
+    let lastError = null;
+    for (const provider of ordered) {
+      try {
+        console.log(`[AIService] Trying generateJson using provider: ${provider.name}`);
+        return await provider.generateJson<T>(params);
+      } catch (err: any) {
+        console.warn(`[AIService] Provider ${provider.name} failed generateJson: ${err.message || err}`);
+        lastError = err;
+      }
+    }
+    throw new Error(`All AI providers failed. Last error: ${lastError?.message || lastError}`);
+  }
+
+  async generateText(params: GenerationParams, preferredProvider?: string): Promise<string> {
+    const ordered = this.getOrderedProviders(preferredProvider);
+    let lastError = null;
+    for (const provider of ordered) {
+      try {
+        console.log(`[AIService] Trying generateText using provider: ${provider.name}`);
+        return await provider.generateText(params);
+      } catch (err: any) {
+        console.warn(`[AIService] Provider ${provider.name} failed generateText: ${err.message || err}`);
+        lastError = err;
+      }
+    }
+    throw new Error(`All AI providers failed. Last error: ${lastError?.message || lastError}`);
+  }
+
   async generateWebsiteLayout(
     prompt: string,
     style: string,
@@ -540,9 +593,9 @@ Choose an appropriate ID based on the niche:
       `;
     }
 
-    return provider.generateJson<any>({
+    return this.generateJson<any>({
       prompt: userPrompt,
       systemPrompt
-    });
+    }, preferredProvider || "gemini");
   }
 }

@@ -175,10 +175,10 @@ Choose an appropriate ID based on the niche:
     `;
 
     // 3. Call AI service to update layout JSON mapping
-    const result = await aiService.getProvider(preferredProvider).generateJson<any>({
+    const result = await aiService.generateJson<any>({
       prompt: userPrompt,
       systemPrompt
-    });
+    }, preferredProvider);
 
     console.log("AI Edit Chat raw result:", JSON.stringify(result, null, 2));
 

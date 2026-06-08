@@ -133,22 +133,36 @@ const worker = new Worker<WebsiteGenerationJobData>(
 
         // If e-commerce was requested, build EcomStore template using generated items
         if (ecommerce) {
-          const aiProducts = generationOutput.products || [];
+          const aiProducts = Array.isArray(generationOutput?.products) ? generationOutput.products : [];
           const productsToCreate = aiProducts.map((p: any) => {
             const descriptionJson = JSON.stringify({
               bodyText: p.description || "No description available.",
               category: p.category || "General",
-              variants: p.variants || [],
-              specifications: p.specifications || {},
+              variants: Array.isArray(p.variants) ? p.variants : [],
+              specifications: p.specifications && typeof p.specifications === "object" ? p.specifications : {},
               sku: `SKU-${(p.name || "ITEM").slice(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`
             });
+
+            let rawPrice = p.price;
+            if (typeof rawPrice === "string") {
+              rawPrice = Number(rawPrice.replace(/[^0-9.]/g, ""));
+            }
+            const finalPrice = isNaN(Number(rawPrice)) || Number(rawPrice) <= 0 ? 1299 : Number(rawPrice);
+
+            let rawInventory = p.inventory;
+            if (typeof rawInventory === "string") {
+              rawInventory = Number(rawInventory.replace(/[^0-9]/g, ""));
+            }
+            const finalInventory = isNaN(Number(rawInventory)) || Number(rawInventory) < 0 ? 100 : Number(rawInventory);
+
+            const finalImages = Array.isArray(p.images) ? p.images : (p.imageUrl ? [p.imageUrl] : []);
 
             return {
               name: p.name || "Sample Product",
               description: descriptionJson,
-              price: p.price || 1299,
-              inventory: p.inventory || 100,
-              images: p.imageUrl ? [p.imageUrl] : []
+              price: finalPrice,
+              inventory: finalInventory,
+              images: finalImages
             };
           });
 

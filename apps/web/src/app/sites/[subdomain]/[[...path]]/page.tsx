@@ -1,8 +1,10 @@
 import React from "react";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { prisma } from "@webbing/db";
 import { CheckCircle2, Mail, ArrowRight, Zap, Star, ArrowUpRight, Phone, Clock } from "lucide-react";
 import EcommerceStore from "@/components/EcommerceStore";
+import ClientDashboard from "@/components/ClientDashboard";
 import ClientEffects from "@/components/ClientEffects";
 import ContactForm from "@/components/ContactForm";
 
@@ -171,6 +173,21 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
           initialSettings={settings}
           initialPathSlug={pathSlug}
           projectSubdomain={project.subdomain}
+          projectName={project.name}
+          initialLogoUrl={themeObj.metadata?.logoUrl || ""}
+        />
+      );
+    }
+
+    if (slug === "admin") {
+      const hostHeader = headers().get("host") || "webbing.in";
+      const baseDomain = hostHeader.startsWith("app.") ? hostHeader.slice(4) : hostHeader;
+
+      return (
+        <ClientDashboard 
+          projectId={project.id}
+          projectSubdomain={project.subdomain}
+          baseDomain={baseDomain}
         />
       );
     }
@@ -180,6 +197,7 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
 
     const themeConfig = (project.theme as any) || {};
     const designStyle = themeConfig.style || "Modern Startup";
+    const logoUrl = themeConfig.metadata?.logoUrl || themeConfig.logoUrl || "";
 
     // Map theme styles to classes
     let bgClass = "bg-grad-saas";
@@ -246,7 +264,10 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
         <div className={`site-preview ${themeClass} ${bgClass} ${fontClass}`} style={{ minHeight: "100vh", position: "relative", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
           {/* Simple header */}
           <header style={{ padding: "1.5rem 2rem", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: "1100px", margin: "0 auto", width: "100%" }}>
-            <a href="/" style={{ color: "#fff", textDecoration: "none", fontSize: "1.25rem", fontWeight: 800 }}>
+            <a href="/" style={{ color: "#fff", textDecoration: "none", fontSize: "1.25rem", fontWeight: 800, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" style={{ maxHeight: "36px", objectFit: "contain", borderRadius: "0.25rem" }} />
+              ) : null}
               {renderText(project.name)}
             </a>
             <a href="/" style={{ color: "#818cf8", textDecoration: "none", fontSize: "0.85rem", fontWeight: 600 }}>
@@ -294,9 +315,13 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
               return (
                 <header key={section.id} id="header" className="reveal-on-scroll active" style={{ position: "sticky", top: 0, zIndex: 50, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1.2rem 2rem", background: "rgba(6, 9, 20, 0.4)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
                   <a href="#" style={{ fontSize: "1.25rem", fontWeight: 800, color: "#fff", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <span style={{ padding: "0.25rem 0.5rem", borderRadius: "0.40rem", background: logoGradient, color: "#fff", fontSize: "1rem" }}>
-                      {renderText(project.name)?.[0]?.toUpperCase() || "W"}
-                    </span>
+                    {logoUrl ? (
+                      <img src={logoUrl} alt="Logo" style={{ maxHeight: "36px", objectFit: "contain", borderRadius: "0.25rem" }} />
+                    ) : (
+                      <span style={{ padding: "0.25rem 0.5rem", borderRadius: "0.40rem", background: logoGradient, color: "#fff", fontSize: "1rem" }}>
+                        {renderText(project.name)?.[0]?.toUpperCase() || "W"}
+                      </span>
+                    )}
                     {renderText(project.name)}
                   </a>
                   <nav style={{ display: "flex", gap: "1.5rem" }}>
