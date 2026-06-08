@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Check, X, Shield, Plus, Trash2, Edit2, Sparkles, DollarSign, Layers, Users, Key, ChevronLeft, ChevronRight, Home, MessageSquare, Mail, Sliders } from "lucide-react";
 import PlanEditor from "./PlanEditor";
 import LlmKeyManager from "../components/LlmKeyManager";
+import AdminProjectEditor from "./AdminProjectEditor";
 
 interface Plan {
   id: string;
@@ -42,6 +43,7 @@ interface AdminProject {
   subdomain: string;
   status: string;
   selfHosted: boolean;
+  theme: any;
   tenant: {
     name: string;
   };
@@ -937,7 +939,7 @@ export default function AdminConsole({
               <div className="table-wrap">
                 <table className="data-table">
                   <thead>
-                    <tr><th>Site</th><th>Subdomain</th><th>Owner</th><th>Status</th><th>Workspace</th></tr>
+                    <tr><th>Site</th><th>Subdomain</th><th>Owner & Client Logins</th><th>Status</th><th>Workspace</th><th style={{ textAlign: "right" }}>Actions</th></tr>
                   </thead>
                   <tbody>
                     {projects.map((p) => {
@@ -973,14 +975,34 @@ export default function AdminConsole({
                             </div>
                           </td>
                           <td>
-                            {p.user ? (
-                              <div style={{ display: "flex", flexDirection: "column" }}>
-                                <span style={{ fontWeight: 600 }}>{p.user.name || "N/A"}</span>
-                                <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{p.user.email}</span>
-                              </div>
-                            ) : (
-                              <span style={{ color: "#4b5563" }}>N/A</span>
-                            )}
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                              {p.user ? (
+                                <div style={{ display: "flex", flexDirection: "column" }}>
+                                  <span style={{ fontWeight: 600 }}>{p.user.name || "N/A"}</span>
+                                  <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{p.user.email}</span>
+                                </div>
+                              ) : (
+                                <span style={{ color: "#4b5563" }}>N/A</span>
+                              )}
+
+                              {/* Configured Client Logins list */}
+                              {(() => {
+                                const logins = (p.theme as any)?.metadata?.clientLogins || [];
+                                if (logins.length > 0) {
+                                  return (
+                                    <div style={{ marginTop: "0.25rem", padding: "0.35rem 0.5rem", background: "rgba(255,255,255,0.03)", borderRadius: "0.3rem", border: "1px solid rgba(255,255,255,0.05)" }}>
+                                      <div style={{ fontSize: "0.65rem", color: "#a5b4fc", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.15rem" }}>Client Logins ({logins.length}):</div>
+                                      {logins.map((login: any, idx: number) => (
+                                        <div key={idx} style={{ fontSize: "0.7rem", color: "#cbd5e1" }}>
+                                          <span style={{ color: "#818cf8" }}>{login.email}</span>: {login.password}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
                           </td>
                           <td>
                             <span
@@ -997,12 +1019,15 @@ export default function AdminConsole({
                             </span>
                           </td>
                           <td>{p.tenant.name}</td>
+                          <td style={{ textAlign: "right" }}>
+                            <AdminProjectEditor project={p} baseDomain={baseDomain} />
+                          </td>
                         </tr>
                       );
                     })}
                     {projects.length === 0 && (
                       <tr>
-                        <td colSpan={5} style={{ textAlign: "center", color: "#9ca3af", padding: "2rem" }}>No generated websites on the platform.</td>
+                        <td colSpan={6} style={{ textAlign: "center", color: "#9ca3af", padding: "2rem" }}>No generated websites on the platform.</td>
                       </tr>
                     )}
                   </tbody>

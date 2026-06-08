@@ -670,6 +670,19 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
     setError("");
     setSuccess("");
 
+    // Automatically capture any typed but unsaved client logins
+    let finalClientLogins = [...clientLogins];
+    if (newClientEmail.trim() && newClientPassword.trim()) {
+      const emailLower = newClientEmail.trim().toLowerCase();
+      if (!finalClientLogins.some(c => c.email.toLowerCase() === emailLower)) {
+        const newLogin = { email: newClientEmail.trim(), password: newClientPassword.trim() };
+        finalClientLogins.push(newLogin);
+        setClientLogins(finalClientLogins);
+        setNewClientEmail("");
+        setNewClientPassword("");
+      }
+    }
+
     try {
       // Save metadata settings into the project config
       const res = await fetch(`/api/projects/${currentProject.id}/settings`, {
@@ -685,7 +698,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             analyticsTag,
             metadata: {
               ...(currentProject.theme as any)?.metadata,
-              clientLogins,
+              clientLogins: finalClientLogins,
               logoUrl,
               policies: {
                 privacyPolicyEnabled,
