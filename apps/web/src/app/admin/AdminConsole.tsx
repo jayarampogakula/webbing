@@ -300,6 +300,17 @@ export default function AdminConsole({
   const [licenseKey, setLicenseKey] = useState(initialSettings?.licenseKey || "");
   const [generatedLicense, setGeneratedLicense] = useState("");
 
+  // SMTP form states
+  const [smtpHost, setSmtpHost] = useState(initialSettings?.smtpHost || "");
+  const [smtpPort, setSmtpPort] = useState(initialSettings?.smtpPort || "465");
+  const [smtpUser, setSmtpUser] = useState(initialSettings?.smtpUser || "");
+  const [smtpPass, setSmtpPass] = useState(initialSettings?.smtpPass || "");
+  const [smtpFromName, setSmtpFromName] = useState(initialSettings?.smtpFromName || "");
+  const [smtpFromEmail, setSmtpFromEmail] = useState(initialSettings?.smtpFromEmail || "");
+
+  // Email subtab state
+  const [emailsSubTab, setEmailsSubTab] = useState<"templates" | "smtp">("templates");
+
   const [selectedTemplateId, setSelectedTemplateId] = useState<"welcome" | "payment_request" | "activation" | "credits">("welcome");
   const [testEmailAddress, setTestEmailAddress] = useState(user.email);
   const [sendingTest, setSendingTest] = useState(false);
@@ -1565,127 +1576,311 @@ export default function AdminConsole({
         {activeTab === "emails" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
             <div className="app-title" style={{ marginBottom: "1rem" }}>
-              <div>
-                <span className="eyebrow">Communications</span>
-                <h1 style={{ color: "#fff", margin: "0.25rem 0 0.5rem 0", fontSize: "1.75rem", fontWeight: 850 }}>Email Templates</h1>
-                <p style={{ color: "#9ca3af", fontSize: "0.9rem", margin: 0 }}>Preview transactional system emails sent from support@webbing.in and dispatch test sends.</p>
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "2rem", minHeight: "600px" }}>
-              {/* Left sidebar: list templates */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                {Object.entries(emailTemplates).map(([id, t]) => (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", width: "100%" }}>
+                <div>
+                  <span className="eyebrow">Communications</span>
+                  <h1 style={{ color: "#fff", margin: "0.25rem 0 0.5rem 0", fontSize: "1.75rem", fontWeight: 850 }}>
+                    {emailsSubTab === "templates" ? "Email Templates" : "SMTP Configurations"}
+                  </h1>
+                  <p style={{ color: "#9ca3af", fontSize: "0.9rem", margin: 0 }}>
+                    {emailsSubTab === "templates"
+                      ? "Preview transactional system emails sent from support@webbing.in and dispatch test sends."
+                      : "Configure your custom SMTP host server details to authorize automatic transactional emails."}
+                  </p>
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", background: "rgba(255,255,255,0.03)", padding: "0.25rem", borderRadius: "0.375rem", border: "1px solid rgba(255,255,255,0.05)" }}>
                   <button
-                    key={id}
-                    onClick={() => {
-                      setSelectedTemplateId(id as any);
-                      setEmailStatus({ success: false, message: "", error: "" });
-                    }}
+                    type="button"
+                    onClick={() => setEmailsSubTab("templates")}
                     style={{
-                      padding: "1.25rem",
-                      borderRadius: "0.75rem",
-                      background: selectedTemplateId === id ? "rgba(129, 140, 248, 0.08)" : "#111827",
-                      border: `1px solid ${selectedTemplateId === id ? "#6366f1" : "rgba(255,255,255,0.06)"}`,
-                      textAlign: "left",
+                      padding: "0.4rem 0.8rem",
+                      fontSize: "0.75rem",
+                      borderRadius: "0.25rem",
+                      background: emailsSubTab === "templates" ? "linear-gradient(to right, #6366f1, #a855f7)" : "transparent",
+                      color: "#fff",
+                      border: "none",
                       cursor: "pointer",
+                      fontWeight: 600,
                       transition: "all 0.2s"
                     }}
                   >
-                    <div style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem", fontSize: "0.95rem" }}>{t.title}</div>
-                    <div style={{ color: "#9ca3af", fontSize: "0.8rem", lineHeight: "1.4" }}>{t.description}</div>
+                    Templates
                   </button>
-                ))}
-              </div>
-
-              {/* Right column: live iframe preview & test panel */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                <section className="surface-panel" style={{ padding: "1.5rem" }}>
-                  <h3 style={{ margin: "0 0 1rem 0", color: "#fff", fontSize: "1.1rem" }}>Send a Test Email</h3>
-                  <form
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      if (!testEmailAddress) return;
-                      setSendingTest(true);
-                      setEmailStatus({ success: false, message: "", error: "" });
-                      try {
-                        const res = await fetch("/api/admin/emails/test", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ templateId: selectedTemplateId, testEmail: testEmailAddress }),
-                        });
-                        const data = await res.json();
-                        if (!res.ok) throw new Error(data.error || "Failed to dispatch email.");
-                        setEmailStatus({ success: true, message: data.message, error: "" });
-                      } catch (err: any) {
-                        setEmailStatus({ success: false, message: "", error: err.message });
-                      } finally {
-                        setSendingTest(false);
-                      }
+                  <button
+                    type="button"
+                    onClick={() => setEmailsSubTab("smtp")}
+                    style={{
+                      padding: "0.4rem 0.8rem",
+                      fontSize: "0.75rem",
+                      borderRadius: "0.25rem",
+                      background: emailsSubTab === "smtp" ? "linear-gradient(to right, #6366f1, #a855f7)" : "transparent",
+                      color: "#fff",
+                      border: "none",
+                      cursor: "pointer",
+                      fontWeight: 600,
+                      transition: "all 0.2s"
                     }}
-                    style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}
                   >
-                    <input
-                      type="email"
-                      value={testEmailAddress}
-                      onChange={(e) => setTestEmailAddress(e.target.value)}
-                      placeholder="recipient@example.com"
-                      required
-                      style={{
-                        flexGrow: 1,
-                        background: "#1f2937",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                        borderRadius: "0.375rem",
-                        padding: "0.6rem 0.8rem",
-                        color: "#fff",
-                        fontSize: "0.85rem"
-                      }}
-                    />
-                    <button
-                      type="submit"
-                      disabled={sendingTest}
-                      style={{
-                        background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "0.375rem",
-                        padding: "0.6rem 1.25rem",
-                        fontWeight: 600,
-                        fontSize: "0.85rem",
-                        cursor: "pointer",
-                        opacity: sendingTest ? 0.6 : 1
-                      }}
-                    >
-                      {sendingTest ? "Sending..." : "Send Test"}
-                    </button>
-                  </form>
-                  {emailStatus.message && (
-                    <div style={{ color: "#34d399", fontSize: "0.8rem", marginTop: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                      <Check size={14} /> {emailStatus.message}
-                    </div>
-                  )}
-                  {emailStatus.error && (
-                    <div style={{ color: "#f87171", fontSize: "0.8rem", marginTop: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                      <X size={14} /> {emailStatus.error}
-                    </div>
-                  )}
-                </section>
-
-                <div style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                  <div style={{ padding: "0.75rem 1.25rem", background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ color: "#9ca3af", fontSize: "0.75rem" }}>
-                      Subject: <strong style={{ color: "#fff" }}>{(emailTemplates as any)[selectedTemplateId].subject}</strong>
-                    </div>
-                    <span style={{ fontSize: "0.7rem", color: "#6b7280", background: "rgba(255,255,255,0.04)", padding: "0.2rem 0.5rem", borderRadius: "0.25rem" }}>HTML PREVIEW</span>
-                  </div>
-                  <iframe
-                    srcDoc={(emailTemplates as any)[selectedTemplateId].getHtml()}
-                    title="Email Template Preview"
-                    style={{ border: "none", width: "100%", height: "550px", background: "#0a0e17" }}
-                  />
+                    SMTP Settings
+                  </button>
                 </div>
               </div>
             </div>
+
+            {message && <div className="form-alert" style={{ background: "rgba(52, 211, 153, 0.1)", border: "1px solid rgba(52, 211, 153, 0.2)", color: "#34d399" }}>{message}</div>}
+            {error && <div className="form-alert">{error}</div>}
+
+            {emailsSubTab === "templates" ? (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "2rem", minHeight: "600px" }}>
+                {/* Left sidebar: list templates */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {Object.entries(emailTemplates).map(([id, t]) => (
+                    <button
+                      key={id}
+                      onClick={() => {
+                        setSelectedTemplateId(id as any);
+                        setEmailStatus({ success: false, message: "", error: "" });
+                      }}
+                      style={{
+                        padding: "1.25rem",
+                        borderRadius: "0.75rem",
+                        background: selectedTemplateId === id ? "rgba(129, 140, 248, 0.08)" : "#111827",
+                        border: `1px solid ${selectedTemplateId === id ? "#6366f1" : "rgba(255,255,255,0.06)"}`,
+                        textAlign: "left",
+                        cursor: "pointer",
+                        transition: "all 0.2s"
+                      }}
+                    >
+                      <div style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem", fontSize: "0.95rem" }}>{t.title}</div>
+                      <div style={{ color: "#9ca3af", fontSize: "0.8rem", lineHeight: "1.4" }}>{t.description}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Right column: live iframe preview & test panel */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                  <section className="surface-panel" style={{ padding: "1.5rem" }}>
+                    <h3 style={{ margin: "0 0 1rem 0", color: "#fff", fontSize: "1.1rem" }}>Send a Test Email</h3>
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!testEmailAddress) return;
+                        setSendingTest(true);
+                        setEmailStatus({ success: false, message: "", error: "" });
+                        try {
+                          const res = await fetch("/api/admin/emails/test", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ templateId: selectedTemplateId, testEmail: testEmailAddress }),
+                          });
+                          const data = await res.json();
+                          if (!res.ok) throw new Error(data.error || "Failed to dispatch email.");
+                          setEmailStatus({ success: true, message: data.message, error: "" });
+                        } catch (err: any) {
+                          setEmailStatus({ success: false, message: "", error: err.message });
+                        } finally {
+                          setSendingTest(false);
+                        }
+                      }}
+                      style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}
+                    >
+                      <input
+                        type="email"
+                        value={testEmailAddress}
+                        onChange={(e) => setTestEmailAddress(e.target.value)}
+                        placeholder="recipient@example.com"
+                        required
+                        style={{
+                          flexGrow: 1,
+                          background: "#1f2937",
+                          border: "1px solid rgba(255, 255, 255, 0.08)",
+                          borderRadius: "0.375rem",
+                          padding: "0.6rem 0.8rem",
+                          color: "#fff",
+                          fontSize: "0.85rem"
+                        }}
+                      />
+                      <button
+                        type="submit"
+                        disabled={sendingTest}
+                        style={{
+                          background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "0.375rem",
+                          padding: "0.6rem 1.25rem",
+                          fontWeight: 600,
+                          fontSize: "0.85rem",
+                          cursor: "pointer",
+                          opacity: sendingTest ? 0.6 : 1
+                        }}
+                      >
+                        {sendingTest ? "Sending..." : "Send Test"}
+                      </button>
+                    </form>
+                    {emailStatus.message && (
+                      <div style={{ color: "#34d399", fontSize: "0.8rem", marginTop: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                        <Check size={14} /> {emailStatus.message}
+                      </div>
+                    )}
+                    {emailStatus.error && (
+                      <div style={{ color: "#f87171", fontSize: "0.8rem", marginTop: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                        <X size={14} /> {emailStatus.error}
+                      </div>
+                    )}
+                  </section>
+
+                  <div style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                    <div style={{ padding: "0.75rem 1.25rem", background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ color: "#9ca3af", fontSize: "0.75rem" }}>
+                        Subject: <strong style={{ color: "#fff" }}>{(emailTemplates as any)[selectedTemplateId].subject}</strong>
+                      </div>
+                      <span style={{ fontSize: "0.7rem", color: "#6b7280", background: "rgba(255,255,255,0.04)", padding: "0.2rem 0.5rem", borderRadius: "0.25rem" }}>HTML PREVIEW</span>
+                    </div>
+                    <iframe
+                      srcDoc={(emailTemplates as any)[selectedTemplateId].getHtml()}
+                      title="Email Template Preview"
+                      style={{ border: "none", width: "100%", height: "550px", background: "#0a0e17" }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem" }}>
+                <section className="surface-panel" style={{ maxWidth: "650px" }}>
+                  <div style={{ marginBottom: "1.5rem" }}>
+                    <span className="eyebrow">SMTP Config</span>
+                    <h2 style={{ margin: 0, color: "#fff", fontSize: "1.25rem", fontWeight: 800 }}>SMTP Server Settings</h2>
+                    <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.2rem 0 0 0" }}>Configure your mail client server authentication to send transaction notifications dynamically.</p>
+                  </div>
+
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      setLoading(true);
+                      setMessage("");
+                      setError("");
+                      try {
+                        const res = await fetch("/api/admin/settings", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            settings: {
+                              smtpHost,
+                              smtpPort,
+                              smtpUser,
+                              smtpPass,
+                              smtpFromName,
+                              smtpFromEmail
+                            }
+                          })
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || "Failed to save SMTP settings.");
+                        setMessage("SMTP Configurations saved successfully!");
+                      } catch (err: any) {
+                        setError(err.message || "Failed to save settings.");
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}
+                  >
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>SMTP HOST</label>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={smtpHost}
+                          onChange={(e) => setSmtpHost(e.target.value)}
+                          placeholder="smtp.hostinger.com"
+                          required
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>SMTP PORT</label>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={smtpPort}
+                          onChange={(e) => setSmtpPort(e.target.value)}
+                          placeholder="e.g. 465 or 587"
+                          required
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>SMTP USERNAME / EMAIL</label>
+                        <input
+                          type="email"
+                          className="premium-input"
+                          value={smtpUser}
+                          onChange={(e) => setSmtpUser(e.target.value)}
+                          placeholder="support@webbing.in"
+                          required
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>SMTP PASSWORD</label>
+                        <input
+                          type="password"
+                          className="premium-input"
+                          value={smtpPass}
+                          onChange={(e) => setSmtpPass(e.target.value)}
+                          placeholder="••••••••••••"
+                          required
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>SENDER DISPLAY NAME</label>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={smtpFromName}
+                          onChange={(e) => setSmtpFromName(e.target.value)}
+                          placeholder="e.g. Webbing Support"
+                          required
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>SENDER EMAIL ADDRESS</label>
+                        <input
+                          type="email"
+                          className="premium-input"
+                          value={smtpFromEmail}
+                          onChange={(e) => setSmtpFromEmail(e.target.value)}
+                          placeholder="e.g. support@webbing.in"
+                          required
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+                      <button
+                        type="submit"
+                        className="primary-action"
+                        style={{ padding: "0 2rem", fontWeight: 700, height: "40px" }}
+                        disabled={loading}
+                      >
+                        {loading ? "Saving..." : "Save Config"}
+                      </button>
+                    </div>
+                  </form>
+                </section>
+              </div>
+            )}
           </div>
         )}
 

@@ -1,39 +1,60 @@
 import nodemailer from "nodemailer";
 import { prisma } from "@webbing/db";
 
-// Retrieve configuration from environment variables, defaulting to Hostinger SMTP configurations
-const host = process.env.SMTP_HOST || "smtp.hostinger.com";
-const port = parseInt(process.env.SMTP_PORT || "465", 10);
-const secure = port === 465; // Use SSL for 465
-const user = process.env.SMTP_USER || "support@webbing.in";
-const pass = process.env.SMTP_PASS || ""; // User must set this in env
-const defaultFrom = process.env.SMTP_FROM || `"Webbing Support" <support@webbing.in>`;
-
-// Create SMTP Transporter
-const transporter = pass
-  ? nodemailer.createTransport({
-      host,
-      port,
-      secure,
-      auth: {
-        user,
-        pass,
-      },
-    })
-  : null;
+// Helper to retrieve all SMTP and email branding settings dynamically from the database
+async function getSmtpSettings() {
+  try {
+    const settings = await prisma.systemSetting.findMany({
+      where: {
+        key: { in: ["smtpHost", "smtpPort", "smtpUser", "smtpPass", "smtpFromName", "smtpFromEmail", "appName", "appEmail"] }
+      }
+    });
+    const map = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+    
+    // Resolve dynamic SMTP parameters
+    const host = map.smtpHost || process.env.SMTP_HOST || "smtp.hostinger.com";
+    const port = parseInt(map.smtpPort || process.env.SMTP_PORT || "465", 10);
+    const secure = port === 465; // Use SSL for 465
+    const user = map.smtpUser || process.env.SMTP_USER || "support@webbing.in";
+    const pass = map.smtpPass || process.env.SMTP_PASS || "";
+    
+    // Resolve branding parameters
+    const appName = map.appName || "Webbing";
+    const appEmail = map.appEmail || user;
+    
+    // Resolve from address: if smtpFromName & smtpFromEmail are configured, construct format
+    let defaultFrom = process.env.SMTP_FROM || `"${appName} Support" <${appEmail}>`;
+    if (map.smtpFromName && map.smtpFromEmail) {
+      defaultFrom = `"${map.smtpFromName}" <${map.smtpFromEmail}>`;
+    } else if (map.smtpFromEmail) {
+      defaultFrom = map.smtpFromEmail;
+    }
+    
+    return { host, port, secure, user, pass, defaultFrom, appName, appEmail };
+  } catch (err) {
+    console.error("Error loading dynamic SMTP settings, falling back to environment config:", err);
+    const host = process.env.SMTP_HOST || "smtp.hostinger.com";
+    const port = parseInt(process.env.SMTP_PORT || "465", 10);
+    const secure = port === 465;
+    const user = process.env.SMTP_USER || "support@webbing.in";
+    const pass = process.env.SMTP_PASS || "";
+    const defaultFrom = process.env.SMTP_FROM || `"Webbing Support" <support@webbing.in>`;
+    return { host, port, secure, user, pass, defaultFrom, appName: "Webbing", appEmail: "support@webbing.in" };
+  }
+}
 
 // Helper to query dynamic email branding settings
 async function getEmailBranding() {
   try {
     const settings = await prisma.systemSetting.findMany({
       where: {
-        key: { in: ["appName", "appEmail"] }
+        key: { in: ["appName", "appEmail", "smtpFromEmail", "smtpUser"] }
       }
     });
     const map = Object.fromEntries(settings.map((s) => [s.key, s.value]));
     return {
       appName: map.appName || "Webbing",
-      appEmail: map.appEmail || "support@webbing.in"
+      appEmail: map.appEmail || map.smtpFromEmail || map.smtpUser || "support@webbing.in"
     };
   } catch (err) {
     return {
@@ -43,15 +64,28 @@ async function getEmailBranding() {
   }
 }
 
-// Generic helper to send email safely
+// Generic helper to send email safely using dynamic SMTP transporter
 async function sendMailSafe(to: string, subject: string, html: string, customFrom?: string) {
-  if (!transporter) {
-    console.warn(`[Mail Service] SMTP is not configured (missing SMTP_PASS). Email to ${to} was not sent. Subject: "${subject}"`);
+  const smtp = await getSmtpSettings();
+  
+  if (!smtp.pass) {
+    console.warn(`[Mail Service] SMTP is not configured (missing password). Email to ${to} was not sent. Subject: "${subject}"`);
     return false;
   }
+  
   try {
+    const transporter = nodemailer.createTransport({
+      host: smtp.host,
+      port: smtp.port,
+      secure: smtp.secure,
+      auth: {
+        user: smtp.user,
+        pass: smtp.pass,
+      },
+    });
+
     const info = await transporter.sendMail({
-      from: customFrom || defaultFrom,
+      from: customFrom || smtp.defaultFrom,
       to,
       subject,
       html,

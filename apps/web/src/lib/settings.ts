@@ -25,6 +25,12 @@ export interface SystemSettings {
   affiliateTier3Rate: string;
   affiliateRecurringRate: string;
   licenseKey: string;
+  smtpHost: string;
+  smtpPort: string;
+  smtpUser: string;
+  smtpPass: string;
+  smtpFromName: string;
+  smtpFromEmail: string;
 }
 
 export async function getSystemSettings(): Promise<SystemSettings> {
@@ -56,6 +62,12 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       affiliateTier3Rate: map.affiliateTier3Rate || "30",
       affiliateRecurringRate: map.affiliateRecurringRate || "10",
       licenseKey: map.licenseKey || "",
+      smtpHost: map.smtpHost || "",
+      smtpPort: map.smtpPort || "465",
+      smtpUser: map.smtpUser || "",
+      smtpPass: map.smtpPass || "",
+      smtpFromName: map.smtpFromName || "",
+      smtpFromEmail: map.smtpFromEmail || "",
     };
   } catch (error) {
     console.error("Error reading system settings from DB:", error);
@@ -83,6 +95,12 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       affiliateTier3Rate: "30",
       affiliateRecurringRate: "10",
       licenseKey: "",
+      smtpHost: "",
+      smtpPort: "465",
+      smtpUser: "",
+      smtpPass: "",
+      smtpFromName: "",
+      smtpFromEmail: "",
     };
   }
 }
