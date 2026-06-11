@@ -108,7 +108,11 @@ export default function GeneratorForm({ user, onSuccess }: GeneratorFormProps) {
         onSuccess(data.projectId);
       }
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+      let msg = err.message || "An unexpected error occurred.";
+      if (msg.includes("Unexpected token") || msg.includes("is not valid JSON") || err instanceof SyntaxError) {
+        msg = "The server returned an invalid HTML response. This typically indicates a database connection failure, missing migrations, or that the Redis queue server is offline on your VPS. Please verify that Redis is running and database migrations are fully applied.";
+      }
+      setError(msg);
       setStep(2); // return to configuration
     } finally {
       setLoading(false);

@@ -29,14 +29,14 @@ export const config = {
 
 export default function middleware(req: NextRequest) {
   const url = req.nextUrl;
-  const hostname = req.headers.get("host") || "webbing.io";
+  const hostname = req.headers.get("host") || "webbing.in";
   const path = url.pathname;
 
   // Strip port from hostname so subdomain detection works on any port (3000, 3001, etc.)
   const hostnameWithoutPort = hostname.split(":")[0].toLowerCase();
 
   // Local development fallback/handling
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://webbing.io";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://webbing.in";
   let appHost = appUrl.startsWith("http") ? new URL(appUrl).hostname : appUrl.split(":")[0];
   appHost = appHost.toLowerCase();
 
@@ -65,10 +65,10 @@ export default function middleware(req: NextRequest) {
   // 1. Root and standard app/dashboard pages
   if (
     currentHost === "" ||
-    hostClean === "webbing.io" ||
     hostClean === "webbing.in" ||
-    hostClean === "app.webbing.io" ||
+    hostClean === "webbing.io" ||
     hostClean === "app.webbing.in" ||
+    hostClean === "app.webbing.io" ||
     currentHost === "app"
   ) {
     const sessionToken = req.cookies.get("webbing-session")?.value;

@@ -270,7 +270,7 @@ export default function PlanEditor({
                   style={{ background: "#0d111c", color: "#ffffff", width: "100%" }}
                   disabled={loading}
                 >
-                  <option value="SUBDOMAIN">Subdomain only (e.g. brand.webbing.io)</option>
+                  <option value="SUBDOMAIN">Subdomain only (e.g. brand.webbing.in)</option>
                   <option value="CUSTOM">Custom Domain connection (e.g. brand.com)</option>
                 </select>
               </div>
