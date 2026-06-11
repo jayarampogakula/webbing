@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webbing - SaaS Platform Documentation</title>
+  <!-- Google Fonts Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #060913;
+      --panel-bg: #0b1120;
+      --panel-border: rgba(255, 255, 255, 0.06);
+      --text-main: #cbd5e1;
+      --text-white: #ffffff;
+      --text-muted: #64748b;
+      --primary: #6366f1;
+      --primary-glow: rgba(99, 102, 241, 0.15);
+      --accent: #a855f7;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --sidebar-width: 250px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Left Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background-color: #04070f;
+      border-right: 1px solid var(--panel-border);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2rem 1rem 1rem 1rem;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 1.3rem;
+      color: var(--text-white);
+      margin-bottom: 2.5rem;
+      padding-left: 0.5rem;
+    }
+
+    .brand-mark {
+      background: linear-gradient(to right, var(--primary), var(--accent));
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      font-weight: 950;
+      color: #fff;
+    }
+
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      list-style: none;
+    }
+
+    .nav-btn {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.75rem 0.85rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      text-align: left;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .nav-btn:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+      color: var(--text-main);
+    }
+
+    .nav-btn.active {
+      background-color: var(--primary-glow);
+      color: var(--primary);
+    }
+
+    .sidebar-footer {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
+      padding-top: 0.75rem;
+    }
+
+    /* Main Content */
+    .content-area {
+      flex-grow: 1;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 3rem;
+      background-color: var(--bg-color);
+    }
+
+    .tab-panel {
+      display: none;
+      max-width: 850px;
+      margin: 0 auto;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Headings */
+    h1, h2, h3, h4 {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text-white);
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-top: 2rem;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 0.5rem;
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      margin-bottom: 1.25rem;
+      font-size: 0.95rem;
+      color: var(--text-main);
+    }
+
+    /* Panels & Cards */
+    .panel {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .alert-box {
+      border-left: 4px solid var(--primary);
+      background-color: rgba(99, 102, 241, 0.03);
+      padding: 1rem 1.25rem;
+      border-radius: 0 0.5rem 0.5rem 0;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .alert-box.success {
+      border-left-color: var(--success);
+      background-color: rgba(16, 185, 129, 0.03);
+    }
+
+    .alert-box.warning {
+      border-left-color: var(--warning);
+      background-color: rgba(245, 158, 11, 0.03);
+    }
+
+    /* Lists */
+    ul, ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    li {
+      margin-bottom: 0.4rem;
+    }
+
+    /* Code Blocks */
+    code {
+      font-family: monospace;
+      font-size: 0.85rem;
+      background-color: rgba(255, 255, 255, 0.04);
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+      color: #e2e8f0;
+    }
+
+    pre {
+      background-color: #030712;
+      border: 1px solid var(--panel-border);
+      border-radius: 0.5rem;
+      padding: 1.25rem;
+      overflow-x: auto;
+      margin-bottom: 1.5rem;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      border-radius: 0;
+      color: #94a3b8;
+      font-size: 0.825rem;
+      line-height: 1.5;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+        overflow: auto;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--panel-border);
+        padding: 1.5rem;
+      }
+      .content-area {
+        height: auto;
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div>
+      <div class="brand">
+        <span class="brand-mark">W</span>
+        Webbing Documentation
+      </div>
+      <nav>
+        <ul class="nav-list">
+          <li><button class="nav-btn active" onclick="showTab('overview')">🚀 Overview</button></li>
+          <li><button class="nav-btn" onclick="showTab('requirements')">💻 Requirements</button></li>
+          <li><button class="nav-btn" onclick="showTab('installation')">🐋 VPS Installation</button></li>
+          <li><button class="nav-btn" onclick="showTab('licensing')">🔑 Setup & Licensing</button></li>
+          <li><button class="nav-btn" onclick="showTab('keys')">⚙️ API Keys Config</button></li>
+          <li><button class="nav-btn" onclick="showTab('releases')">🏷️ Version Release</button></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="sidebar-footer">
+      Webbing SaaS v0.8.0
+    </div>
+  </aside>
+
+  <!-- Main Work Space -->
+  <main class="content-area">
+
+    <!-- TAB 1: OVERVIEW -->
+    <section id="overview" class="tab-panel active">
+      <h1>Enterprise AI Website Builder SaaS</h1>
+      <p style="font-size: 1.1rem; color: #94a3b8; margin-bottom: 2rem;">
+        Welcome to Webbing—the production-ready, multi-tenant AI Website Builder.
+      </p>
+
+      <div class="panel">
+        <h2>🚀 Product Features</h2>
+        <ul style="margin-top: 1rem;">
+          <li><strong>Multi-Tenant Workspace Isolation:</strong> Isolated database schemas, custom plan constraints, and active tenant metering.</li>
+          <li><strong>AI Website Orchestrator:</strong> Generates multi-page websites (landing layout, features grids, SEO options) instantly using prompt directions.</li>
+          <li><strong>Dynamic Custom Domains:</strong> Fast subdomain routing alongside on-demand automatic SSL cert configurations for client custom domains.</li>
+          <li><strong>BullMQ Queued Worker:</strong> Background job execution consumer utilizing Redis storage to handle complex prompt workflows.</li>
+          <li><strong>eCommerce Storefronts:</strong> Includes shopping carts, catalog items manager, product edit panels, and multi-image galleries.</li>
+        </ul>
+      </div>
+
+      <div class="alert-box success">
+        <strong>Distribution Ready:</strong> This package contains configurations and license validators specifically tuned for CodeCanyon upload and instant host activation.
+      </div>
+    </section>
+
+    <!-- TAB 2: REQUIREMENTS -->
+    <section id="requirements" class="tab-panel">
+      <h1>System Requirements</h1>
+      <p>Ensure your server environment matches the hardware and database specifications detailed below.</p>
+
+      <h2>💻 Hardware Requirements</h2>
+      <div class="panel">
+        <ul>
+          <li><strong>Minimum Host:</strong> 1 vCPU, 2 GB RAM (for light testing workloads)</li>
+          <li><strong>Recommended Host:</strong> 2 vCPUs, 4 GB RAM (with swap space activated if running postgres, redis, and next-js on the same node)</li>
+          <li><strong>Disk Space:</strong> 10 GB+ SSD (dependent on database growth and self-hosted project packages)</li>
+        </ul>
+      </div>
+
+      <h2>🛠️ Software Requirements</h2>
+      <div class="panel">
+        <ul>
+          <li><strong>OS:</strong> Ubuntu 20.04 LTS or newer (recommended), Debian, or WSL2 for Windows</li>
+          <li><strong>Node.js:</strong> <code>v20.x</code> or newer (LTS version)</li>
+          <li><strong>NPM:</strong> <code>v10.x</code> or newer</li>
+          <li><strong>Database:</strong> PostgreSQL 14 or newer</li>
+          <li><strong>Cache & Queue:</strong> Redis 6.2 or newer</li>
+        </ul>
+      </div>
+
+      <h2>🔑 External API Credentials</h2>
+      <p>To use AI generation and online checkout, configure accounts with the following:</p>
+      <ul>
+        <li><strong>OpenAI / Gemini / Anthropic Keys:</strong> Powers copywriting and layout generation.</li>
+        <li><strong>Stripe:</strong> Developer credentials for subscriptions and billing checkouts.</li>
+        <li><strong>SMTP Mail Server:</strong> host port, user, and password to dispatch user invitations and password resets.</li>
+      </ul>
+    </section>
+
+    <!-- TAB 3: INSTALLATION -->
+    <section id="installation" class="tab-panel">
+      <h1>VPS Installation Guide</h1>
+      <p>We provide two deployment options: Docker Compose (recommended) or manual PM2 Node processes.</p>
+
+      <h2>🐋 Option 1: Docker Compose (Recommended)</h2>
+      <p>Boot the web app, background queues, Redis cache, and Postgres DB inside detached containers.</p>
+
+      <h3>1. Install Docker on your VPS</h3>
+      <pre><code>sudo apt update
+sudo apt install -y docker.io docker-compose
+sudo systemctl start docker
+sudo systemctl enable docker</code></pre>
+
+      <h3>2. Setup Project Files</h3>
+      <pre><code>git clone https://github.com/jayarampogakula/webbing.git
+cd webbing
+cp .env.example .env
+nano .env</code></pre>
+
+      <h3>3. Boot Detached Services</h3>
+      <pre><code>docker-compose up -d --build</code></pre>
+
+      <h2>🛠️ Option 2: Manual PM2 Deployment</h2>
+      <p>Deploy using host-native Node.js services managed via PM2 process manager.</p>
+
+      <h3>1. Setup Node 20 & PM2</h3>
+      <pre><code>curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs postgresql redis-server
+sudo npm install -y pm2 -g
+sudo systemctl start postgresql redis-server</code></pre>
+
+      <h3>2. Install, Migrate and Seed</h3>
+      <pre><code>npm install --legacy-peer-deps
+npm run db:generate
+npx prisma db push --schema=packages/db/prisma/schema.prisma
+node packages/db/prisma/seed.js
+npm run build</code></pre>
+
+      <h3>3. Boot PM2 Instances</h3>
+      <pre><code>pm2 start "npm run start -w webbing-web" --name "webbing-web"
+pm2 start "node packages/worker/dist/index.js" --name "webbing-worker"
+pm2 save
+pm2 startup</code></pre>
+    </section>
+
+    <!-- TAB 4: SETUP & LICENSING -->
+    <section id="licensing" class="tab-panel">
+      <h1>Setup Screen & SaaS Licensing</h1>
+      
+      <h2>📍 Initial Configuration</h2>
+      <p>
+        Upon first launching Webbing on your custom domain, the platform detects that default user tables are unconfigured or using standard credentials. It automatically redirects you to:
+        <br><code>http://yourdomain.com/setup</code>
+      </p>
+      
+      <div class="panel">
+        <h3>Fields Required:</h3>
+        <ol style="margin-top: 0.5rem; margin-left: 1rem;">
+          <li><strong>SaaS Name:</strong> Define your public application brand name.</li>
+          <li><strong>CodeCanyon Purchase Code:</strong> Enter the Envato Purchase Code received upon buying the product.</li>
+          <li><strong>Admin Details:</strong> Set custom email, full name, and secure passwords.</li>
+        </ol>
+      </div>
+
+      <h2>🔑 How Licensing Works</h2>
+      <p>
+        License key verification is handled inside <code>apps/web/src/lib/licensing.ts</code>.
+      </p>
+
+      <div class="alert-box success">
+        <strong>Validation Methods:</strong>
+        <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+          <li><strong>CodeCanyon Purchase Code:</strong> Checked locally via regex formatting matching standard UUIDs: <code>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code>.</li>
+          <li><strong>Proprietary Activation Keys:</strong> Matches custom direct seller license keys: <code>WEBBING-XXXX-XXXX-XXXX-XXXX</code>.</li>
+        </ul>
+      </div>
+
+      <h2>🛠️ License Key Generation</h2>
+      <p>
+        If you wish to sell the SaaS directly to clients off-market, you can generate active license keys:
+      </p>
+      <ol>
+        <li>Log in as Administrator and go to **Admin Console > SaaS Licensing**.</li>
+        <li>Under **License Key Generator**, click **Generate Key**.</li>
+        <li>A proprietary activation token (e.g. <code>WEBBING-A4F2-8B1E-C6D9-F0A3</code>) will be created. Copy and deliver this key to your client to input in their <code>/setup</code> wizard.</li>
+      </ol>
+    </section>
+
+    <!-- TAB 5: API KEYS -->
+    <section id="keys" class="tab-panel">
+      <h1>API Keys & LLM Configurations</h1>
+      <p>Webbing supports a split keys mechanism to divide credit usages between administrators and standard hosts.</p>
+
+      <h2>🤖 Admin Global Keys</h2>
+      <p>Global keys are used to power AI generations for free-tier users or users without custom credentials. Define them in two ways:</p>
+      
+      <h3>1. Environmental Variables</h3>
+      <p>Fill in key values inside the root <code>.env</code> file:</p>
+      <pre><code>OPENAI_API_KEY="sk-proj-..."
+GEMINI_API_KEY="AIzaSy..."
+ANTHROPIC_API_KEY="sk-ant-..."</code></pre>
+
+      <h3>2. Admin Console UI</h3>
+      <p>Go to **Admin Console > API Keys** and click **Add API Key**. Select `GLOBAL` scope. Keys configured in the database take precedence over <code>.env</code> variables.</p>
+
+      <div class="alert-box warning">
+        <strong>Security Shield:</strong> Global administrator API keys are filtered out at the server level. They are never sent to frontend interfaces or standard client dashboard views.
+      </div>
+
+      <h2>👤 User Custom Keys & Bypass</h2>
+      <p>
+        Standard clients can go to their **Settings** panel and add their own private LLM provider keys (OpenAI or Gemini). 
+        When active:
+      </p>
+      <ul>
+        <li>Website generation requests bypass the administrator's global LLM accounts.</li>
+        <li>The client's **credit checks are bypassed**, allowing unlimited edits without drawing from their SaaS subscription package limits.</li>
+      </ul>
+    </section>
+
+    <!-- TAB 6: RELEASES -->
+    <section id="releases" class="tab-panel">
+      <h1>Release Notes & Version History</h1>
+
+      <h2>🏷️ v0.8.0 - Setup Wizard, Licensing & Overwrite Protections</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: -0.5rem; margin-bottom: 1.5rem;">Release Date: June 11, 2026</p>
+
+      <div class="panel">
+        <h3>🚀 Release Highlights</h3>
+        <ul>
+          <li><strong>Platform Installation Wizard:</strong> Created the <code>/setup</code> page and endpoint to boot new instances, branding settings, and custom credentials securely.</li>
+          <li><strong>Licensing Manager UI:</strong> Added a licensing controller tab inside the Admin Console to manage Envato purchase codes and generate direct activation keys.</li>
+          <li><strong>Update Protection:</strong> Wrapped default user creations in checks so subsequent release database migrations and seeds (<code>prisma db seed</code>) will not overwrite active admin credentials, modified prices, system settings, or user websites.</li>
+          <li><strong>General Fixes:</strong> Widened the page builder wizard layout, corrected theme previews, and locked active manual editor sections during updates.</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function showTab(tabId) {
+      // Hide all panels
+      const panels = document.querySelectorAll('.tab-panel');
+      panels.forEach(p => p.classList.remove('active'));
+
+      // Deactivate all buttons
+      const buttons = document.querySelectorAll('.nav-btn');
+      buttons.forEach(b => b.classList.remove('active'));
+
+      // Show requested panel
+      const targetPanel = document.getElementById(tabId);
+      if (targetPanel) {
+        targetPanel.classList.add('active');
+      }
+
+      // Find triggering button and activate it
+      const clickedBtn = Array.from(buttons).find(b => b.getAttribute('onclick').includes(tabId));
+      if (clickedBtn) {
+        clickedBtn.classList.add('active');
+      }
+
+      // Reset content area scroll position
+      document.querySelector('.content-area').scrollTop = 0;
+    }
+  </script>
+</body>
+</html>
