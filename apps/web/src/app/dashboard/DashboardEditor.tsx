@@ -477,7 +477,24 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   useEffect(() => {
     if (currentProject) {
       setManualName(currentProject.name);
-      setSelectedSection(null);
+      
+      const isNewProject = prevProjectIdRef.current !== selectedProjectId;
+      if (isNewProject) {
+        setSelectedSection(null);
+        setError("");
+        setSuccess("");
+        setDnsStatus("");
+        setSubdomainStatus("");
+        prevProjectIdRef.current = selectedProjectId;
+      } else if (selectedSection) {
+        const page = currentProject.pages.find((p) => p.slug === "index") || currentProject.pages[0];
+        const updatedSec = page?.sections.find((s) => s.id === selectedSection.id);
+        if (updatedSec) {
+          setSelectedSection(updatedSec);
+        } else {
+          setSelectedSection(null);
+        }
+      }
       
       const page = currentProject.pages.find((p) => p.slug === "index") || currentProject.pages[0];
       if (page) {
@@ -500,14 +517,6 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
       setCustomDomainName(currentProject.customDomain?.hostname || "");
       setProjectSubdomain(currentProject.subdomain || "");
-      // Only clear messages when switching to a different project
-      if (prevProjectIdRef.current !== selectedProjectId) {
-        setError("");
-        setSuccess("");
-        setDnsStatus("");
-        setSubdomainStatus("");
-        prevProjectIdRef.current = selectedProjectId;
-      }
 
       setPreferredProvider(currentProject.theme?.preferredProvider || "gemini");
       setAnalyticsTag(currentProject.theme?.analyticsTag || "");
@@ -3223,7 +3232,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
 
       {isCreatingNew ? (
         <div style={{ flexGrow: 1, padding: "2.5rem", background: "#0a0e17", overflowY: "auto" }}>
-          <div style={{ maxWidth: "850px", margin: "0 auto" }}>
+          <div style={{ maxWidth: "1150px", margin: "0 auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
               <div>
                 <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#fff", margin: 0 }}>Create a new website with AI</h2>

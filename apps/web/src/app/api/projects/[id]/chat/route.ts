@@ -72,7 +72,17 @@ export async function POST(
       return NextResponse.json({ error: "Tenant/Workspace not found" }, { status: 404 });
     }
 
-    if (tenant.subscription) {
+    // Check if user has active custom keys
+    const userKeysCount = await prisma.llmApiKey.count({
+      where: {
+        ownerUserId: user.userId,
+        scope: "USER",
+        isActive: true
+      }
+    });
+    const hasUserKeys = userKeysCount > 0;
+
+    if (tenant.subscription && !hasUserKeys) {
       const { creditsLimit, creditsUsed } = tenant.subscription;
       if (creditsUsed + 1 > creditsLimit) {
         return NextResponse.json(
@@ -238,7 +248,7 @@ Choose an appropriate ID based on the niche:
       }
 
       // Increment Tenant credits count
-      if (tenant.subscription) {
+      if (tenant.subscription && !hasUserKeys) {
         await tx.subscription.update({
           where: { tenantId: user.tenantId },
           data: { creditsUsed: { increment: 1 } }

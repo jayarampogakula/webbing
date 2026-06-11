@@ -38,10 +38,8 @@ export async function GET() {
         user.role === "ADMIN"
           ? {}
           : {
-              OR: [
-                { scope: LlmKeyScope.GLOBAL, isActive: true },
-                { scope: LlmKeyScope.USER, ownerUserId: user.userId },
-              ],
+              scope: LlmKeyScope.USER,
+              ownerUserId: user.userId,
             },
       orderBy: [{ scope: "asc" }, { createdAt: "desc" }],
       select: {

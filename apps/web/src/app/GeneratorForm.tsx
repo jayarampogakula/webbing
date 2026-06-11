@@ -223,7 +223,7 @@ export default function GeneratorForm({ user, onSuccess }: GeneratorFormProps) {
                 {/* Visual Thumbnail */}
                 <div style={{ flexGrow: 1, position: "relative", overflow: "hidden", background: "#0a0f1d" }}>
                   <img 
-                    src={`/images/themes/${style.toLowerCase().replace(" ", "")}.png`} 
+                    src={`/images/themes/${style === "Modern Startup" ? "startup" : style.toLowerCase().replace(" ", "")}.png`} 
                     alt={`${style} Theme Preview`} 
                     style={{ 
                       width: "100%", 

@@ -11,10 +11,8 @@ async function getLlmKeys(userId: string) {
   try {
     return await prisma.llmApiKey.findMany({
       where: {
-        OR: [
-          { scope: "GLOBAL", isActive: true },
-          { scope: "USER", ownerUserId: userId },
-        ],
+        scope: "USER",
+        ownerUserId: userId,
       },
       orderBy: [{ scope: "asc" }, { createdAt: "desc" }],
       select: {

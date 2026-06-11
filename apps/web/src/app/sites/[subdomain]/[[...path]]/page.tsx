@@ -164,17 +164,19 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
         ]
       };
 
-      const pathSlug = params.path?.join("/") || "index";
+      const indexPage = project.pages.find((p) => p.slug === "index") || project.pages[0];
+      const sections = indexPage?.sections || [];
 
       return (
         <EcommerceStore 
           projectId={project.id}
           initialProducts={store.products as any}
           initialSettings={settings}
-          initialPathSlug={pathSlug}
+          initialPathSlug={slug}
           projectSubdomain={project.subdomain}
           projectName={project.name}
           initialLogoUrl={themeObj.metadata?.logoUrl || ""}
+          initialSections={sections}
         />
       );
     }
@@ -230,13 +232,13 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
       fontClass = "font-gaming";
       logoGradient = "linear-gradient(135deg, #e11d48, #ea580c)";
       themeClass = "theme-fitness";
-    } else if (designStyle === "SaaS") {
+    } else if (designStyle === "SaaS" || designStyle === "Corporate" || designStyle === "Education") {
       bgClass = "bg-grad-saas";
       textGradClass = "text-grad-saas";
       fontClass = "font-gaming";
       logoGradient = "linear-gradient(135deg, #3b82f6, #6366f1)";
       themeClass = "theme-saas";
-    } else if (designStyle === "Modern Startup") {
+    } else if (designStyle === "Modern Startup" || designStyle === "Portfolio") {
       bgClass = "bg-grad-saas";
       textGradClass = "text-grad-saas";
       fontClass = "font-gaming";

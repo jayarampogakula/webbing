@@ -60,6 +60,7 @@ function resolveImageUrl(url: any, style?: string): string {
 
 export default async function ProjectPreviewPage({ params }: { params: { id: string; path?: string[] } }) {
   try {
+    const slug = params.path?.join("/") || "index";
     const project = await prisma.project.findUnique({
       where: { id: params.id },
       include: {
@@ -107,23 +108,24 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
         ]
       };
 
-      const pathSlug = params.path?.join("/") || "index";
+      const indexPage = project.pages.find((p) => p.slug === "index") || project.pages[0];
+      const sections = indexPage?.sections || [];
 
       return (
         <EcommerceStore 
           projectId={project.id}
           initialProducts={store.products as any}
           initialSettings={settings}
-          initialPathSlug={pathSlug}
+          initialPathSlug={slug}
           projectSubdomain={project.subdomain}
           projectName={project.name}
           initialLogoUrl={themeObj.metadata?.logoUrl || ""}
+          initialSections={sections}
         />
       );
     }
 
     // Find requested page or default to index
-    const slug = params.path?.join("/") || "index";
     const page = project.pages.find((item) => item.slug === slug) || project.pages.find((item) => item.slug === "index") || project.pages[0];
     if (!page) notFound();
 
@@ -134,35 +136,43 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
     let bgClass = "bg-grad-saas";
     let textGradClass = "text-grad-saas";
     let fontClass = "font-gaming";
+    let themeClass = "theme-startup";
 
     if (designStyle === "Gaming") {
       bgClass = "bg-grad-gaming";
       textGradClass = "text-grad-gaming";
       fontClass = "font-gaming";
+      themeClass = "theme-gaming";
     } else if (designStyle === "Creator") {
       bgClass = "bg-grad-creator";
       textGradClass = "text-grad-creator";
       fontClass = "font-gaming";
+      themeClass = "theme-creator";
     } else if (designStyle === "Luxury") {
       bgClass = "bg-grad-luxury";
       textGradClass = "text-grad-luxury";
       fontClass = "font-serif-lux";
+      themeClass = "theme-luxury";
     } else if (designStyle === "Fitness") {
       bgClass = "bg-grad-fitness";
       textGradClass = "text-grad-fitness";
       fontClass = "font-gaming";
-    } else if (designStyle === "SaaS") {
+      themeClass = "theme-fitness";
+    } else if (designStyle === "SaaS" || designStyle === "Corporate" || designStyle === "Education") {
       bgClass = "bg-grad-saas";
       textGradClass = "text-grad-saas";
       fontClass = "font-gaming";
-    } else if (designStyle === "Modern Startup") {
+      themeClass = "theme-saas";
+    } else if (designStyle === "Modern Startup" || designStyle === "Portfolio") {
       bgClass = "bg-grad-saas";
       textGradClass = "text-grad-saas";
       fontClass = "font-gaming";
+      themeClass = "theme-startup";
     } else {
       bgClass = "bg-grad-saas";
       textGradClass = "text-grad-saas";
       fontClass = "font-gaming";
+      themeClass = "theme-startup";
     }
 
     // Client side effects initialized below in JSX
@@ -214,7 +224,7 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
     }
 
     return (
-      <div className={`site-preview ${bgClass} ${fontClass}`} style={{ minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
+      <div className={`site-preview ${themeClass} ${bgClass} ${fontClass}`} style={{ minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
         {/* Dynamic Sections Loop */}
         {page.sections.map((section, idx) => {
           const content = (section.content as any) || {};

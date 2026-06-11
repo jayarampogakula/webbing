@@ -59,6 +59,7 @@ interface EcommerceStoreProps {
   projectSubdomain?: string;
   projectName?: string;
   initialLogoUrl?: string;
+  initialSections?: any[];
 }
 
 export default function EcommerceStore({
@@ -68,9 +69,10 @@ export default function EcommerceStore({
   initialPathSlug = "index",
   projectSubdomain = "",
   projectName = "",
-  initialLogoUrl = ""
+  initialLogoUrl = "",
+  initialSections = []
 }: EcommerceStoreProps) {
-  // Navigation Routing States: "home" | "shop" | "product" | "cart" | "checkout" | "account" | "admin"
+  // Navigation Routing States: "home" | "shop" | "product" | "cart" | "checkout" | "account" | "admin" | "about" | "contact"
   const [view, setView] = useState<string>("home");
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
@@ -78,6 +80,12 @@ export default function EcommerceStore({
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [settings, setSettings] = useState<any>(initialSettings);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [sections, setSections] = useState<any[]>(initialSections || []);
+
+  const heroSection = sections?.find((s: any) => s.type === "HERO");
+  const aboutSection = sections?.find((s: any) => s.type === "ABOUT");
+  const contactSection = sections?.find((s: any) => s.type === "CONTACT");
+  const headerSection = sections?.find((s: any) => s.type === "HEADER");
 
   // Branding States
   const [storeName, setStoreName] = useState<string>(projectName);
@@ -90,6 +98,11 @@ export default function EcommerceStore({
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [priceRange, setPriceRange] = useState<number>(15000);
   const [sortBy, setSortBy] = useState("featured");
+  
+  // Gallery and Edit States
+  const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
+  const [productImages, setProductImages] = useState<string[]>([]);
+  const [imageUrlInput, setImageUrlInput] = useState<string>("");
 
   // Authentication States
   const [customer, setCustomer] = useState<any>(null);
@@ -196,9 +209,17 @@ export default function EcommerceStore({
     fetchSettings();
   }, [initialPathSlug, projectId]);
 
+  // Sync sections when initialSections updates
+  useEffect(() => {
+    if (initialSections) {
+      setSections(initialSections);
+    }
+  }, [initialSections]);
+
   // Reset product quantity when product changes
   useEffect(() => {
     setProductQty(1);
+    setActiveImageIndex(0);
   }, [selectedProductId]);
 
   // Sync Cart to LocalStorage
@@ -585,7 +606,7 @@ export default function EcommerceStore({
   // Admin: Add new product
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { name, descriptionText, price, inventory, category, variants, specifications, imageUrl } = newProductForm;
+    const { name, descriptionText, price, inventory, category, variants, specifications } = newProductForm;
     if (!name || !price) return;
 
     try {
@@ -614,7 +635,7 @@ export default function EcommerceStore({
           description,
           price: Number(price),
           inventory: Number(inventory || 0),
-          images: imageUrl ? [imageUrl] : []
+          images: productImages
         })
       });
 
@@ -633,6 +654,7 @@ export default function EcommerceStore({
         specifications: "",
         imageUrl: ""
       });
+      setProductImages([]);
     } catch (err: any) {
       alert(err.message || "Error adding product.");
     }
@@ -653,6 +675,100 @@ export default function EcommerceStore({
       fetchProducts();
     } catch (err: any) {
       alert(err.message || "Error deleting product.");
+    }
+  };
+
+  // Intercept button clicks and switch views or open external URLs
+  const handleCtaClick = (url: string, e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    if (!url) return;
+    const normalizedUrl = url.toLowerCase().trim();
+    if (normalizedUrl === "#about" || normalizedUrl === "about" || normalizedUrl === "/about") {
+      setView("about");
+      setSelectedProductId(null);
+    } else if (normalizedUrl === "#contact" || normalizedUrl === "contact" || normalizedUrl === "/contact") {
+      setView("contact");
+      setSelectedProductId(null);
+    } else if (normalizedUrl === "#shop" || normalizedUrl === "shop" || normalizedUrl === "/shop" || normalizedUrl === "#collection") {
+      setView("shop");
+      setSelectedProductId(null);
+    } else if (normalizedUrl === "#account" || normalizedUrl === "account" || normalizedUrl === "/account") {
+      setView("account");
+      setSelectedProductId(null);
+    } else if (normalizedUrl.startsWith("#") || normalizedUrl.startsWith("/") || normalizedUrl === "") {
+      setView("shop");
+      setSelectedProductId(null);
+    } else {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  // Handle Edit Product via PUT request
+  const handleEditProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    const { name, descriptionText, price, inventory, category, variants, specifications } = newProductForm;
+    if (!name || !price) return;
+
+    try {
+      const parsedVariants = variants.split(",").map(v => v.trim()).filter(Boolean);
+      const parsedSpecs: Record<string, string> = {};
+      specifications.split(",").forEach(s => {
+        const parts = s.split(":");
+        if (parts.length === 2) {
+          parsedSpecs[parts[0].trim()] = parts[1].trim();
+        }
+      });
+
+      const description = {
+        bodyText: descriptionText,
+        category,
+        variants: parsedVariants,
+        specifications: parsedSpecs,
+        sku: editingProduct.description ? (parseProductDescription(editingProduct.description).sku || `SKU-${name.slice(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`) : `SKU-${name.slice(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`
+      };
+
+      const res = await fetch(`/api/projects/${projectId}/ecommerce/products`, {
+        method: "PUT",
+        headers: getAdminHeadersJson(),
+        body: JSON.stringify({
+          productId: editingProduct.id,
+          name,
+          description,
+          price: Number(price),
+          inventory: Number(inventory || 0),
+          images: productImages
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to edit product");
+
+      fetchProducts();
+      setShowAddProductModal(false);
+      setEditingProduct(null);
+      setNewProductForm({
+        name: "",
+        descriptionText: "",
+        price: "",
+        inventory: "",
+        category: "General",
+        variants: "",
+        specifications: "",
+        imageUrl: ""
+      });
+      setProductImages([]);
+    } catch (err: any) {
+      alert(err.message || "Error editing product.");
+    }
+  };
+
+  const handleSaveProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingProduct) {
+      await handleEditProduct(e);
+    } else {
+      await handleAddProduct(e);
     }
   };
 
@@ -716,6 +832,8 @@ export default function EcommerceStore({
             <div style={{ display: "flex", gap: "1.2rem", fontSize: "0.9rem" }}>
               <span onClick={() => { setView("home"); setSelectedProductId(null); }} style={{ cursor: "pointer", color: view === "home" ? "#818cf8" : "#94a3b8", fontWeight: view === "home" ? 700 : 500 }}>Home</span>
               <span onClick={() => { setView("shop"); setSelectedProductId(null); }} style={{ cursor: "pointer", color: view === "shop" ? "#818cf8" : "#94a3b8", fontWeight: view === "shop" ? 700 : 500 }}>Shop</span>
+              <span onClick={() => { setView("about"); setSelectedProductId(null); }} style={{ cursor: "pointer", color: view === "about" ? "#818cf8" : "#94a3b8", fontWeight: view === "about" ? 700 : 500 }}>About</span>
+              <span onClick={() => { setView("contact"); setSelectedProductId(null); }} style={{ cursor: "pointer", color: view === "contact" ? "#818cf8" : "#94a3b8", fontWeight: view === "contact" ? 700 : 500 }}>Contact</span>
             </div>
           </div>
 
@@ -780,19 +898,25 @@ export default function EcommerceStore({
               <div style={{ flex: 1, minWidth: "280px", display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <span className="eyebrow" style={{ display: "inline-flex", gap: "0.4rem", alignItems: "center", color: "#a5b4fc", fontSize: "0.8rem", fontWeight: 700 }}><Sparkles size={12} /> Live Niche Store Active</span>
                 <h1 style={{ fontSize: "2.5rem", fontWeight: 900, lineHeight: 1.2, margin: 0 }}>
-                  Elevate Your Style with Premium Dynamic Gear
+                  {heroSection?.content?.heading || "Elevate Your Style with Premium Dynamic Gear"}
                 </h1>
                 <p style={{ color: "#94a3b8", fontSize: "0.95rem", lineHeight: 1.6 }}>
-                  Sourced and structured specifically for your niche. Buy, customize, and configure layouts in real-time.
+                  {heroSection?.content?.subheading || "Sourced and structured specifically for your niche. Buy, customize, and configure layouts in real-time."}
                 </p>
                 <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
-                  <button onClick={() => setView("shop")} className="primary-action" style={{ padding: "0.6rem 1.2rem", fontSize: "0.9rem" }}>Shop Collection</button>
-                  <button onClick={() => setView("account")} className="secondary-action" style={{ padding: "0.6rem 1.2rem", fontSize: "0.9rem" }}>Customer Portal</button>
+                  <button onClick={(e) => handleCtaClick(heroSection?.content?.ctaUrl || "shop", e)} className="primary-action" style={{ padding: "0.6rem 1.2rem", fontSize: "0.9rem" }}>
+                    {heroSection?.content?.ctaText || "Shop Collection"}
+                  </button>
+                  {(heroSection?.content?.secondaryCtaText || !heroSection) && (
+                    <button onClick={(e) => handleCtaClick(heroSection?.content?.secondaryCtaUrl || "account", e)} className="secondary-action" style={{ padding: "0.6rem 1.2rem", fontSize: "0.9rem" }}>
+                      {heroSection?.content?.secondaryCtaText || "Customer Portal"}
+                    </button>
+                  )}
                 </div>
               </div>
               <div style={{ flex: 1, minWidth: "280px", display: "flex", justifyContent: "center" }}>
                 <img 
-                  src={products.length > 0 ? getProductImage(products[0]) : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80"}
+                  src={heroSection?.content?.imageUrl || (products.length > 0 ? getProductImage(products[0]) : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80")}
                   alt="Featured product"
                   style={{ width: "100%", maxWidth: "380px", height: "260px", objectFit: "cover", borderRadius: "0.75rem", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}
                 />
@@ -982,12 +1106,35 @@ export default function EcommerceStore({
 
             <div style={{ display: "flex", gap: "3rem", flexWrap: "wrap" }}>
               {/* Product Images Gallery */}
-              <div style={{ flex: 1, minWidth: "280px" }}>
+              <div style={{ flex: 1, minWidth: "280px", display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <img 
-                  src={getProductImage(activeProduct)} 
+                  src={(activeProduct.images && activeProduct.images.length > 0) ? activeProduct.images[activeImageIndex] : getProductImage(activeProduct)} 
                   alt={activeProduct.name}
-                  style={{ width: "100%", maxHeight: "400px", objectFit: "cover", borderRadius: "0.75rem", border: "1px solid rgba(255,255,255,0.06)" }}
+                  style={{ width: "100%", height: "350px", objectFit: "cover", borderRadius: "0.75rem", border: "1px solid rgba(255,255,255,0.06)" }}
                 />
+                
+                {activeProduct.images && activeProduct.images.length > 1 && (
+                  <div style={{ display: "flex", gap: "0.5rem", overflowX: "auto", paddingBottom: "0.5rem" }}>
+                    {activeProduct.images.map((img, idx) => (
+                      <img 
+                        key={idx}
+                        src={img} 
+                        alt={`${activeProduct.name} View ${idx + 1}`}
+                        onClick={() => setActiveImageIndex(idx)}
+                        style={{ 
+                          width: "60px", 
+                          height: "60px", 
+                          objectFit: "cover", 
+                          borderRadius: "0.4rem", 
+                          cursor: "pointer", 
+                          border: activeImageIndex === idx ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.1)",
+                          opacity: activeImageIndex === idx ? 1 : 0.6,
+                          transition: "all 0.2s"
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Product Details Content */}
@@ -1766,13 +1913,33 @@ export default function EcommerceStore({
                   <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <h3 style={{ margin: 0, fontSize: "1.2rem" }}>Catalog Products List</h3>
-                      <button onClick={() => setShowAddProductModal(true)} className="primary-action" style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", background: "#a855f7" }}>+ Add Store Product</button>
+                      <button 
+                        onClick={() => {
+                          setEditingProduct(null);
+                          setNewProductForm({
+                            name: "",
+                            descriptionText: "",
+                            price: "",
+                            inventory: "",
+                            category: "General",
+                            variants: "",
+                            specifications: "",
+                            imageUrl: ""
+                          });
+                          setProductImages([]);
+                          setShowAddProductModal(true);
+                        }} 
+                        className="primary-action" 
+                        style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", background: "#a855f7" }}
+                      >
+                        + Add Store Product
+                      </button>
                     </div>
 
-                    {/* Add Product Modal Form */}
+                    {/* Add/Edit Product Modal Form */}
                     {showAddProductModal && (
-                      <form onSubmit={handleAddProduct} className="glass-panel" style={{ padding: "1.5rem", borderRadius: "0.75rem", border: "1px solid rgba(168,85,247,0.3)", display: "flex", flexDirection: "column", gap: "1rem", background: "rgba(10,14,23,0.99)" }}>
-                        <h4 style={{ margin: 0, color: "#c084fc" }}>New Product Config</h4>
+                      <form onSubmit={handleSaveProduct} className="glass-panel" style={{ padding: "1.5rem", borderRadius: "0.75rem", border: "1px solid rgba(168,85,247,0.3)", display: "flex", flexDirection: "column", gap: "1rem", background: "rgba(10,14,23,0.99)" }}>
+                        <h4 style={{ margin: 0, color: "#c084fc" }}>{editingProduct ? "Edit Product Config" : "New Product Config"}</h4>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                           <div className="field-group">
                             <label>Product Name</label>
@@ -1811,53 +1978,89 @@ export default function EcommerceStore({
                           </div>
                         </div>
 
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "1rem", alignItems: "end" }}>
-                          <div className="field-group" style={{ flex: 1 }}>
-                            <label>Image Unsplash/Web URL (Optional)</label>
-                            <input type="text" className="field" value={newProductForm.imageUrl} onChange={(e) => setNewProductForm({ ...newProductForm, imageUrl: e.target.value })} placeholder="https://images.unsplash.com/photo-..." />
-                          </div>
-                          <div className="field-group" style={{ width: "200px" }}>
-                            <label>Or Upload Local File</label>
-                            <input 
-                              type="file" 
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  const reader = new FileReader();
-                                  reader.onloadend = () => {
-                                    setNewProductForm(prev => ({
-                                      ...prev,
-                                      imageUrl: reader.result as string
-                                    }));
-                                  };
-                                  reader.readAsDataURL(file);
-                                }
-                              }}
-                              style={{ 
-                                background: "rgba(255,255,255,0.05)", 
-                                border: "1px solid rgba(255,255,255,0.1)", 
-                                borderRadius: "0.4rem", 
-                                padding: "0.45rem", 
-                                color: "#fff", 
-                                fontSize: "0.8rem",
-                                width: "100%"
-                              }}
-                            />
-                          </div>
-                        </div>
-                        {newProductForm.imageUrl && (
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", background: "rgba(255,255,255,0.02)", padding: "0.5rem", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.05)" }}>
-                            <img src={newProductForm.imageUrl} alt="Preview" style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "0.25rem" }} />
-                            <span style={{ fontSize: "0.75rem", color: newProductForm.imageUrl.startsWith("data:") ? "#34d399" : "#cbd5e1" }}>
-                              {newProductForm.imageUrl.startsWith("data:") ? "✓ Local image uploaded" : "Image URL Preview"}
-                            </span>
+                        {/* Multiple Image Management UI */}
+                        {productImages.length > 0 && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                            <label style={{ fontSize: "0.8rem", color: "#9ca3af", fontWeight: 600 }}>Product Images ({productImages.length})</label>
+                            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                              {productImages.map((img, idx) => (
+                                <div key={idx} style={{ position: "relative", width: "60px", height: "60px", borderRadius: "0.4rem", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden" }}>
+                                  <img src={img} alt={`Thumb ${idx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  <button 
+                                    type="button"
+                                    onClick={() => setProductImages(prev => prev.filter((_, i) => i !== idx))}
+                                    style={{ position: "absolute", top: 2, right: 2, background: "rgba(239, 68, 68, 0.85)", border: 0, color: "#fff", width: "16px", height: "16px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", cursor: "pointer", padding: 0 }}
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
 
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "1rem", alignItems: "end" }}>
+                          <div className="field-group" style={{ flex: 1 }}>
+                            <label>Add Remote Image URL</label>
+                            <input 
+                              type="text" 
+                              className="field" 
+                              value={imageUrlInput} 
+                              onChange={(e) => setImageUrlInput(e.target.value)} 
+                              placeholder="https://images.unsplash.com/photo-..." 
+                            />
+                          </div>
+                          <button 
+                            type="button" 
+                            onClick={() => {
+                              if (imageUrlInput.trim()) {
+                                setProductImages(prev => [...prev, imageUrlInput.trim()]);
+                                setImageUrlInput("");
+                              }
+                            }}
+                            style={{ padding: "0.5rem 1rem", height: "38px", border: "1px solid #a855f7", color: "#a855f7", borderRadius: "0.4rem", cursor: "pointer", background: "transparent", fontSize: "0.8rem", fontWeight: 700 }}
+                          >
+                            + Add URL
+                          </button>
+                        </div>
+
+                        <div className="field-group">
+                          <label>Or Upload Local Files (Multiple allowed)</label>
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            multiple
+                            onChange={(e) => {
+                              const files = e.target.files;
+                              if (files && files.length > 0) {
+                                Array.from(files).forEach(file => {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    if (reader.result) {
+                                      setProductImages(prev => [...prev, reader.result as string]);
+                                    }
+                                  };
+                                  reader.readAsDataURL(file);
+                                });
+                              }
+                            }}
+                            style={{ 
+                              background: "rgba(255,255,255,0.05)", 
+                              border: "1px solid rgba(255,255,255,0.1)", 
+                              borderRadius: "0.4rem", 
+                              padding: "0.45rem", 
+                              color: "#fff", 
+                              fontSize: "0.8rem",
+                              width: "100%"
+                            }}
+                          />
+                        </div>
+
                         <div style={{ display: "flex", gap: "1rem" }}>
-                          <button type="button" onClick={() => setShowAddProductModal(false)} className="secondary-action" style={{ flex: 1, justifyContent: "center" }}>Cancel</button>
-                          <button type="submit" className="primary-action" style={{ flex: 1, justifyContent: "center", background: "#a855f7" }}>Add Product</button>
+                          <button type="button" onClick={() => { setShowAddProductModal(false); setEditingProduct(null); }} className="secondary-action" style={{ flex: 1, justifyContent: "center" }}>Cancel</button>
+                          <button type="submit" className="primary-action" style={{ flex: 1, justifyContent: "center", background: "#a855f7" }}>
+                            {editingProduct ? "Save Product" : "Add Product"}
+                          </button>
                         </div>
                       </form>
                     )}
@@ -1886,7 +2089,28 @@ export default function EcommerceStore({
                                 <td style={{ padding: "0.75rem" }}>{parsed.category}</td>
                                 <td style={{ padding: "0.75rem" }}>₹{Number(p.price).toLocaleString()}</td>
                                 <td style={{ padding: "0.75rem", color: p.inventory < 10 ? "#f87171" : "#34d399", fontWeight: 700 }}>{p.inventory}</td>
-                                <td style={{ padding: "0.75rem" }}>
+                                <td style={{ padding: "0.75rem", display: "flex", gap: "0.75rem" }}>
+                                  <button 
+                                    onClick={() => {
+                                      const parsed = parseProductDescription(p.description);
+                                      setEditingProduct(p);
+                                      setNewProductForm({
+                                        name: p.name,
+                                        descriptionText: parsed.bodyText || p.description,
+                                        price: String(p.price),
+                                        inventory: String(p.inventory),
+                                        category: parsed.category || "General",
+                                        variants: parsed.variants ? parsed.variants.join(", ") : "",
+                                        specifications: parsed.specifications ? Object.entries(parsed.specifications).map(([k, v]) => `${k}:${v}`).join(", ") : "",
+                                        imageUrl: ""
+                                      });
+                                      setProductImages(p.images || []);
+                                      setShowAddProductModal(true);
+                                    }}
+                                    style={{ background: "transparent", border: 0, color: "#818cf8", cursor: "pointer", fontWeight: 600 }}
+                                  >
+                                    Edit
+                                  </button>
                                   <button 
                                     onClick={() => handleDeleteProduct(p.id)}
                                     style={{ background: "transparent", border: 0, color: "#f87171", cursor: "pointer" }}
@@ -2354,6 +2578,86 @@ export default function EcommerceStore({
 
               </div>
             )}
+          </div>
+        )}
+
+        {/* ==================== VIEW 9: ABOUT PAGE ==================== */}
+        {view === "about" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2rem", maxWidth: "800px", margin: "0 auto" }}>
+            <span 
+              onClick={() => setView("home")} 
+              style={{ cursor: "pointer", color: "#818cf8", fontSize: "0.85rem", display: "inline-flex", alignItems: "center", gap: "0.4rem", width: "fit-content" }}
+            >
+              <ArrowLeft size={14} /> Back to Home
+            </span>
+            
+            <div className="glass-panel" style={{ padding: "2.5rem", borderRadius: "1rem", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              <h1 style={{ fontSize: "2rem", fontWeight: 900, margin: 0, background: "linear-gradient(to right, #6366f1, #a855f7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                {aboutSection?.content?.heading || "About Our Store"}
+              </h1>
+              
+              {aboutSection?.content?.imageUrl && (
+                <img 
+                  src={aboutSection.content.imageUrl} 
+                  alt="About Us"
+                  style={{ width: "100%", maxHeight: "350px", objectFit: "cover", borderRadius: "0.75rem", border: "1px solid rgba(255,255,255,0.06)" }}
+                />
+              )}
+              
+              <p style={{ color: "#cbd5e1", fontSize: "0.95rem", lineHeight: 1.7, whiteSpace: "pre-wrap", margin: 0 }}>
+                {aboutSection?.content?.body || "We are dedicated to providing premium quality products tailored for your specific niche. Our collections are sourced from vetted suppliers to ensure high standards of excellence."}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ==================== VIEW 10: CONTACT PAGE ==================== */}
+        {view === "contact" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2rem", maxWidth: "600px", margin: "0 auto" }}>
+            <span 
+              onClick={() => setView("home")} 
+              style={{ cursor: "pointer", color: "#818cf8", fontSize: "0.85rem", display: "inline-flex", alignItems: "center", gap: "0.4rem", width: "fit-content" }}
+            >
+              <ArrowLeft size={14} /> Back to Home
+            </span>
+
+            <div className="glass-panel" style={{ padding: "2.5rem", borderRadius: "1rem", border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              <h1 style={{ fontSize: "2rem", fontWeight: 900, margin: 0, background: "linear-gradient(to right, #6366f1, #a855f7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                {contactSection?.content?.heading || "Get In Touch"}
+              </h1>
+              
+              <p style={{ color: "#94a3b8", fontSize: "0.9rem", lineHeight: 1.5, margin: 0 }}>
+                Have questions about our products, orders, or custom setups? Drop us a line and our team will get back to you shortly.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "0.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "1rem", background: "rgba(255,255,255,0.02)", padding: "1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div style={{ width: "2.5rem", height: "2.5rem", borderRadius: "50%", background: "rgba(99, 102, 241, 0.1)", color: "#818cf8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <User size={18} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <span style={{ fontSize: "0.75rem", color: "#64748b" }}>Support Email</span>
+                    <a href={`mailto:${contactSection?.content?.email || "support@example.com"}`} style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600 }}>
+                      {contactSection?.content?.email || "support@example.com"}
+                    </a>
+                  </div>
+                </div>
+
+                {contactSection?.content?.phone && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "1rem", background: "rgba(255,255,255,0.02)", padding: "1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.04)" }}>
+                    <div style={{ width: "2.5rem", height: "2.5rem", borderRadius: "50%", background: "rgba(168, 85, 247, 0.1)", color: "#a855f7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Phone size={18} />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <span style={{ fontSize: "0.75rem", color: "#64748b" }}>Phone Contact</span>
+                      <a href={`tel:${contactSection.content.phone}`} style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem", fontWeight: 600 }}>
+                        {contactSection.content.phone}
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

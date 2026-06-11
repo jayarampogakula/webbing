@@ -92,7 +92,17 @@ export async function POST(req: Request) {
       );
     }
 
-    if (tenant.subscription) {
+    // Check if user has active custom keys
+    const userKeysCount = await prisma.llmApiKey.count({
+      where: {
+        ownerUserId: user.userId,
+        scope: "USER",
+        isActive: true
+      }
+    });
+    const hasUserKeys = userKeysCount > 0;
+
+    if (tenant.subscription && !hasUserKeys) {
       const { creditsLimit, creditsUsed } = tenant.subscription;
       if (creditsUsed + requiredCredits > creditsLimit) {
         return NextResponse.json(
@@ -140,7 +150,7 @@ export async function POST(req: Request) {
     });
 
     // 6. Increment Tenant credits count
-    if (tenant.subscription) {
+    if (tenant.subscription && !hasUserKeys) {
       await prisma.subscription.update({
         where: { tenantId: tenantId },
         data: { creditsUsed: { increment: requiredCredits } }
