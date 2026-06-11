@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
+import { verifyLicenseOnline } from "@/lib/licensing";
 
 // GET: Fetch global settings (like UPI ID, branding, etc.)
 export async function GET(req: Request) {
@@ -48,6 +49,14 @@ export async function POST(req: Request) {
       settingsToSave = { upiId: body.upiId };
     } else {
       return NextResponse.json({ error: "No settings provided" }, { status: 400 });
+    }
+
+    if (settingsToSave.licenseKey) {
+      const host = req.headers.get("host") || "localhost";
+      const verification = await verifyLicenseOnline(settingsToSave.licenseKey, host);
+      if (!verification.success) {
+        return NextResponse.json({ error: verification.error || "License verification failed." }, { status: 400 });
+      }
     }
 
     await Promise.all(

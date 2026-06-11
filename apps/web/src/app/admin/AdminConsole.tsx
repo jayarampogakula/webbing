@@ -2322,21 +2322,29 @@ export default function AdminConsole({
                 <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                   <button
                     type="button"
-                    onClick={() => {
-                      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-                      const part = (length: number) => {
-                        let res = "";
-                        for (let i = 0; i < length; i++) {
-                          res += chars.charAt(Math.floor(Math.random() * chars.length));
-                        }
-                        return res;
-                      };
-                      setGeneratedLicense(`WEBBING-${part(4)}-${part(4)}-${part(4)}-${part(4)}`);
+                    onClick={async () => {
+                      setLoading(true);
+                      setError("");
+                      setMessage("");
+                      try {
+                        const res = await fetch("/api/admin/licensing", {
+                          method: "POST"
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || "Failed to generate key on the database.");
+                        setGeneratedLicense(data.licenseKey);
+                        setMessage("License key generated and saved successfully!");
+                      } catch (err: any) {
+                        setError(err.message || "Failed to generate key.");
+                      } finally {
+                        setLoading(false);
+                      }
                     }}
                     className="primary-action"
                     style={{ width: "fit-content", background: "rgba(129, 140, 248, 0.15)", border: "1px solid rgba(129, 140, 248, 0.3)", color: "#818cf8" }}
+                    disabled={loading}
                   >
-                    Generate Key
+                    {loading ? "Generating..." : "Generate Key"}
                   </button>
 
                   {generatedLicense && (

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma, Role, LlmKeyScope, SubscriptionStatus } from "@webbing/db";
 import { hashPassword, verifyPassword } from "@webbing/db";
-import { isValidLicenseKey } from "@/lib/licensing";
+import { verifyLicenseOnline } from "@/lib/licensing";
 
 async function isSetupRequired() {
   try {
@@ -51,8 +51,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "All configuration details are required (SaaS Name, Admin Name, Email, Password, License Key)." }, { status: 400 });
     }
 
-    if (!isValidLicenseKey(licenseKey)) {
-      return NextResponse.json({ error: "Invalid CodeCanyon License Key / Purchase Code format. Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" }, { status: 400 });
+    const host = req.headers.get("host") || "localhost";
+    const verification = await verifyLicenseOnline(licenseKey, host);
+    if (!verification.success) {
+      return NextResponse.json({ error: verification.error || "License verification failed." }, { status: 400 });
     }
 
     const emailClean = adminEmail.trim().toLowerCase();

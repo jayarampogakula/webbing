@@ -370,4 +370,16 @@ model RefundRequest {
   updatedAt        DateTime       @updatedAt
 }
 
+model CentralLicense {
+  id           String   @id @default(uuid())
+  licenseKey   String   @unique
+  status       String   @default("ACTIVE") // ACTIVE, REVOKED
+  type         String   @default("CUSTOM") // CUSTOM, ENVATO
+  domain       String?  // The domain name where it is currently activated (to enforce single-domain use)
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+
 
