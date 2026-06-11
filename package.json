@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspaces --parallel",
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspace=@webbing/db && npm run build --workspace=@webbing/ai && npm run build --workspace=webbing-web && npm run build --workspace=webbing-worker",
     "start": "npm run start --workspaces",
     "ts": "npm run ts --workspaces",
     "db:generate": "prisma generate --schema=packages/db/prisma/schema.prisma",
@@ -29,6 +29,11 @@
     "prisma": "^5.22.0",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3"
+  },
+  "optionalDependencies": {
+    "@next/swc-linux-x64-gnu": "14.2.35",
+    "@next/swc-linux-x64-musl": "14.2.35",
+    "@next/swc-win32-x64-msvc": "14.2.35"
   },
   "engines": {
     "node": ">=20",
