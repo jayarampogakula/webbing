@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma, Role, LlmKeyScope, SubscriptionStatus } from "@webbing/db";
 import { hashPassword, verifyPassword } from "@webbing/db";
+import { isValidLicenseKey } from "@/lib/licensing";
 
 async function isSetupRequired() {
   try {
@@ -44,10 +45,14 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { appName, adminEmail, adminPassword, adminName } = await req.json();
+    const { appName, adminEmail, adminPassword, adminName, licenseKey } = await req.json();
 
-    if (!appName || !adminEmail || !adminPassword || !adminName) {
-      return NextResponse.json({ error: "All configuration details are required (SaaS Name, Admin Name, Email, Password)." }, { status: 400 });
+    if (!appName || !adminEmail || !adminPassword || !adminName || !licenseKey) {
+      return NextResponse.json({ error: "All configuration details are required (SaaS Name, Admin Name, Email, Password, License Key)." }, { status: 400 });
+    }
+
+    if (!isValidLicenseKey(licenseKey)) {
+      return NextResponse.json({ error: "Invalid CodeCanyon License Key / Purchase Code format. Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" }, { status: 400 });
     }
 
     const emailClean = adminEmail.trim().toLowerCase();
@@ -129,6 +134,12 @@ export async function POST(req: Request) {
         where: { key: "appEmail" },
         update: { value: emailClean },
         create: { key: "appEmail", value: emailClean }
+      });
+
+      await tx.systemSetting.upsert({
+        where: { key: "licenseKey" },
+        update: { value: licenseKey.trim() },
+        create: { key: "licenseKey", value: licenseKey.trim() }
       });
     });
 

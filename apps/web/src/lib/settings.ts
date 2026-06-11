@@ -24,6 +24,7 @@ export interface SystemSettings {
   affiliateTier2Rate: string;
   affiliateTier3Rate: string;
   affiliateRecurringRate: string;
+  licenseKey: string;
 }
 
 export async function getSystemSettings(): Promise<SystemSettings> {
@@ -54,6 +55,7 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       affiliateTier2Rate: map.affiliateTier2Rate || "25",
       affiliateTier3Rate: map.affiliateTier3Rate || "30",
       affiliateRecurringRate: map.affiliateRecurringRate || "10",
+      licenseKey: map.licenseKey || "",
     };
   } catch (error) {
     console.error("Error reading system settings from DB:", error);
@@ -80,6 +82,7 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       affiliateTier2Rate: "25",
       affiliateTier3Rate: "30",
       affiliateRecurringRate: "10",
+      licenseKey: "",
     };
   }
 }

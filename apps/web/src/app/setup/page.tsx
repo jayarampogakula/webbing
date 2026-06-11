@@ -11,6 +11,7 @@ export default function SetupPage() {
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [licenseKey, setLicenseKey] = useState("");
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const [setupRequired, setSetupRequired] = useState(false);
@@ -54,7 +55,8 @@ export default function SetupPage() {
           appName: appName.trim(),
           adminName: adminName.trim(),
           adminEmail: adminEmail.trim(),
-          adminPassword
+          adminPassword,
+          licenseKey
         })
       });
       const data = await res.json();
@@ -167,6 +169,19 @@ export default function SetupPage() {
               value={appName} 
               onChange={(e) => setAppName(e.target.value)} 
               placeholder="e.g. Webbing" 
+              disabled={loading} 
+              required 
+            />
+          </div>
+
+          <div className="field-group">
+            <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700, textTransform: "uppercase" }}>CodeCanyon License Purchase Code</label>
+            <input 
+              className="field" 
+              type="text" 
+              value={licenseKey} 
+              onChange={(e) => setLicenseKey(e.target.value)} 
+              placeholder="e.g. 87cf97c7-cc9b-4357-8de2-873b28b74681" 
               disabled={loading} 
               required 
             />

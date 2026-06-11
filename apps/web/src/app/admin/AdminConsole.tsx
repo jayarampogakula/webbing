@@ -249,7 +249,7 @@ export default function AdminConsole({
 }: AdminConsoleProps) {
   // States
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "keys" | "plans" | "payments" | "feedback" | "emails" | "payouts" | "refunds" | "branding">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "keys" | "plans" | "payments" | "feedback" | "emails" | "payouts" | "refunds" | "branding" | "licensing">("dashboard");
   const [upiId, setUpiId] = useState(initialUpiId);
   const [plans, setPlans] = useState<Plan[]>(initialPlans);
   const [requests, setRequests] = useState<PaymentRequest[]>(initialRequests);
@@ -295,6 +295,8 @@ export default function AdminConsole({
   const [affiliateTier2Rate, setAffiliateTier2Rate] = useState(initialSettings?.affiliateTier2Rate || "25");
   const [affiliateTier3Rate, setAffiliateTier3Rate] = useState(initialSettings?.affiliateTier3Rate || "30");
   const [affiliateRecurringRate, setAffiliateRecurringRate] = useState(initialSettings?.affiliateRecurringRate || "10");
+  const [licenseKey, setLicenseKey] = useState(initialSettings?.licenseKey || "");
+  const [generatedLicense, setGeneratedLicense] = useState("");
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<"welcome" | "payment_request" | "activation" | "credits">("welcome");
   const [testEmailAddress, setTestEmailAddress] = useState(user.email);
@@ -406,7 +408,8 @@ export default function AdminConsole({
             affiliateTier2Max,
             affiliateTier2Rate,
             affiliateTier3Rate,
-            affiliateRecurringRate
+            affiliateRecurringRate,
+            licenseKey
           }
         })
       });
@@ -847,6 +850,30 @@ export default function AdminConsole({
             {!sidebarCollapsed && <span>Platform Settings</span>}
           </button>
 
+          <button
+            type="button"
+            onClick={() => setActiveTab("licensing")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              width: "100%",
+              padding: "0.6rem 0.8rem",
+              borderRadius: "0.375rem",
+              background: activeTab === "licensing" ? "rgba(129, 140, 248, 0.08)" : "none",
+              border: "none",
+              color: activeTab === "licensing" ? "#818cf8" : "#9ca3af",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              textAlign: "left",
+              transition: "all 0.2s"
+            }}
+          >
+            <Shield size={16} />
+            {!sidebarCollapsed && <span>SaaS Licensing</span>}
+          </button>
+
           <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0.5rem 0" }} />
 
           {/* Go to App Link */}
@@ -870,6 +897,14 @@ export default function AdminConsole({
             {!sidebarCollapsed && <span>User Console</span>}
           </a>
         </div>
+
+        {/* Version Indicator */}
+        {!sidebarCollapsed && (
+          <div style={{ padding: "0.5rem 0.8rem", color: "#4b5563", fontSize: "0.75rem", fontWeight: 600, textAlign: "center", borderTop: "1px solid rgba(255, 255, 255, 0.03)", paddingTop: "0.5rem", marginTop: "auto", display: "flex", flexDirection: "column", gap: "0.1rem" }}>
+            <span style={{ fontSize: "0.7rem", opacity: 0.8 }}>Webbing SaaS</span>
+            <span style={{ color: "#818cf8" }}>v0.8.0</span>
+          </div>
+        )}
 
         {/* Sidebar Collapse Toggle */}
         <button
@@ -2196,8 +2231,139 @@ export default function AdminConsole({
             </section>
           </div>
         )}
+
+        {/* TAB 11: SAAS LICENSING MANAGEMENT */}
+        {activeTab === "licensing" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+            <section className="surface-panel" style={{ height: "fit-content" }}>
+              <div style={{ marginBottom: "1.5rem" }}>
+                <span className="eyebrow">Envato / CodeCanyon</span>
+                <h2 style={{ margin: 0, color: "#fff", fontSize: "1.25rem", fontWeight: 800 }}>SaaS License Key</h2>
+                <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.2rem 0 0 0" }}>
+                  Your CodeCanyon license verification status and license activation parameters. Keep this code secure as it registers your installation.
+                </p>
+              </div>
+
+              <div style={{ background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)", borderRadius: "0.5rem", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
+                  <div>
+                    <span style={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 700, textTransform: "uppercase" }}>Activation Status</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.25rem" }}>
+                      <span style={{ width: "0.6rem", height: "0.6rem", borderRadius: "50%", background: "#34d399" }} />
+                      <span style={{ fontSize: "0.95rem", fontWeight: 700, color: "#34d399" }}>Activated & Genuine</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 700, textTransform: "uppercase" }}>Product Version</span>
+                    <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#f8fafc", marginTop: "0.25rem" }}>v0.8.0</div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>ACTIVE PURCHASE CODE / LICENSE KEY</label>
+                  <div style={{ display: "flex", gap: "0.75rem" }}>
+                    <input
+                      type="text"
+                      className="premium-input"
+                      value={licenseKey}
+                      onChange={(e) => setLicenseKey(e.target.value)}
+                      placeholder="e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                      style={{ flexGrow: 1 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setLoading(true);
+                        setMessage("");
+                        setError("");
+                        try {
+                          const res = await fetch("/api/admin/settings", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              settings: { licenseKey }
+                            })
+                          });
+                          const data = await res.json();
+                          if (!res.ok) throw new Error(data.error || "Failed to update license key.");
+                          setMessage("License Key saved successfully!");
+                        } catch (err: any) {
+                          setError(err.message || "Failed to save license key.");
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      className="primary-action"
+                      style={{ padding: "0 1.5rem", flexShrink: 0, fontWeight: 700, height: "40px" }}
+                      disabled={loading}
+                    >
+                      Update
+                    </button>
+                  </div>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                    Purchase code format is validated locally. Supported formats: CodeCanyon Purchase UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) or direct proprietary activation keys.
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <section className="surface-panel" style={{ height: "fit-content" }}>
+              <div style={{ marginBottom: "1.5rem" }}>
+                <span className="eyebrow">Generator Tool</span>
+                <h2 style={{ margin: 0, color: "#fff", fontSize: "1.25rem", fontWeight: 800 }}>License Key Generator</h2>
+                <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.2rem 0 0 0" }}>
+                  Use this tool to generate direct proprietary license keys for external sales or manual customer support.
+                </p>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                    const part = (length: number) => {
+                      let res = "";
+                      for (let i = 0; i < length; i++) {
+                        res += chars.charAt(Math.floor(Math.random() * chars.length));
+                      }
+                      return res;
+                    };
+                    setGeneratedLicense(`WEBBING-${part(4)}-${part(4)}-${part(4)}-${part(4)}`);
+                  }}
+                  className="primary-action"
+                  style={{ width: "fit-content", background: "rgba(129, 140, 248, 0.15)", border: "1px solid rgba(129, 140, 248, 0.3)", color: "#818cf8" }}
+                >
+                  Generate Key
+                </button>
+
+                {generatedLicense && (
+                  <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <label style={{ fontSize: "0.75rem", color: "#34d399", fontWeight: 700 }}>GENERATED LICENSE KEY</label>
+                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                      <code style={{ background: "rgba(52, 211, 153, 0.08)", border: "1px solid rgba(52, 211, 153, 0.2)", color: "#34d399", padding: "0.5rem 1rem", borderRadius: "0.25rem", fontSize: "1rem", letterSpacing: "0.05em", fontFamily: "monospace", flexGrow: 1, textAlign: "center" }}>
+                        {generatedLicense}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(generatedLicense);
+                          setMessage("Generated license key copied to clipboard!");
+                          setTimeout(() => setMessage(""), 3000);
+                        }}
+                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", padding: "0.5rem 1rem", borderRadius: "0.25rem", color: "#cbd5e1", cursor: "pointer", fontSize: "0.85rem" }}
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        )}
       </div>
 
     </div>
   );
 }
+

@@ -49,8 +49,9 @@ export default function CookiesPage() {
           <a href="/cookies" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.85rem", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = '#fff'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}>Cookies Policy</a>
           <a href="/refund" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.85rem", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = '#fff'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}>Refund Policy</a>
         </div>
-        <div style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "0.8rem" }}>
-          © {new Date().getFullYear()} Webbing Platforms Inc. All rights reserved.
+        <div style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "0.8rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
+          <span>© {new Date().getFullYear()} Webbing Platforms Inc. All rights reserved.</span>
+          <span style={{ opacity: 0.6 }}>Version v0.8.0</span>
         </div>
       </footer>
     </div>
