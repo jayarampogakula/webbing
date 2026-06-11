@@ -113,37 +113,40 @@ export default async function AdminPage() {
   const totalSites = projects.length;
   const activeSubs = subscriptions.filter((s) => s.status === "ACTIVE").length;
 
-  return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0a0e17" }}>
-      <header className="site-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: 0, background: "rgba(10, 14, 23, 0.95)" }}>
-        <a className="brand" href="/">
-          <span className="brand-mark"><Sparkles size={18} /></span>
-          Webbing
-        </a>
-        <div className="nav-actions">
-          <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>Admin: {user.email}</span>
-          <a className="danger-action" href="/api/auth/signout">Sign out</a>
-        </div>
-      </header>
+      const isMasterDomain = baseDomain.toLowerCase() === "webbing.in" || baseDomain.toLowerCase().includes("localhost");
+      const enableLicenseGenerator = (process.env.ENABLE_LICENSE_GENERATOR === "true" || process.env.NODE_ENV === "development") && isMasterDomain;
 
-      <AdminConsole
-        user={user}
-        users={users}
-        projects={projects}
-        subscriptions={subscriptions}
-        totalTenants={totalTenants}
-        llmKeys={llmKeys}
-        initialPlans={plans}
-        initialRequests={paymentRequests}
-        initialFeedbacks={feedbacks}
-        initialUpiId={upiId}
-        initialPayouts={payoutRequests}
-        initialRefunds={refundRequests}
-        baseDomain={baseDomain}
-        protocol={protocol}
-        initialSettings={systemSettings}
-        enableLicenseGenerator={process.env.ENABLE_LICENSE_GENERATOR === "true" || process.env.NODE_ENV === "development"}
-      />
-    </div>
-  );
+      return (
+        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0a0e17" }}>
+          <header className="site-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: 0, background: "rgba(10, 14, 23, 0.95)" }}>
+            <a className="brand" href="/">
+              <span className="brand-mark"><Sparkles size={18} /></span>
+              Webbing
+            </a>
+            <div className="nav-actions">
+              <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>Admin: {user.email}</span>
+              <a className="danger-action" href="/api/auth/signout">Sign out</a>
+            </div>
+          </header>
+
+          <AdminConsole
+            user={user}
+            users={users}
+            projects={projects}
+            subscriptions={subscriptions}
+            totalTenants={totalTenants}
+            llmKeys={llmKeys}
+            initialPlans={plans}
+            initialRequests={paymentRequests}
+            initialFeedbacks={feedbacks}
+            initialUpiId={upiId}
+            initialPayouts={payoutRequests}
+            initialRefunds={refundRequests}
+            baseDomain={baseDomain}
+            protocol={protocol}
+            initialSettings={systemSettings}
+            enableLicenseGenerator={enableLicenseGenerator}
+          />
+        </div>
+      );
 }
