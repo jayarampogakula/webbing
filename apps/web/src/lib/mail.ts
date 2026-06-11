@@ -325,3 +325,42 @@ export async function sendContactFormEmail(
   `;
   return sendMailSafe(toEmail, subject, html);
 }
+
+/**
+ * Send Password Recovery Email
+ */
+export async function sendPasswordRecoveryEmail(toEmail: string, name: string, tempPassword: string) {
+  const { appName, appEmail } = await getEmailBranding();
+  const subject = `Your ${appName} Password Reset Request 🔑`;
+  const customFrom = `"${appName} Support" <${appEmail}>`;
+  const html = `
+<div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+     <div style="text-align: center; margin-bottom: 30px;">
+       <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">🔑 ${appName} Support</span>
+     </div>
+     <h1 style="font-size: 22px; font-weight: 700; color: #ffffff; margin-bottom: 20px;">Password Reset Completed</h1>
+     <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
+       Hello ${name}, we received a request to recover your password. Because passwords are encrypted using modern security standards, we cannot decrypt or read the old password.
+     </p>
+     <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
+       Instead, we have generated a temporary secure password for you to log in:
+     </p>
+     <div style="background-color: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 25px;">
+       <code style="font-size: 20px; font-weight: 800; color: #f59e0b; letter-spacing: 2px;">${tempPassword}</code>
+     </div>
+     <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 30px;">
+       Please log in using this temporary password and immediately change it from your profile settings on the dashboard.
+     </p>
+     <div style="text-align: center; margin-bottom: 30px;">
+       <a href="https://${appName.toLowerCase() === 'webbing' ? 'webbing.in' : 'localhost:3000'}/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Log In Now</a>
+     </div>
+     <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
+     <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
+       If you did not make this request, please contact us at ${appEmail}.
+     </p>
+  </div>
+</div>
+  `;
+  return sendMailSafe(toEmail, subject, html, customFrom);
+}

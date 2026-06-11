@@ -3,7 +3,14 @@ import { prisma, Role, LlmKeyScope, SubscriptionStatus } from "@webbing/db";
 import { hashPassword, verifyPassword } from "@webbing/db";
 import { verifyLicenseOnline } from "@/lib/licensing";
 
-async function isSetupRequired() {
+async function isSetupRequired(req?: Request) {
+  if (req) {
+    const host = req.headers.get("host") || "";
+    if (host.toLowerCase().includes("webbing.in")) {
+      return false;
+    }
+  }
+
   try {
     // 1. Check if default admin user is still using default credentials
     const defaultAdmin = await prisma.user.findUnique({
@@ -33,15 +40,24 @@ async function isSetupRequired() {
   }
 }
 
-export async function GET() {
-  const required = await isSetupRequired();
+export async function GET(req: Request) {
+  const required = await isSetupRequired(req);
   return NextResponse.json({ setupRequired: required });
 }
 
 export async function POST(req: Request) {
-  const required = await isSetupRequired();
+  const required = await isSetupRequired(req);
   if (!required) {
-    return NextResponse.json({ error: "SaaS setup has already been completed. For modifications, please log in and navigate to the Admin Console." }, { status: 403 });
+    const host = req.headers.get("host") || "";
+    const isWebbingDomain = host.toLowerCase().includes("webbing.in");
+    return NextResponse.json(
+      { 
+        error: isWebbingDomain 
+          ? "SaaS setup configuration is disabled on the primary domain." 
+          : "SaaS setup has already been completed. For modifications, please log in and navigate to the Admin Console." 
+      }, 
+      { status: 403 }
+    );
   }
 
   try {

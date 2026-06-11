@@ -3,73 +3,6 @@ import { cookies } from "next/headers";
 import { Role, SubscriptionStatus, hashPassword, prisma, verifyPassword } from "@webbing/db";
 import { signSession } from "@/lib/session";
 
-const demoPasswords: Record<string, { current: string; legacy: string }> = {
-  "admin@webbing.in": { current: "Admin123", legacy: "AdminPassword123" },
-  "user@webbing.in": { current: "User123", legacy: "UserPassword123" },
-};
-
-async function ensureDemoUser(email: string, password: string) {
-  const demoPassword = demoPasswords[email];
-  if (!demoPassword || (password !== demoPassword.current && password !== demoPassword.legacy)) {
-    return null;
-  }
-
-  const isAdmin = email === "admin@webbing.in";
-  const tenantSlug = isAdmin ? "admin" : "user";
-  const tenantName = isAdmin ? "Admin Team" : "User Workspace";
-  const planId = isAdmin ? "agency-plan" : "pro-plan";
-  const creditsLimit = isAdmin ? 500 : 100;
-
-  const tenant = await prisma.tenant.upsert({
-    where: { slug: tenantSlug },
-    update: { name: tenantName },
-    create: { name: tenantName, slug: tenantSlug },
-  });
-
-  const user = await prisma.user.upsert({
-    where: { email },
-    update: {
-      name: isAdmin ? "SaaS Admin Manager" : "John Doe User",
-      passwordHash: hashPassword(demoPassword.current),
-      role: isAdmin ? Role.ADMIN : Role.USER,
-      tenantId: tenant.id,
-    },
-    create: {
-      email,
-      name: isAdmin ? "SaaS Admin Manager" : "John Doe User",
-      passwordHash: hashPassword(demoPassword.current),
-      role: isAdmin ? Role.ADMIN : Role.USER,
-      tenantId: tenant.id,
-    },
-  });
-
-  await prisma.subscription.upsert({
-    where: { tenantId: tenant.id },
-    update: { 
-      planId, 
-      status: SubscriptionStatus.ACTIVE, 
-      creditsLimit,
-      withLlm: true,
-      hostingType: isAdmin ? "BOTH" : "OURS",
-      domainType: isAdmin ? "CUSTOM" : "SUBDOMAIN",
-    },
-    create: {
-      tenantId: tenant.id,
-      planId,
-      status: SubscriptionStatus.ACTIVE,
-      currentPeriodStart: new Date(),
-      currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-      creditsLimit,
-      creditsUsed: 0,
-      withLlm: true,
-      hostingType: isAdmin ? "BOTH" : "OURS",
-      domainType: isAdmin ? "CUSTOM" : "SUBDOMAIN",
-    },
-  });
-
-  return user;
-}
-
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
@@ -85,26 +18,11 @@ export async function POST(req: Request) {
     });
 
     if (!user || !user.passwordHash) {
-      user = await ensureDemoUser(emailClean, password);
-    }
-
-    if (!user || !user.passwordHash) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
     // 2. Verify password hash
-    let isValid = verifyPassword(password, user.passwordHash);
-    const demoPassword = demoPasswords[emailClean];
-
-    if (!isValid && demoPassword) {
-      if (password === demoPassword.current || password === demoPassword.legacy) {
-        user = await prisma.user.update({
-          where: { email: emailClean },
-          data: { passwordHash: hashPassword(demoPassword.current) },
-        });
-        isValid = true;
-      }
-    }
+    const isValid = verifyPassword(password, user.passwordHash);
 
     if (!isValid) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });

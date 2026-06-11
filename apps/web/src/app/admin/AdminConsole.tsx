@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Check, X, Shield, Plus, Trash2, Edit2, Sparkles, DollarSign, Layers, Users, Key, ChevronLeft, ChevronRight, Home, MessageSquare, Mail, Sliders } from "lucide-react";
 import PlanEditor from "./PlanEditor";
+import UserEditor from "./UserEditor";
 import LlmKeyManager from "../components/LlmKeyManager";
 import AdminProjectEditor from "./AdminProjectEditor";
 
@@ -1099,7 +1100,7 @@ export default function AdminConsole({
               <div className="table-wrap">
                 <table className="data-table">
                   <thead>
-                    <tr><th>Name</th><th>Email</th><th>Role</th><th>Workspace</th></tr>
+                    <tr><th>Name</th><th>Email</th><th>Role</th><th>Workspace</th><th style={{ textAlign: "right" }}>Actions</th></tr>
                   </thead>
                   <tbody>
                     {users.map((u) => (
@@ -1108,6 +1109,14 @@ export default function AdminConsole({
                         <td>{u.email}</td>
                         <td><span className="status-pill" style={{ fontSize: "0.75rem", padding: "0.15rem 0.45rem", borderRadius: "0.25rem", fontWeight: 700, background: "rgba(99, 102, 241, 0.15)", color: "#a5b4fc" }}>{u.role}</span></td>
                         <td>{u.tenant.name}</td>
+                        <td style={{ textAlign: "right" }}>
+                          <UserEditor
+                            userId={u.id}
+                            initialName={u.name || ""}
+                            initialEmail={u.email}
+                            initialRole={u.role}
+                          />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
