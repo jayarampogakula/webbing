@@ -9,117 +9,100 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Checking and initializing default accounts via upsert...");
 
-  // 1. Create or get Admin Tenant
-  const adminTenant = await prisma.tenant.upsert({
-    where: { slug: "admin" },
-    update: { name: "Admin Team" },
-    create: {
-      name: "Admin Team",
-      slug: "admin",
-    },
-  });
+  const userCount = await prisma.user.count();
+  if (userCount === 0) {
+    console.log("No users found in database. Initializing default accounts...");
 
-  // 2. Create or update Admin User
-  const adminPasswordHash = hashPassword("Admin123");
-  const adminUser = await prisma.user.upsert({
-    where: { email: "admin@webbing.in" },
-    update: {
-      name: "SaaS Admin Manager",
-      passwordHash: adminPasswordHash,
-      role: Role.ADMIN,
-      tenantId: adminTenant.id,
-    },
-    create: {
-      email: "admin@webbing.in",
-      name: "SaaS Admin Manager",
-      passwordHash: adminPasswordHash,
-      role: Role.ADMIN,
-      tenantId: adminTenant.id,
-    },
-  });
+    // 1. Create or get Admin Tenant
+    const adminTenant = await prisma.tenant.upsert({
+      where: { slug: "admin" },
+      update: {},
+      create: {
+        name: "Admin Team",
+        slug: "admin",
+      },
+    });
 
-  // 3. Create or update Admin Subscription
-  await prisma.subscription.upsert({
-    where: { tenantId: adminTenant.id },
-    update: {
-      planId: "agency-plan",
-      status: SubscriptionStatus.ACTIVE,
-      creditsLimit: 500,
-      withLlm: true,
-      hostingType: "BOTH",
-      domainType: "CUSTOM",
-    },
-    create: {
-      tenantId: adminTenant.id,
-      planId: "agency-plan",
-      status: SubscriptionStatus.ACTIVE,
-      currentPeriodStart: new Date(),
-      currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
-      creditsLimit: 500,
-      creditsUsed: 0,
-      withLlm: true,
-      hostingType: "BOTH",
-      domainType: "CUSTOM",
-    },
-  });
+    // 2. Create or update Admin User
+    const adminPasswordHash = hashPassword("Admin123");
+    const adminUser = await prisma.user.upsert({
+      where: { email: "admin@webbing.in" },
+      update: {},
+      create: {
+        email: "admin@webbing.in",
+        name: "SaaS Admin Manager",
+        passwordHash: adminPasswordHash,
+        role: Role.ADMIN,
+        tenantId: adminTenant.id,
+      },
+    });
 
-  console.log(`Ensured Admin User: ${adminUser.email} (Password: Admin123)`);
+    // 3. Create or update Admin Subscription
+    await prisma.subscription.upsert({
+      where: { tenantId: adminTenant.id },
+      update: {},
+      create: {
+        tenantId: adminTenant.id,
+        planId: "agency-plan",
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+        creditsLimit: 500,
+        creditsUsed: 0,
+        withLlm: true,
+        hostingType: "BOTH",
+        domainType: "CUSTOM",
+      },
+    });
 
-  // 4. Create or get Standard User Tenant
-  const standardTenant = await prisma.tenant.upsert({
-    where: { slug: "user" },
-    update: { name: "User Workspace" },
-    create: {
-      name: "User Workspace",
-      slug: "user",
-    },
-  });
+    console.log(`Ensured Admin User: ${adminUser.email} (Password: Admin123)`);
 
-  // 5. Create or update Standard User
-  const userPasswordHash = hashPassword("User123");
-  const standardUser = await prisma.user.upsert({
-    where: { email: "user@webbing.in" },
-    update: {
-      name: "John Doe User",
-      passwordHash: userPasswordHash,
-      role: Role.USER,
-      tenantId: standardTenant.id,
-    },
-    create: {
-      email: "user@webbing.in",
-      name: "John Doe User",
-      passwordHash: userPasswordHash,
-      role: Role.USER,
-      tenantId: standardTenant.id,
-    },
-  });
+    // 4. Create or get Standard User Tenant
+    const standardTenant = await prisma.tenant.upsert({
+      where: { slug: "user" },
+      update: {},
+      create: {
+        name: "User Workspace",
+        slug: "user",
+      },
+    });
 
-  // 6. Create or update Standard User Subscription
-  await prisma.subscription.upsert({
-    where: { tenantId: standardTenant.id },
-    update: {
-      planId: "pro-plan",
-      status: SubscriptionStatus.ACTIVE,
-      creditsLimit: 100,
-      withLlm: true,
-      hostingType: "OURS",
-      domainType: "SUBDOMAIN",
-    },
-    create: {
-      tenantId: standardTenant.id,
-      planId: "pro-plan",
-      status: SubscriptionStatus.ACTIVE,
-      currentPeriodStart: new Date(),
-      currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
-      creditsLimit: 100,
-      creditsUsed: 0,
-      withLlm: true,
-      hostingType: "OURS",
-      domainType: "SUBDOMAIN",
-    },
-  });
+    // 5. Create or update Standard User
+    const userPasswordHash = hashPassword("User123");
+    const standardUser = await prisma.user.upsert({
+      where: { email: "user@webbing.in" },
+      update: {},
+      create: {
+        email: "user@webbing.in",
+        name: "John Doe User",
+        passwordHash: userPasswordHash,
+        role: Role.USER,
+        tenantId: standardTenant.id,
+      },
+    });
 
-  console.log(`Ensured Standard User: ${standardUser.email} (Password: User123)`);
+    // 6. Create or update Standard User Subscription
+    await prisma.subscription.upsert({
+      where: { tenantId: standardTenant.id },
+      update: {},
+      create: {
+        tenantId: standardTenant.id,
+        planId: "pro-plan",
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+        creditsLimit: 100,
+        creditsUsed: 0,
+        withLlm: true,
+        hostingType: "OURS",
+        domainType: "SUBDOMAIN",
+      },
+    });
+
+    console.log(`Ensured Standard User: ${standardUser.email} (Password: User123)`);
+  } else {
+    console.log(`Database already has ${userCount} users. Skipping default user accounts creation.`);
+  }
 
   // 7. Seed Default Plans
   console.log("Seeding default plans...");
@@ -132,11 +115,7 @@ async function main() {
   for (const plan of defaultPlans) {
     await prisma.plan.upsert({
       where: { name: plan.name },
-      update: {
-        price: plan.price,
-        creditsLimit: plan.creditsLimit,
-        features: plan.features
-      },
+      update: {},
       create: {
         name: plan.name,
         price: plan.price,
