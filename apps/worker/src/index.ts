@@ -47,7 +47,20 @@ const worker = new Worker<WebsiteGenerationJobData>(
         }
       });
 
-      const customKeys = activeKeys.map(k => ({
+      // Prioritize USER scope keys over GLOBAL keys for the same provider
+      const keysMap = new Map<string, typeof activeKeys[0]>();
+      for (const k of activeKeys) {
+        if (k.scope === LlmKeyScope.GLOBAL) {
+          keysMap.set(k.provider.toLowerCase(), k);
+        }
+      }
+      for (const k of activeKeys) {
+        if (k.scope === LlmKeyScope.USER) {
+          keysMap.set(k.provider.toLowerCase(), k);
+        }
+      }
+
+      const customKeys = Array.from(keysMap.values()).map(k => ({
         provider: k.provider.toLowerCase(),
         secret: k.secret,
         model: k.model || undefined

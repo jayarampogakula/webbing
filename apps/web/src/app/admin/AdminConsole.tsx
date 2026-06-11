@@ -88,6 +88,7 @@ interface AdminConsoleProps {
   baseDomain: string;
   protocol: string;
   initialSettings?: any;
+  enableLicenseGenerator?: boolean;
 }
 
 const emailTemplates = {
@@ -246,6 +247,7 @@ export default function AdminConsole({
   baseDomain,
   protocol,
   initialSettings,
+  enableLicenseGenerator = false,
 }: AdminConsoleProps) {
   // States
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -2307,58 +2309,60 @@ export default function AdminConsole({
               </div>
             </section>
 
-            <section className="surface-panel" style={{ height: "fit-content" }}>
-              <div style={{ marginBottom: "1.5rem" }}>
-                <span className="eyebrow">Generator Tool</span>
-                <h2 style={{ margin: 0, color: "#fff", fontSize: "1.25rem", fontWeight: 800 }}>License Key Generator</h2>
-                <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.2rem 0 0 0" }}>
-                  Use this tool to generate direct proprietary license keys for external sales or manual customer support.
-                </p>
-              </div>
+            {enableLicenseGenerator && (
+              <section className="surface-panel" style={{ height: "fit-content" }}>
+                <div style={{ marginBottom: "1.5rem" }}>
+                  <span className="eyebrow">Generator Tool</span>
+                  <h2 style={{ margin: 0, color: "#fff", fontSize: "1.25rem", fontWeight: 800 }}>License Key Generator</h2>
+                  <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0.2rem 0 0 0" }}>
+                    Use this tool to generate direct proprietary license keys for external sales or manual customer support.
+                  </p>
+                </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-                    const part = (length: number) => {
-                      let res = "";
-                      for (let i = 0; i < length; i++) {
-                        res += chars.charAt(Math.floor(Math.random() * chars.length));
-                      }
-                      return res;
-                    };
-                    setGeneratedLicense(`WEBBING-${part(4)}-${part(4)}-${part(4)}-${part(4)}`);
-                  }}
-                  className="primary-action"
-                  style={{ width: "fit-content", background: "rgba(129, 140, 248, 0.15)", border: "1px solid rgba(129, 140, 248, 0.3)", color: "#818cf8" }}
-                >
-                  Generate Key
-                </button>
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                      const part = (length: number) => {
+                        let res = "";
+                        for (let i = 0; i < length; i++) {
+                          res += chars.charAt(Math.floor(Math.random() * chars.length));
+                        }
+                        return res;
+                      };
+                      setGeneratedLicense(`WEBBING-${part(4)}-${part(4)}-${part(4)}-${part(4)}`);
+                    }}
+                    className="primary-action"
+                    style={{ width: "fit-content", background: "rgba(129, 140, 248, 0.15)", border: "1px solid rgba(129, 140, 248, 0.3)", color: "#818cf8" }}
+                  >
+                    Generate Key
+                  </button>
 
-                {generatedLicense && (
-                  <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                    <label style={{ fontSize: "0.75rem", color: "#34d399", fontWeight: 700 }}>GENERATED LICENSE KEY</label>
-                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                      <code style={{ background: "rgba(52, 211, 153, 0.08)", border: "1px solid rgba(52, 211, 153, 0.2)", color: "#34d399", padding: "0.5rem 1rem", borderRadius: "0.25rem", fontSize: "1rem", letterSpacing: "0.05em", fontFamily: "monospace", flexGrow: 1, textAlign: "center" }}>
-                        {generatedLicense}
-                      </code>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(generatedLicense);
-                          setMessage("Generated license key copied to clipboard!");
-                          setTimeout(() => setMessage(""), 3000);
-                        }}
-                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", padding: "0.5rem 1rem", borderRadius: "0.25rem", color: "#cbd5e1", cursor: "pointer", fontSize: "0.85rem" }}
-                      >
-                        Copy
-                      </button>
+                  {generatedLicense && (
+                    <div style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                      <label style={{ fontSize: "0.75rem", color: "#34d399", fontWeight: 700 }}>GENERATED LICENSE KEY</label>
+                      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                        <code style={{ background: "rgba(52, 211, 153, 0.08)", border: "1px solid rgba(52, 211, 153, 0.2)", color: "#34d399", padding: "0.5rem 1rem", borderRadius: "0.25rem", fontSize: "1rem", letterSpacing: "0.05em", fontFamily: "monospace", flexGrow: 1, textAlign: "center" }}>
+                          {generatedLicense}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(generatedLicense);
+                            setMessage("Generated license key copied to clipboard!");
+                            setTimeout(() => setMessage(""), 3000);
+                          }}
+                          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", padding: "0.5rem 1rem", borderRadius: "0.25rem", color: "#cbd5e1", cursor: "pointer", fontSize: "0.85rem" }}
+                        >
+                          Copy
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </section>
+                  )}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </div>

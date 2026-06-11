@@ -142,6 +142,7 @@ export default async function AdminPage() {
         baseDomain={baseDomain}
         protocol={protocol}
         initialSettings={systemSettings}
+        enableLicenseGenerator={process.env.ENABLE_LICENSE_GENERATOR === "true" || process.env.NODE_ENV === "development"}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { prisma } from "@webbing/db";
+import { prisma, LlmKeyScope } from "@webbing/db";
 import { verifySession } from "@/lib/session";
 import { AIService } from "@webbing/ai";
 
@@ -107,13 +107,26 @@ export async function POST(
       where: {
         isActive: true,
         OR: [
-          { scope: "GLOBAL" },
-          { scope: "USER", ownerUserId: user.userId }
+          { scope: LlmKeyScope.GLOBAL },
+          { scope: LlmKeyScope.USER, ownerUserId: user.userId }
         ]
       }
     });
 
-    const customKeys = activeKeys.map(k => ({
+    // Prioritize USER scope keys over GLOBAL keys for the same provider
+    const keysMap = new Map<string, typeof activeKeys[0]>();
+    for (const k of activeKeys) {
+      if (k.scope === LlmKeyScope.GLOBAL) {
+        keysMap.set(k.provider.toLowerCase(), k);
+      }
+    }
+    for (const k of activeKeys) {
+      if (k.scope === LlmKeyScope.USER) {
+        keysMap.set(k.provider.toLowerCase(), k);
+      }
+    }
+
+    const customKeys = Array.from(keysMap.values()).map(k => ({
       provider: k.provider.toLowerCase(),
       secret: k.secret,
       model: k.model || undefined

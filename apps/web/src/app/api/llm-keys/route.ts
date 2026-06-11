@@ -34,13 +34,10 @@ export async function GET() {
 
   try {
     const keys = await prisma.llmApiKey.findMany({
-      where:
-        user.role === "ADMIN"
-          ? {}
-          : {
-              scope: LlmKeyScope.USER,
-              ownerUserId: user.userId,
-            },
+      where: {
+        scope: LlmKeyScope.USER,
+        ownerUserId: user.userId,
+      },
       orderBy: [{ scope: "asc" }, { createdAt: "desc" }],
       select: {
         id: true,
