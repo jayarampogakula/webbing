@@ -3,6 +3,7 @@ import "./globals.css";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { checkSetupAndLicense } from "@/lib/licensing";
+import { getSystemSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Webbing - Production AI Website Builder SaaS",
@@ -31,9 +32,25 @@ export default async function RootLayout({
     }
   }
 
+  const settings = await getSystemSettings();
+
   return (
     <html lang="en">
-      <body style={{ margin: 0, padding: 0, fontFamily: "system-ui, -apple-system, sans-serif", backgroundColor: "#0b0f19", color: "#f3f4f6" }}>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: `
+          :root {
+            --bg: ${settings.themeBgColor};
+            --text: ${settings.themeTextColor};
+            --muted: ${settings.themeMutedColor};
+            --blue: ${settings.themePrimaryColor};
+            --teal: ${settings.themeSecondaryColor};
+            --panel: ${settings.themePanelColor};
+            --panel-2: ${settings.themePanelColor};
+            --line: ${settings.themeBorderColor};
+          }
+        `}} />
+      </head>
+      <body style={{ margin: 0, padding: 0, fontFamily: "system-ui, -apple-system, sans-serif", backgroundColor: "var(--bg)", color: "var(--text)" }}>
         {children}
       </body>
     </html>

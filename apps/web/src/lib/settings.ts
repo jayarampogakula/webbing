@@ -31,13 +31,21 @@ export interface SystemSettings {
   smtpPass: string;
   smtpFromName: string;
   smtpFromEmail: string;
+  // Theme Color Configurations
+  themeBgColor: string;
+  themeTextColor: string;
+  themeMutedColor: string;
+  themePrimaryColor: string;
+  themeSecondaryColor: string;
+  themePanelColor: string;
+  themeBorderColor: string;
 }
 
 export async function getSystemSettings(): Promise<SystemSettings> {
   try {
     const settings = await prisma.systemSetting.findMany();
     const map = Object.fromEntries(settings.map((s) => [s.key, s.value]));
-
+ 
     return {
       appName: map.appName || "Webbing",
       appLogo: map.appLogo || "",
@@ -68,6 +76,13 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       smtpPass: map.smtpPass || "",
       smtpFromName: map.smtpFromName || "",
       smtpFromEmail: map.smtpFromEmail || "",
+      themeBgColor: map.themeBgColor || "#060914",
+      themeTextColor: map.themeTextColor || "#f8fafc",
+      themeMutedColor: map.themeMutedColor || "#9aa7bd",
+      themePrimaryColor: map.themePrimaryColor || "#4f7cff",
+      themeSecondaryColor: map.themeSecondaryColor || "#20c7b5",
+      themePanelColor: map.themePanelColor || "#0d1323",
+      themeBorderColor: map.themeBorderColor || "rgba(226, 232, 240, 0.12)",
     };
   } catch (error) {
     console.error("Error reading system settings from DB:", error);
@@ -101,6 +116,13 @@ export async function getSystemSettings(): Promise<SystemSettings> {
       smtpPass: "",
       smtpFromName: "",
       smtpFromEmail: "",
+      themeBgColor: "#060914",
+      themeTextColor: "#f8fafc",
+      themeMutedColor: "#9aa7bd",
+      themePrimaryColor: "#4f7cff",
+      themeSecondaryColor: "#20c7b5",
+      themePanelColor: "#0d1323",
+      themeBorderColor: "rgba(226, 232, 240, 0.12)",
     };
   }
 }

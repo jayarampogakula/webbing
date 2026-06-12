@@ -288,6 +288,14 @@ export default function AdminConsole({
     initialSettings?.landingFeatures || JSON.stringify(defaultFeatures, null, 2)
   );
 
+  const [themeBgColor, setThemeBgColor] = useState(initialSettings?.themeBgColor || "#060914");
+  const [themeTextColor, setThemeTextColor] = useState(initialSettings?.themeTextColor || "#f8fafc");
+  const [themeMutedColor, setThemeMutedColor] = useState(initialSettings?.themeMutedColor || "#9aa7bd");
+  const [themePrimaryColor, setThemePrimaryColor] = useState(initialSettings?.themePrimaryColor || "#4f7cff");
+  const [themeSecondaryColor, setThemeSecondaryColor] = useState(initialSettings?.themeSecondaryColor || "#20c7b5");
+  const [themePanelColor, setThemePanelColor] = useState(initialSettings?.themePanelColor || "#0d1323");
+  const [themeBorderColor, setThemeBorderColor] = useState(initialSettings?.themeBorderColor || "rgba(226, 232, 240, 0.12)");
+
   const [policyPrivacy, setPolicyPrivacy] = useState(initialSettings?.policyPrivacy || "");
   const [policyTerms, setPolicyTerms] = useState(initialSettings?.policyTerms || "");
   const [policyRefund, setPolicyRefund] = useState(initialSettings?.policyRefund || "");
@@ -424,7 +432,14 @@ export default function AdminConsole({
             affiliateTier2Rate,
             affiliateTier3Rate,
             affiliateRecurringRate,
-            licenseKey
+            licenseKey,
+            themeBgColor,
+            themeTextColor,
+            themeMutedColor,
+            themePrimaryColor,
+            themeSecondaryColor,
+            themePanelColor,
+            themeBorderColor
           }
         })
       });
@@ -2151,6 +2166,149 @@ export default function AdminConsole({
                       <img src={appLogo} alt="Logo preview" style={{ height: "32px", maxWidth: "120px", objectFit: "contain" }} />
                     </div>
                   )}
+                </div>
+
+                <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1.5rem" }}>
+                  <span className="eyebrow">Theme Customization</span>
+                  <h3 style={{ margin: "0 0 0.5rem 0", color: "#fff", fontSize: "1.1rem", fontWeight: 700 }}>Platform Theme Colors</h3>
+                  <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0 0 1.5rem 0" }}>
+                    Configure the color palette of the entire SaaS platform (landing pages, authentication, dashboard, etc.). Each deployment can have a unique design aesthetic.
+                  </p>
+                  
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.25rem" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>BACKGROUND COLOR</label>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <input
+                          type="color"
+                          value={themeBgColor}
+                          onChange={(e) => setThemeBgColor(e.target.value)}
+                          style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
+                        />
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={themeBgColor}
+                          onChange={(e) => setThemeBgColor(e.target.value)}
+                          style={{ flex: 1 }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>PRIMARY TEXT COLOR</label>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <input
+                          type="color"
+                          value={themeTextColor}
+                          onChange={(e) => setThemeTextColor(e.target.value)}
+                          style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
+                        />
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={themeTextColor}
+                          onChange={(e) => setThemeTextColor(e.target.value)}
+                          style={{ flex: 1 }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>MUTED TEXT COLOR</label>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <input
+                          type="color"
+                          value={themeMutedColor}
+                          onChange={(e) => setThemeMutedColor(e.target.value)}
+                          style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
+                        />
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={themeMutedColor}
+                          onChange={(e) => setThemeMutedColor(e.target.value)}
+                          style={{ flex: 1 }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>PRIMARY ACCENT / GRADIENT 1 (BLUE)</label>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <input
+                          type="color"
+                          value={themePrimaryColor}
+                          onChange={(e) => setThemePrimaryColor(e.target.value)}
+                          style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
+                        />
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={themePrimaryColor}
+                          onChange={(e) => setThemePrimaryColor(e.target.value)}
+                          style={{ flex: 1 }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>SECONDARY ACCENT / GRADIENT 2 (TEAL)</label>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <input
+                          type="color"
+                          value={themeSecondaryColor}
+                          onChange={(e) => setThemeSecondaryColor(e.target.value)}
+                          style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
+                        />
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={themeSecondaryColor}
+                          onChange={(e) => setThemeSecondaryColor(e.target.value)}
+                          style={{ flex: 1 }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>PANEL BACKGROUND</label>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <input
+                          type="color"
+                          value={themePanelColor}
+                          onChange={(e) => setThemePanelColor(e.target.value)}
+                          style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
+                        />
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={themePanelColor}
+                          onChange={(e) => setThemePanelColor(e.target.value)}
+                          style={{ flex: 1 }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>BORDER / GRID LINE COLOR</label>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <input
+                          type="color"
+                          value={themeBorderColor}
+                          onChange={(e) => setThemeBorderColor(e.target.value)}
+                          style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
+                        />
+                        <input
+                          type="text"
+                          className="premium-input"
+                          value={themeBorderColor}
+                          onChange={(e) => setThemeBorderColor(e.target.value)}
+                          style={{ flex: 1 }}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1.5rem" }}>
