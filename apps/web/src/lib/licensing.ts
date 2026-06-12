@@ -109,8 +109,29 @@ export async function verifyLicenseOnline(key: string, domain: string): Promise<
 
 export async function checkSetupAndLicense(host?: string): Promise<{ setupRequired: boolean; licenseValid: boolean }> {
   try {
-    const cleanHost = host ? host.toLowerCase().replace("www.", "").split(":")[0] : "";
-    const isPrimaryCentralServer = cleanHost.endsWith("webbing.in") || cleanHost.endsWith("webbing.io");
+    let resolvedHost = host;
+    if (!resolvedHost) {
+      try {
+        const { headers } = await import("next/headers");
+        const headersList = headers();
+        resolvedHost = headersList.get("x-forwarded-host") || headersList.get("host") || "";
+      } catch (e) {
+        // Ignore if headers() is called outside request context
+      }
+    }
+    const cleanHost = resolvedHost ? resolvedHost.toLowerCase().replace("www.", "").split(":")[0] : "";
+    
+    // Fallback: Check if environment variables point to the master platforms
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "";
+    const cleanAppHost = appUrl.startsWith("http") 
+      ? new URL(appUrl).hostname.toLowerCase() 
+      : appUrl.toLowerCase().split(":")[0];
+
+    const isPrimaryCentralServer = 
+      cleanHost.endsWith("webbing.in") || 
+      cleanHost.endsWith("webbing.io") ||
+      cleanAppHost.endsWith("webbing.in") ||
+      cleanAppHost.endsWith("webbing.io");
 
     // Bypasses all setup/license constraints on master platform domains
     if (isPrimaryCentralServer) {

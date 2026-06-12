@@ -24,7 +24,7 @@ export default async function RootLayout({
     pathname.includes(".");
 
   if (!shouldBypass) {
-    const hostHeader = headers().get("host") || "";
+    const hostHeader = headers().get("x-forwarded-host") || headers().get("host") || "";
     const { setupRequired, licenseValid } = await checkSetupAndLicense(hostHeader);
     if (setupRequired || !licenseValid) {
       redirect("/setup");

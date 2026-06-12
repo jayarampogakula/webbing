@@ -34,7 +34,8 @@ async function getLlmKeys() {
 }
 
 export default async function AdminPage() {
-  const { setupRequired, licenseValid } = await checkSetupAndLicense();
+  const reqHost = headers().get("x-forwarded-host") || headers().get("host") || "";
+  const { setupRequired, licenseValid } = await checkSetupAndLicense(reqHost);
   if (setupRequired || !licenseValid) {
     redirect("/setup");
   }
