@@ -59,7 +59,7 @@ export default async function DashboardPage() {
   let systemSettings: any = null;
 
   try {
-    const [dbTenant, dbLlmKeys, dbPlans, dbUpiSetting, dbUser, dbSettings] = await Promise.all([
+    const [dbTenant, dbLlmKeys, dbPlans, dbUpiSetting, dbUser, dbSettings, dbDiscounts] = await Promise.all([
       prisma.tenant.findUnique({
         where: { id: user.tenantId },
         include: {
