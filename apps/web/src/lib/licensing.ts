@@ -112,6 +112,14 @@ export async function checkSetupAndLicense(host?: string): Promise<{ setupRequir
     const cleanHost = host ? host.toLowerCase().replace("www.", "").split(":")[0] : "";
     const isPrimaryCentralServer = cleanHost.endsWith("webbing.in") || cleanHost.endsWith("webbing.io");
 
+    // Bypasses all setup/license constraints on master platform domains
+    if (isPrimaryCentralServer) {
+      return {
+        setupRequired: false,
+        licenseValid: true
+      };
+    }
+
     const { prisma } = await import("@webbing/db");
 
     // 1. Check if there are any ADMIN role users configured in the DB
@@ -120,7 +128,7 @@ export async function checkSetupAndLicense(host?: string): Promise<{ setupRequir
     });
 
     if (adminCount === 0) {
-      return { setupRequired: true, licenseValid: isPrimaryCentralServer };
+      return { setupRequired: true, licenseValid: false };
     }
 
     // Check default credentials
@@ -131,17 +139,11 @@ export async function checkSetupAndLicense(host?: string): Promise<{ setupRequir
       const { verifyPassword } = await import("@webbing/db");
       const isDefaultPassword = verifyPassword("Admin123", defaultAdmin.passwordHash);
       if (isDefaultPassword) {
-        return { setupRequired: true, licenseValid: isPrimaryCentralServer };
+        return { setupRequired: true, licenseValid: false };
       }
     }
 
     // 2. Check license key
-    if (isPrimaryCentralServer) {
-      return {
-        setupRequired: false,
-        licenseValid: true
-      };
-    }
 
     const licenseSetting = await prisma.systemSetting.findUnique({
       where: { key: "licenseKey" }
