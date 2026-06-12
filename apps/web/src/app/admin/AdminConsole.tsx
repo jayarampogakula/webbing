@@ -232,6 +232,129 @@ const emailTemplates = {
   }
 };
 
+const THEME_PRESETS = [
+  {
+    name: "Default Indigo",
+    colors: {
+      themeBgColor: "#060914",
+      themeTextColor: "#f8fafc",
+      themeMutedColor: "#9aa7bd",
+      themePrimaryColor: "#4f7cff",
+      themeSecondaryColor: "#20c7b5",
+      themePanelColor: "#0d1323",
+      themeBorderColor: "rgba(226, 232, 240, 0.12)"
+    }
+  },
+  {
+    name: "Cyberpunk Purple",
+    colors: {
+      themeBgColor: "#0c0714",
+      themeTextColor: "#f3e8ff",
+      themeMutedColor: "#a78bfa",
+      themePrimaryColor: "#8b5cf6",
+      themeSecondaryColor: "#ec4899",
+      themePanelColor: "#120a1f",
+      themeBorderColor: "rgba(139, 92, 246, 0.15)"
+    }
+  },
+  {
+    name: "Ocean Emerald",
+    colors: {
+      themeBgColor: "#022c22",
+      themeTextColor: "#f0fdf4",
+      themeMutedColor: "#86efac",
+      themePrimaryColor: "#10b981",
+      themeSecondaryColor: "#06b6d4",
+      themePanelColor: "#064e3b",
+      themeBorderColor: "rgba(16, 185, 129, 0.15)"
+    }
+  },
+  {
+    name: "Luxury Gold",
+    colors: {
+      themeBgColor: "#0a0a0a",
+      themeTextColor: "#f5f5f5",
+      themeMutedColor: "#a3a3a3",
+      themePrimaryColor: "#fbbf24",
+      themeSecondaryColor: "#d97706",
+      themePanelColor: "#171717",
+      themeBorderColor: "rgba(251, 191, 36, 0.15)"
+    }
+  },
+  {
+    name: "Vampire Crimson",
+    colors: {
+      themeBgColor: "#0f0507",
+      themeTextColor: "#ffe4e6",
+      themeMutedColor: "#fda4af",
+      themePrimaryColor: "#e11d48",
+      themeSecondaryColor: "#f43f5e",
+      themePanelColor: "#1c0b0e",
+      themeBorderColor: "rgba(225, 29, 72, 0.18)"
+    }
+  },
+  {
+    name: "Neon Sapphire",
+    colors: {
+      themeBgColor: "#030712",
+      themeTextColor: "#f3f4f6",
+      themeMutedColor: "#9ca3af",
+      themePrimaryColor: "#2563eb",
+      themeSecondaryColor: "#3b82f6",
+      themePanelColor: "#111827",
+      themeBorderColor: "rgba(37, 99, 235, 0.15)"
+    }
+  },
+  {
+    name: "Sunset Amber",
+    colors: {
+      themeBgColor: "#0f0b08",
+      themeTextColor: "#fff7ed",
+      themeMutedColor: "#ffedd5",
+      themePrimaryColor: "#f97316",
+      themeSecondaryColor: "#f59e0b",
+      themePanelColor: "#1c140e",
+      themeBorderColor: "rgba(249, 115, 22, 0.15)"
+    }
+  },
+  {
+    name: "Forest Moss",
+    colors: {
+      themeBgColor: "#0b0f0b",
+      themeTextColor: "#f0fdf4",
+      themeMutedColor: "#a7f3d0",
+      themePrimaryColor: "#84cc16",
+      themeSecondaryColor: "#22c55e",
+      themePanelColor: "#141f14",
+      themeBorderColor: "rgba(132, 204, 22, 0.15)"
+    }
+  },
+  {
+    name: "Arctic Frost",
+    colors: {
+      themeBgColor: "#0f172a",
+      themeTextColor: "#f8fafc",
+      themeMutedColor: "#cbd5e1",
+      themePrimaryColor: "#38bdf8",
+      themeSecondaryColor: "#0ea5e9",
+      themePanelColor: "#1e293b",
+      themeBorderColor: "rgba(56, 189, 248, 0.15)"
+    }
+  },
+  {
+    name: "Cherry Blossom",
+    colors: {
+      themeBgColor: "#180f12",
+      themeTextColor: "#fff1f2",
+      themeMutedColor: "#fecdd3",
+      themePrimaryColor: "#ec4899",
+      themeSecondaryColor: "#f472b6",
+      themePanelColor: "#27191f",
+      themeBorderColor: "rgba(236, 72, 153, 0.15)"
+    }
+  }
+];
+
 export default function AdminConsole({
   user,
   users,
@@ -358,6 +481,50 @@ export default function AdminConsole({
       return () => clearTimeout(timer);
     }
   }, [message, error]);
+
+  const handleSaveTheme = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setLoading(true);
+    setMessage("");
+    setError("");
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          settings: {
+            themeBgColor,
+            themeTextColor,
+            themeMutedColor,
+            themePrimaryColor,
+            themeSecondaryColor,
+            themePanelColor,
+            themeBorderColor
+          }
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save theme settings.");
+      setMessage("Theme settings saved successfully! Reloading to apply styling...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (err: any) {
+      setError(err.message || "Failed to update theme settings.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetTheme = () => {
+    setThemeBgColor("#060914");
+    setThemeTextColor("#f8fafc");
+    setThemeMutedColor("#9aa7bd");
+    setThemePrimaryColor("#4f7cff");
+    setThemeSecondaryColor("#20c7b5");
+    setThemePanelColor("#0d1323");
+    setThemeBorderColor("rgba(226, 232, 240, 0.12)");
+  };
 
   // Handle Save UPI ID
   const handleSaveUpi = async (e: React.FormEvent) => {
@@ -2177,7 +2344,7 @@ export default function AdminConsole({
                   
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.25rem" }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>BACKGROUND COLOR</label>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700, minHeight: "2.2rem", display: "flex", alignItems: "flex-end", marginBottom: "0.25rem" }}>BACKGROUND COLOR</label>
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
@@ -2196,7 +2363,7 @@ export default function AdminConsole({
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>PRIMARY TEXT COLOR</label>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700, minHeight: "2.2rem", display: "flex", alignItems: "flex-end", marginBottom: "0.25rem" }}>PRIMARY TEXT COLOR</label>
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
@@ -2215,7 +2382,7 @@ export default function AdminConsole({
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>MUTED TEXT COLOR</label>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700, minHeight: "2.2rem", display: "flex", alignItems: "flex-end", marginBottom: "0.25rem" }}>MUTED TEXT COLOR</label>
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
@@ -2234,7 +2401,7 @@ export default function AdminConsole({
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>PRIMARY ACCENT / GRADIENT 1 (BLUE)</label>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700, minHeight: "2.2rem", display: "flex", alignItems: "flex-end", marginBottom: "0.25rem" }}>PRIMARY ACCENT / GRADIENT 1 (BLUE)</label>
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
@@ -2253,7 +2420,7 @@ export default function AdminConsole({
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>SECONDARY ACCENT / GRADIENT 2 (TEAL)</label>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700, minHeight: "2.2rem", display: "flex", alignItems: "flex-end", marginBottom: "0.25rem" }}>SECONDARY ACCENT / GRADIENT 2 (TEAL)</label>
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
@@ -2272,7 +2439,7 @@ export default function AdminConsole({
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>PANEL BACKGROUND</label>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700, minHeight: "2.2rem", display: "flex", alignItems: "flex-end", marginBottom: "0.25rem" }}>PANEL BACKGROUND</label>
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
@@ -2291,7 +2458,7 @@ export default function AdminConsole({
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>BORDER / GRID LINE COLOR</label>
+                      <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700, minHeight: "2.2rem", display: "flex", alignItems: "flex-end", marginBottom: "0.25rem" }}>BORDER / GRID LINE COLOR</label>
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
@@ -2307,6 +2474,72 @@ export default function AdminConsole({
                           style={{ flex: 1 }}
                         />
                       </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveTheme()}
+                      className="primary-action"
+                      disabled={loading}
+                      style={{ minHeight: "2.4rem", padding: "0 1.25rem", fontSize: "0.85rem" }}
+                    >
+                      {loading ? "Saving Theme..." : "Save Theme Colors"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetTheme}
+                      className="secondary-action"
+                      disabled={loading}
+                      style={{ minHeight: "2.4rem", padding: "0 1.25rem", fontSize: "0.85rem" }}
+                    >
+                      Reset to Defaults
+                    </button>
+                  </div>
+
+                  <div style={{ marginTop: "1.5rem", borderTop: "1px dashed rgba(255,255,255,0.06)", paddingTop: "1.25rem" }}>
+                    <label style={{ fontSize: "0.72rem", color: "#9ca3af", fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: "0.75rem", letterSpacing: "0.5px" }}>Quick Preset Themes</label>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: "0.75rem" }}>
+                      {THEME_PRESETS.map((preset) => (
+                        <button
+                          key={preset.name}
+                          type="button"
+                          onClick={() => {
+                            setThemeBgColor(preset.colors.themeBgColor);
+                            setThemeTextColor(preset.colors.themeTextColor);
+                            setThemeMutedColor(preset.colors.themeMutedColor);
+                            setThemePrimaryColor(preset.colors.themePrimaryColor);
+                            setThemeSecondaryColor(preset.colors.themeSecondaryColor);
+                            setThemePanelColor(preset.colors.themePanelColor);
+                            setThemeBorderColor(preset.colors.themeBorderColor);
+                          }}
+                          className="secondary-action"
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "flex-start",
+                            padding: "0.65rem 0.8rem",
+                            gap: "0.5rem",
+                            borderRadius: "0.5rem",
+                            background: "rgba(255, 255, 255, 0.02)",
+                            borderColor: "rgba(255, 255, 255, 0.05)",
+                            textAlign: "left",
+                            height: "auto",
+                            width: "100%",
+                            cursor: "pointer",
+                            margin: 0
+                          }}
+                        >
+                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#fff" }}>{preset.name}</span>
+                          <div style={{ display: "flex", gap: "0.25rem" }}>
+                            <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: preset.colors.themeBgColor, border: "1px solid rgba(255,255,255,0.2)" }} title="BG" />
+                            <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: preset.colors.themePrimaryColor, border: "1px solid rgba(255,255,255,0.2)" }} title="Primary" />
+                            <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: preset.colors.themeSecondaryColor, border: "1px solid rgba(255,255,255,0.2)" }} title="Secondary" />
+                            <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: preset.colors.themePanelColor, border: "1px solid rgba(255,255,255,0.2)" }} title="Panel" />
+                          </div>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
