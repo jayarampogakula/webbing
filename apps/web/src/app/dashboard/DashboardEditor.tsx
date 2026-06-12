@@ -1562,36 +1562,31 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                                   </div>
                                 );
                               }
-        
+                                            
                               // Adjust name, pricing, and note for billing cycle
                               let displayPrice = `₹${plan.price}/month`;
                               let amount = plan.price;
                               let planName = plan.name;
                               let discountBadge = null;
                               let customId = planKey;
-         
+                              
+                              const discountPercent = plan.yearlyDiscount || 0;
+          
                               if (billingCycle === "annually") {
-                                if (planKey === "individual-plan") {
-                                  displayPrice = "₹2,040/year";
-                                  amount = 2040;
-                                  planName = "Individual Plan (Annually)";
-                                  discountBadge = "5% Discount Applied";
-                                  customId = "individual-plan-annual";
-                                } else if (planKey === "pro-plan") {
-                                  displayPrice = "₹6,468/year";
-                                  amount = 6468;
-                                  planName = "Pro Plan (Annually)";
-                                  discountBadge = "10% Discount Applied";
-                                  customId = "pro-plan-annual";
-                                } else if (planKey === "agency") {
-                                  displayPrice = "₹25,488/year";
-                                  amount = 25488;
-                                  planName = "Agency (Annually)";
-                                  discountBadge = "15% Discount Applied";
-                                  customId = "agency-annual";
+                                if (discountPercent > 0) {
+                                  amount = Math.round(plan.price * 12 * (1 - discountPercent / 100));
+                                  displayPrice = `₹${amount.toLocaleString("en-IN")}/year`;
+                                  planName = `${plan.name} (Annually)`;
+                                  discountBadge = `${discountPercent}% Discount Applied`;
+                                  customId = `${planKey}-annual`;
+                                } else {
+                                  amount = plan.price * 12;
+                                  displayPrice = `₹${amount.toLocaleString("en-IN")}/year`;
+                                  planName = `${plan.name} (Annually)`;
+                                  customId = `${planKey}-annual`;
                                 }
                               }
-         
+          
                               return (
                                 <div key={plan.id} style={{ padding: "1.25rem", background: "rgba(255,255,255,0.01)", border: isCurrent ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                   <div>
@@ -1603,7 +1598,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                                       {displayPrice} • {plan.creditsLimit} monthly credits
                                       {billingCycle === "annually" && (
                                         <span style={{ color: "#9ca3af", display: "block", fontSize: "0.75rem", marginTop: "0.1rem" }}>
-                                          Equivalent to ₹{planKey === "individual-plan" ? "170" : (planKey === "pro-plan" ? "539" : "2124")}/month
+                                          Equivalent to ₹{Math.round(amount / 12)}/month
                                         </span>
                                       )}
                                     </span>
@@ -2444,18 +2439,6 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             </div>
             
             <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap", marginTop: isMobile ? "0.5rem" : "0" }}>
-              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", background: "rgba(255, 255, 255, 0.02)", padding: "0.4rem 1rem", borderRadius: "0.5rem", border: "1px solid rgba(255,255,255,0.05)", fontSize: "0.85rem" }}>
-                <span style={{ color: "#9ca3af" }}>Credits: <strong style={{ color: "#818cf8" }}>{remainingCredits} left</strong></span>
-                <button
-                  onClick={() => {
-                    setUpgradeModalOpen(true);
-                    setBuyCreditsView(isAgency);
-                  }}
-                  style={{ background: isAgency ? "rgba(168, 85, 247, 0.15)" : "rgba(129, 140, 248, 0.15)", border: isAgency ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(129, 140, 248, 0.3)", color: isAgency ? "#d8b4fe" : "#a5b4fc", padding: "0.2rem 0.5rem", borderRadius: "0.25rem", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", marginLeft: "0.5rem" }}
-                >
-                  {isAgency ? "Buy Credits" : "Upgrade"}
-                </button>
-              </div>
               <button
                 onClick={() => {
                   setIsCreatingNew(true);

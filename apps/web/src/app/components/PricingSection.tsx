@@ -95,21 +95,14 @@ export default function PricingSection({ initialPlans }: { initialPlans?: any[] 
       };
 
       const monthlyPrice = plan.price;
+      const discountPercent = plan.yearlyDiscount || 0;
       let annualPrice = plan.price * 12;
       let discountBadge = null;
       let subText = null;
 
-      if (plan.id === "individual") {
-        annualPrice = Math.round(plan.price * 12 * 0.95);
-        discountBadge = "Save 5%";
-        subText = `Equivalent to ₹${Math.round(annualPrice / 12)}/month`;
-      } else if (plan.id === "pro-plan") {
-        annualPrice = Math.round(plan.price * 12 * 0.9);
-        discountBadge = "Save 10%";
-        subText = `Equivalent to ₹${Math.round(annualPrice / 12)}/month`;
-      } else if (plan.id === "agency") {
-        annualPrice = Math.round(plan.price * 12 * 0.85);
-        discountBadge = "Save 15%";
+      if (discountPercent > 0) {
+        annualPrice = Math.round(plan.price * 12 * (1 - discountPercent / 100));
+        discountBadge = `Save ${discountPercent}%`;
         subText = `Equivalent to ₹${Math.round(annualPrice / 12)}/month`;
       }
 
@@ -137,13 +130,18 @@ export default function PricingSection({ initialPlans }: { initialPlans?: any[] 
     });
   }
 
+  const maxDiscount = plans.reduce((max, p) => {
+    const discount = p.discountBadge ? parseInt(p.discountBadge.replace(/[^0-9]/g, ""), 10) : 0;
+    return discount > max ? discount : max;
+  }, 0);
+
   return (
     <section id="pricing" className="section-band">
       <div className="section-copy" style={{ textAlign: "center", margin: "0 auto 2.5rem auto", maxWidth: "600px" }}>
         <span className="eyebrow">Pricing</span>
         <h2 style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}>Plans that scan clearly.</h2>
         <p>Simple tiers, clearer spacing, and calls to action that do not stack awkwardly down the page.</p>
-
+ 
         {/* Billing Cycle Switcher */}
         <div style={{ display: "inline-flex", alignItems: "center", gap: "1rem", marginTop: "2rem", background: "rgba(255,255,255,0.03)", padding: "0.4rem 1rem", borderRadius: "2rem", border: "1px solid rgba(255,255,255,0.06)" }}>
           <button
@@ -182,9 +180,11 @@ export default function PricingSection({ initialPlans }: { initialPlans?: any[] 
             }}
           >
             Annually
-            <span style={{ fontSize: "0.7rem", background: "rgba(61, 220, 151, 0.2)", color: "#3ddc97", padding: "0.1rem 0.4rem", borderRadius: "10px", fontWeight: 800 }}>
-              Up to 15% off
-            </span>
+            {maxDiscount > 0 && (
+              <span style={{ fontSize: "0.7rem", background: "rgba(61, 220, 151, 0.2)", color: "#3ddc97", padding: "0.1rem 0.4rem", borderRadius: "10px", fontWeight: 800 }}>
+                Up to {maxDiscount}% off
+              </span>
+            )}
           </button>
         </div>
       </div>

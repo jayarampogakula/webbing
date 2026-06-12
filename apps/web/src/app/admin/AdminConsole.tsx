@@ -466,6 +466,7 @@ export default function AdminConsole({
   const [planPrice, setPlanPrice] = useState(299);
   const [planCredits, setPlanCredits] = useState(100);
   const [planFeatures, setPlanFeatures] = useState("");
+  const [planYearlyDiscount, setPlanYearlyDiscount] = useState(0);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -635,16 +636,17 @@ export default function AdminConsole({
           price: planPrice,
           creditsLimit: planCredits,
           features: planFeatures,
+          yearlyDiscount: planYearlyDiscount,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save plan.");
 
       if (editingPlanId) {
-        setPlans(prev => prev.map(p => (p.id === editingPlanId ? data.plan : p)));
+        setPlans(prev => prev.map(p => (p.id === editingPlanId ? { ...data.plan, yearlyDiscount: planYearlyDiscount } : p)));
         setMessage("Plan updated successfully!");
       } else {
-        setPlans(prev => [...prev, data.plan]);
+        setPlans(prev => [...prev, { ...data.plan, yearlyDiscount: planYearlyDiscount }]);
         setMessage("New plan created successfully!");
       }
 
@@ -654,6 +656,7 @@ export default function AdminConsole({
       setPlanPrice(299);
       setPlanCredits(100);
       setPlanFeatures("");
+      setPlanYearlyDiscount(0);
     } catch (err: any) {
       setError(err.message || "Failed to save plan.");
     } finally {
@@ -662,12 +665,13 @@ export default function AdminConsole({
   };
 
   // Start Editing Plan
-  const startEditPlan = (plan: Plan) => {
+  const startEditPlan = (plan: any) => {
     setEditingPlanId(plan.id);
     setPlanName(plan.name);
     setPlanPrice(plan.price);
     setPlanCredits(plan.creditsLimit);
     setPlanFeatures(plan.features);
+    setPlanYearlyDiscount(plan.yearlyDiscount || 0);
   };
 
   // Delete Plan
@@ -1436,17 +1440,32 @@ export default function AdminConsole({
                   </div>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                  <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>MONTHLY AI CREDITS LIMIT</label>
-                  <input
-                    type="number"
-                    className="premium-input"
-                    value={planCredits}
-                    onChange={(e) => setPlanCredits(Math.max(1, parseInt(e.target.value) || 1))}
-                    min="1"
-                    required
-                    style={{ width: "100%" }}
-                  />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>MONTHLY AI CREDITS LIMIT</label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      value={planCredits}
+                      onChange={(e) => setPlanCredits(Math.max(1, parseInt(e.target.value) || 1))}
+                      min="1"
+                      required
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    <label style={{ fontSize: "0.75rem", color: "#9ca3af", fontWeight: 700 }}>YEARLY DISCOUNT (%)</label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      value={planYearlyDiscount}
+                      onChange={(e) => setPlanYearlyDiscount(Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
+                      min="0"
+                      max="100"
+                      required
+                      style={{ width: "100%" }}
+                    />
+                  </div>
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
@@ -1471,6 +1490,7 @@ export default function AdminConsole({
                         setPlanPrice(299);
                         setPlanCredits(100);
                         setPlanFeatures("");
+                        setPlanYearlyDiscount(0);
                       }}
                       style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", padding: "0.5rem 1.2rem", borderRadius: "0.5rem", fontSize: "0.8rem", cursor: "pointer" }}
                     >
@@ -1495,6 +1515,7 @@ export default function AdminConsole({
                     <tr>
                       <th>Plan Name</th>
                       <th>Price (INR)</th>
+                      <th>Yearly Discount</th>
                       <th>AI Credits</th>
                       <th>Features List</th>
                       <th style={{ textAlign: "right" }}>Actions</th>
@@ -1505,6 +1526,7 @@ export default function AdminConsole({
                       <tr key={p.id}>
                         <td><strong>{p.name}</strong></td>
                         <td>₹{p.price}/mo</td>
+                        <td>{(p as any).yearlyDiscount || 0}%</td>
                         <td>{p.creditsLimit} credits</td>
                         <td>
                           <span style={{ fontSize: "0.8rem", color: "#cbd5e1" }}>

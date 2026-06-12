@@ -14,11 +14,20 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const plans = await prisma.plan.findMany({
-      orderBy: { price: "asc" }
-    });
+    const [plans, settings] = await Promise.all([
+      prisma.plan.findMany({ orderBy: { price: "asc" } }),
+      prisma.systemSetting.findMany({
+        where: { key: { startsWith: "yearlyDiscount_" } }
+      })
+    ]);
 
-    return NextResponse.json({ success: true, plans });
+    const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+    const plansWithDiscounts = plans.map((p) => ({
+      ...p,
+      yearlyDiscount: parseInt(settingsMap[`yearlyDiscount_${p.id}`] || "0", 10)
+    }));
+
+    return NextResponse.json({ success: true, plans: plansWithDiscounts });
   } catch (error: any) {
     console.error("GET Plans API Exception:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -36,7 +45,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized. Admin access required." }, { status: 401 });
     }
 
-    const { id, name, price, creditsLimit, features } = await req.json();
+    const { id, name, price, creditsLimit, features, yearlyDiscount } = await req.json();
 
     if (!name || price === undefined || creditsLimit === undefined) {
       return NextResponse.json({ error: "Name, price, and credits limit are required." }, { status: 400 });
@@ -61,6 +70,14 @@ export async function POST(req: Request) {
           creditsLimit: parseInt(String(creditsLimit), 10),
           features: features || ""
         }
+      });
+    }
+
+    if (yearlyDiscount !== undefined) {
+      await prisma.systemSetting.upsert({
+        where: { key: `yearlyDiscount_${plan.id}` },
+        update: { value: String(yearlyDiscount) },
+        create: { key: `yearlyDiscount_${plan.id}`, value: String(yearlyDiscount) }
       });
     }
 
@@ -89,9 +106,14 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Plan ID is required." }, { status: 400 });
     }
 
-    await prisma.plan.delete({
-      where: { id }
-    });
+    await Promise.all([
+      prisma.plan.delete({
+        where: { id }
+      }),
+      prisma.systemSetting.deleteMany({
+        where: { key: `yearlyDiscount_${id}` }
+      })
+    ]);
 
     return NextResponse.json({ success: true, message: "Plan deleted successfully." });
   } catch (error: any) {

@@ -91,10 +91,17 @@ export default async function DashboardPage() {
       prisma.systemSetting.findUnique({ where: { key: "upiId" } }),
       prisma.user.findUnique({ where: { id: user.userId } }),
       getSystemSettings(),
+      prisma.systemSetting.findMany({
+        where: { key: { startsWith: "yearlyDiscount_" } }
+      })
     ]);
     tenant = dbTenant;
     llmKeys = dbLlmKeys;
-    plans = dbPlans;
+    const discountMap = Object.fromEntries((dbDiscounts || []).map((s: any) => [s.key, s.value]));
+    plans = dbPlans.map((p: any) => ({
+      ...p,
+      yearlyDiscount: parseInt(discountMap[`yearlyDiscount_${p.id}`] || "0", 10)
+    }));
     upiId = dbUpiSetting?.value || "pogakula@ybl";
     dbUserObj = dbUser;
     systemSettings = dbSettings;

@@ -31,7 +31,17 @@ export default async function LandingPage() {
 
   let dbPlans: any[] = [];
   try {
-    dbPlans = await prisma.plan.findMany({ orderBy: { price: "asc" } });
+    const [plans, settings] = await Promise.all([
+      prisma.plan.findMany({ orderBy: { price: "asc" } }),
+      prisma.systemSetting.findMany({
+        where: { key: { startsWith: "yearlyDiscount_" } }
+      })
+    ]);
+    const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+    dbPlans = plans.map((p) => ({
+      ...p,
+      yearlyDiscount: parseInt(settingsMap[`yearlyDiscount_${p.id}`] || "0", 10)
+    }));
   } catch (err) {
     console.error("Failed to load plans for landing page:", err);
   }
