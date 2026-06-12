@@ -24,7 +24,8 @@ export default async function RootLayout({
     pathname.includes(".");
 
   if (!shouldBypass) {
-    const { setupRequired, licenseValid } = await checkSetupAndLicense();
+    const hostHeader = headers().get("host") || "";
+    const { setupRequired, licenseValid } = await checkSetupAndLicense(hostHeader);
     if (setupRequired || !licenseValid) {
       redirect("/setup");
     }

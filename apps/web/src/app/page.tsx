@@ -1,8 +1,9 @@
 import React from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { verifySession } from "@/lib/session";
 import { checkSetupAndLicense } from "@/lib/licensing";
 import { redirect } from "next/navigation";
+import { prisma } from "@webbing/db";
 import GeneratorForm from "./GeneratorForm";
 import MarketingHeader from "./components/MarketingHeader";
 import { CheckCircle2, Compass, Globe2, Layers3, Mail, ShieldCheck, Sparkles, Zap, ShoppingCart, MessageSquare, Code, DollarSign } from "lucide-react";
@@ -22,9 +23,17 @@ const features = [
 ];
 
 export default async function LandingPage() {
-  const { setupRequired, licenseValid } = await checkSetupAndLicense();
+  const hostHeader = headers().get("host") || "";
+  const { setupRequired, licenseValid } = await checkSetupAndLicense(hostHeader);
   if (setupRequired || !licenseValid) {
     redirect("/setup");
+  }
+
+  let dbPlans: any[] = [];
+  try {
+    dbPlans = await prisma.plan.findMany({ orderBy: { price: "asc" } });
+  } catch (err) {
+    console.error("Failed to load plans for landing page:", err);
   }
 
   const sessionToken = cookies().get("webbing-session")?.value;
@@ -92,7 +101,7 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        <PricingSection />
+        <PricingSection initialPlans={dbPlans} />
 
 
         <section id="about" className="section-band">

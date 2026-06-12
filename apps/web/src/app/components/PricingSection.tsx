@@ -3,10 +3,10 @@
 import React, { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 
-export default function PricingSection() {
+export default function PricingSection({ initialPlans }: { initialPlans?: any[] }) {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annually">("monthly");
 
-  const plans = [
+  const defaultPlans = [
     {
       id: "starter",
       name: "Free",
@@ -63,7 +63,7 @@ export default function PricingSection() {
     },
     {
       id: "agency",
-      name: "Agency",
+      name: "Agency Plan",
       priceDisplay: billingCycle === "monthly" ? "₹2,499" : "₹25,488",
       period: billingCycle === "monthly" ? "/ month" : "/ year",
       text: "For client production",
@@ -82,6 +82,60 @@ export default function PricingSection() {
       subText: billingCycle === "annually" ? "Equivalent to ₹2124/month" : null
     }
   ];
+
+  let plans = defaultPlans;
+
+  if (initialPlans && initialPlans.length > 0) {
+    plans = initialPlans.map((plan) => {
+      const defaultInfo = defaultPlans.find(p => p.id === plan.id) || {
+        text: "Custom plan details",
+        featured: false,
+        buttonText: "Choose Plan",
+        signUpUrl: `/signup?plan=${plan.id}`
+      };
+
+      const monthlyPrice = plan.price;
+      let annualPrice = plan.price * 12;
+      let discountBadge = null;
+      let subText = null;
+
+      if (plan.id === "individual") {
+        annualPrice = Math.round(plan.price * 12 * 0.95);
+        discountBadge = "Save 5%";
+        subText = `Equivalent to ₹${Math.round(annualPrice / 12)}/month`;
+      } else if (plan.id === "pro-plan") {
+        annualPrice = Math.round(plan.price * 12 * 0.9);
+        discountBadge = "Save 10%";
+        subText = `Equivalent to ₹${Math.round(annualPrice / 12)}/month`;
+      } else if (plan.id === "agency") {
+        annualPrice = Math.round(plan.price * 12 * 0.85);
+        discountBadge = "Save 15%";
+        subText = `Equivalent to ₹${Math.round(annualPrice / 12)}/month`;
+      }
+
+      const priceDisplay = plan.price === 0 
+        ? "₹0" 
+        : (billingCycle === "monthly" ? `₹${monthlyPrice}` : `₹${annualPrice.toLocaleString("en-IN")}`);
+
+      const signUpUrl = plan.price === 0 
+        ? `/signup?plan=${plan.id}`
+        : (billingCycle === "monthly" ? `/signup?plan=${plan.id}` : `/signup?plan=${plan.id}-annual`);
+
+      return {
+        id: plan.id,
+        name: plan.name,
+        priceDisplay,
+        period: plan.price === 0 ? "/ month" : (billingCycle === "monthly" ? "/ month" : "/ year"),
+        text: defaultInfo.text,
+        items: plan.features.split(",").map((item: string) => item.trim()),
+        featured: defaultInfo.featured,
+        buttonText: defaultInfo.buttonText,
+        signUpUrl,
+        discountBadge: billingCycle === "annually" ? discountBadge : null,
+        subText: billingCycle === "annually" ? subText : null
+      };
+    });
+  }
 
   return (
     <section id="pricing" className="section-band">
