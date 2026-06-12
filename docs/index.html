@@ -290,7 +290,7 @@
       </nav>
     </div>
     <div class="sidebar-footer">
-      Webbing SaaS v0.8.0
+      Webbing SaaS v0.9.0
     </div>
   </aside>
 
@@ -478,6 +478,18 @@ ANTHROPIC_API_KEY="sk-ant-..."</code></pre>
     <!-- TAB 6: RELEASES -->
     <section id="releases" class="tab-panel">
       <h1>Release Notes & Version History</h1>
+
+      <h2>🏷️ v0.9.0 - Dynamic White-Labeling & Runtime License Enforcement</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: -0.5rem; margin-bottom: 1.5rem;">Release Date: June 12, 2026</p>
+
+      <div class="panel">
+        <h3>🚀 Release Highlights</h3>
+        <ul>
+          <li><strong>Dynamic White-Labeling:</strong> Decoupled all hardcoded references to <code>webbing.in</code> or <code>Webbing</code> in previews, email footers, default settings, and placeholders. Brand names and links now resolve dynamically from database and domain settings.</li>
+          <li><strong>SaaS Licensing Guards:</strong> Locked application page components and layout routes. If the database is unlicensed or setup has not been run, clients are automatically redirected to <code>/setup</code>.</li>
+          <li><strong>White-Labeled Site Watermark:</strong> Tenant sites on the free tier now display watermarks matching the platform's custom branding, linked to the customer's own domain.</li>
+        </ul>
+      </div>
 
       <h2>🏷️ v0.8.0 - Setup Wizard, Licensing & Overwrite Protections</h2>
       <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: -0.5rem; margin-bottom: 1.5rem;">Release Date: June 11, 2026</p>

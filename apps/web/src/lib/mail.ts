@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer";
 import { prisma } from "@webbing/db";
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "http://localhost:3000";
+
 // Helper to retrieve all SMTP and email branding settings dynamically from the database
 async function getSmtpSettings() {
   try {
@@ -119,7 +121,7 @@ export async function sendWelcomeEmail(toEmail: string, name: string) {
        Your registered email address is: <strong style="color: #ffffff;">${toEmail}</strong>
      </p>
      <div style="text-align: center; margin-bottom: 30px;">
-       <a href="https://${appName.toLowerCase() === 'webbing' ? 'webbing.in' : 'localhost:3000'}/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Dashboard</a>
+       <a href="${appUrl}/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Dashboard</a>
      </div>
      <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
      <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
@@ -220,7 +222,7 @@ export async function sendPlanActivationEmail(toEmail: string, name: string, pla
       </p>
     </div>
     <div style="text-align: center; margin-bottom: 30px;">
-      <a href="https://${appName.toLowerCase() === 'webbing' ? 'webbing.in' : 'localhost:3000'}/signin" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Start Building Now</a>
+      <a href="${appUrl}/signin" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Start Building Now</a>
     </div>
     <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
     <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
@@ -262,7 +264,7 @@ export async function sendCreditsPurchaseEmail(
       These credits are now available for website generations, AI copy writes, or image updates inside your workspace.
     </p>
     <div style="text-align: center; margin-bottom: 30px;">
-      <a href="https://${appName.toLowerCase() === 'webbing' ? 'webbing.in' : 'localhost:3000'}/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Workspace</a>
+      <a href="${appUrl}/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Workspace</a>
     </div>
     <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
     <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
@@ -353,7 +355,7 @@ export async function sendPasswordRecoveryEmail(toEmail: string, name: string, t
        Please log in using this temporary password and immediately change it from your profile settings on the dashboard.
      </p>
      <div style="text-align: center; margin-bottom: 30px;">
-       <a href="https://${appName.toLowerCase() === 'webbing' ? 'webbing.in' : 'localhost:3000'}/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Log In Now</a>
+       <a href="${appUrl}/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Log In Now</a>
      </div>
      <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
      <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">

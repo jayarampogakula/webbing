@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
+import { checkSetupAndLicense } from "@/lib/licensing";
 import PlanEditor from "./PlanEditor";
 import LlmKeyManager from "../components/LlmKeyManager";
 import AdminConsole from "./AdminConsole";
@@ -33,6 +34,11 @@ async function getLlmKeys() {
 }
 
 export default async function AdminPage() {
+  const { setupRequired, licenseValid } = await checkSetupAndLicense();
+  if (setupRequired || !licenseValid) {
+    redirect("/setup");
+  }
+
   const sessionToken = cookies().get("webbing-session")?.value;
   const user = sessionToken ? verifySession(sessionToken) : null;
 

@@ -32,6 +32,9 @@ export default function middleware(req: NextRequest) {
   const hostname = req.headers.get("host") || "webbing.in";
   const path = url.pathname;
 
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", path);
+
   // Strip port from hostname so subdomain detection works on any port (3000, 3001, etc.)
   const hostnameWithoutPort = hostname.split(":")[0].toLowerCase();
 
@@ -99,10 +102,18 @@ export default function middleware(req: NextRequest) {
     }
 
     // Standard app dashboard routing
-    return NextResponse.next();
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      }
+    });
   }
 
   // 2. Subdomain & Custom Domain routing
   // Rewrites requests to the unified dynamic site renderer
-  return NextResponse.rewrite(new URL(`/sites/${currentHost}${path}`, req.url));
+  return NextResponse.rewrite(new URL(`/sites/${currentHost}${path}`, req.url), {
+    request: {
+      headers: requestHeaders,
+    }
+  });
 }

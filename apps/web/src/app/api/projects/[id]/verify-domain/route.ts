@@ -7,6 +7,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const hostHeader = req.headers.get("host") || "webbing.in";
+    const baseDomain = hostHeader.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].split(":")[0];
+
     const projectId = params.id;
     const customDomain = await prisma.customDomain.findUnique({
       where: { projectId },
@@ -32,9 +35,8 @@ export async function POST(
         if (
           resolved.some(
             (cname) =>
-              cname.includes("cname.webbing.in") ||
-              cname.includes("webbing.in") ||
-              cname.includes("cname.webbing.io")
+              cname.includes(`cname.${baseDomain}`) ||
+              cname.includes(baseDomain)
           )
         ) {
           verified = true;
@@ -48,8 +50,8 @@ export async function POST(
         try {
           const [targetIps, systemIps, backupIps] = await Promise.all([
             dns.promises.resolve4(hostname).catch(() => []),
-            dns.promises.resolve4("cname.webbing.in").catch(() => []),
-            dns.promises.resolve4("webbing.in").catch(() => []),
+            dns.promises.resolve4(`cname.${baseDomain}`).catch(() => []),
+            dns.promises.resolve4(baseDomain).catch(() => []),
           ]);
 
           const combinedSystemIps = Array.from(
@@ -74,7 +76,7 @@ export async function POST(
     } else {
       return NextResponse.json({
         success: false,
-        message: "DNS connection check failed. Ensure CNAME points to cname.webbing.in",
+        message: `DNS connection check failed. Ensure CNAME points to cname.${baseDomain}`,
       });
     }
   } catch (error: any) {

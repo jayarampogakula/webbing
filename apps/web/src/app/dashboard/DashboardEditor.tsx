@@ -2134,8 +2134,8 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             {/* Version Indicator */}
             {!sidebarCollapsed && (
               <div style={{ padding: "0.5rem 0.8rem", color: "#4b5563", fontSize: "0.75rem", fontWeight: 600, textAlign: "center", borderTop: "1px solid rgba(255, 255, 255, 0.03)", paddingTop: "0.5rem", marginTop: "auto", display: "flex", flexDirection: "column", gap: "0.1rem" }}>
-                <span style={{ fontSize: "0.75rem", opacity: 0.8 }}>Webbing SaaS</span>
-                <span style={{ color: "#818cf8" }}>v0.8.0</span>
+                <span style={{ fontSize: "0.75rem", opacity: 0.8 }}>{appName} SaaS</span>
+                <span style={{ color: "#818cf8" }}>v0.9.0</span>
               </div>
             )}
 
@@ -4018,7 +4018,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                         <>
                           <h4 style={{ color: "#fff", margin: "0 0 0.5rem 0" }}>Website Subdomain</h4>
                           <p style={{ color: "#9ca3af", fontSize: "0.75rem", margin: 0, lineHeight: 1.4 }}>
-                            Customize the default subdomain address hosted on Webbing's servers.
+                            Customize the default subdomain address hosted on our servers.
                           </p>
                           
                           <div className="field-group" style={{ marginBottom: "1.5rem" }}>
@@ -4087,7 +4087,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
                                 </p>
                                 <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(0,0,0,0.2)", padding: "0.2rem 0.5rem", borderRadius: "0.2rem" }}>
                                   <span>Type: <strong>CNAME</strong> | Name: <strong>www</strong></span>
-                                  <code style={{ color: "#a5b4fc" }}>cname.webbing.in</code>
+                                  <code style={{ color: "#a5b4fc" }}>cname.{baseDomain}</code>
                                 </div>
                               </div>
 

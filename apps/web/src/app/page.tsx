@@ -1,6 +1,8 @@
 import React from "react";
 import { cookies } from "next/headers";
 import { verifySession } from "@/lib/session";
+import { checkSetupAndLicense } from "@/lib/licensing";
+import { redirect } from "next/navigation";
 import GeneratorForm from "./GeneratorForm";
 import MarketingHeader from "./components/MarketingHeader";
 import { CheckCircle2, Compass, Globe2, Layers3, Mail, ShieldCheck, Sparkles, Zap, ShoppingCart, MessageSquare, Code, DollarSign } from "lucide-react";
@@ -20,6 +22,11 @@ const features = [
 ];
 
 export default async function LandingPage() {
+  const { setupRequired, licenseValid } = await checkSetupAndLicense();
+  if (setupRequired || !licenseValid) {
+    redirect("/setup");
+  }
+
   const sessionToken = cookies().get("webbing-session")?.value;
   const user = sessionToken ? verifySession(sessionToken) : null;
   const settings = await getSystemSettings();
@@ -117,7 +124,7 @@ export default async function LandingPage() {
         </div>
         <div style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "0.8rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
           <span>© {new Date().getFullYear()} {settings.appName} Platforms Inc. All rights reserved.</span>
-          <span style={{ opacity: 0.6 }}>Version v0.8.0</span>
+          <span style={{ opacity: 0.6 }}>Version v0.9.0</span>
         </div>
       </footer>
     </div>

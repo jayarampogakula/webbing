@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { prisma } from "@webbing/db";
 import { CheckCircle2, Mail, ArrowRight, Zap, Star, ArrowUpRight, Phone, Clock } from "lucide-react";
+import { getSystemSettings } from "@/lib/settings";
 import EcommerceStore from "@/components/EcommerceStore";
 import ClientDashboard from "@/components/ClientDashboard";
 import ClientEffects from "@/components/ClientEffects";
@@ -54,6 +55,12 @@ function resolveImageUrl(url: any, style?: string): string {
 
 export default async function GeneratedSitePage({ params }: { params: { subdomain: string; path?: string[] } }) {
   try {
+    const settings = await getSystemSettings();
+    const appName = settings.appName || "Webbing";
+    const appLogoInitial = appName.charAt(0).toUpperCase();
+    const hostHeader = headers().get("host") || "localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || (hostHeader.includes("localhost") ? `http://${hostHeader}` : `https://${hostHeader}`);
+
     const slug = params.path?.join("/") || "index";
     const hostnameOrSubdomain = params.subdomain.toLowerCase();
 
@@ -135,9 +142,9 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
               </div>
               <h1 style={{ fontSize: "1.75rem", fontWeight: 800, margin: "0 0 0.75rem 0", color: "#fff" }}>Website Temporarily Offline</h1>
               <p style={{ color: "#9ca3af", fontSize: "0.95rem", lineHeight: 1.6, margin: "0 0 2rem 0" }}>
-                This site's hosting subscription has expired or is currently unpaid. If you are the owner, please log in to your Webbing dashboard to update your billing details.
+                This site's hosting subscription has expired or is currently unpaid. If you are the owner, please log in to your {appName} dashboard to update your billing details.
               </p>
-              <a href="https://webbing.in/dashboard" style={{ display: "inline-block", background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", textDecoration: "none", padding: "0.75rem 1.5rem", borderRadius: "0.5rem", fontWeight: 700, fontSize: "0.9rem", boxShadow: "0 10px 20px rgba(99,102,241,0.2)" }}>
+              <a href={`${appUrl}/dashboard`} style={{ display: "inline-block", background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", textDecoration: "none", padding: "0.75rem 1.5rem", borderRadius: "0.5rem", fontWeight: 700, fontSize: "0.9rem", boxShadow: "0 10px 20px rgba(99,102,241,0.2)" }}>
                 Go to Dashboard
               </a>
             </div>
@@ -670,10 +677,10 @@ export default async function GeneratedSitePage({ params }: { params: { subdomai
                   </div>
                   {isFree && (
                     <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.06)", paddingTop: "1.5rem", width: "100%", display: "flex", justifyContent: "center" }}>
-                      <a href="https://webbing.in" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", color: "#cbd5e1", textDecoration: "none", fontSize: "0.8rem", fontWeight: 600, padding: "0.4rem 0.8rem", borderRadius: "0.4rem", background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                      <a href={appUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", color: "#cbd5e1", textDecoration: "none", fontSize: "0.8rem", fontWeight: 600, padding: "0.4rem 0.8rem", borderRadius: "0.4rem", background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
                         <span>Powered by</span>
-                        <span style={{ padding: "0.15rem 0.35rem", borderRadius: "0.25rem", background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", fontSize: "0.75rem", fontWeight: 800 }}>W</span>
-                        <strong>Webbing AI</strong>
+                        <span style={{ padding: "0.15rem 0.35rem", borderRadius: "0.25rem", background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", fontSize: "0.75rem", fontWeight: 800 }}>{appLogoInitial}</span>
+                        <strong>{appName} AI</strong>
                       </a>
                     </div>
                   )}

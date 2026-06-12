@@ -96,26 +96,26 @@ const emailTemplates = {
   welcome: {
     title: "Welcome Email (on Signup)",
     description: "Sent automatically to users when they successfully create their account.",
-    subject: "Welcome to Webbing! ✨",
-    getHtml: () => `
+    subject: (appName: string) => `Welcome to ${appName}! ✨`,
+    getHtml: (appName: string, appEmail: string, appUrl: string) => `
 <div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center; height: 100%;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
     <div style="text-align: center; margin-bottom: 30px;">
-      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">✨ Webbing</span>
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">✨ ${appName}</span>
     </div>
-    <h1 style="font-size: 22px; font-weight: 700; color: #ffffff; margin-bottom: 20px;">Welcome to Webbing, John Doe!</h1>
+    <h1 style="font-size: 22px; font-weight: 700; color: #ffffff; margin-bottom: 20px;">Welcome to ${appName}, John Doe!</h1>
     <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
-      We're thrilled to have you join Webbing. Your account has been successfully created. You can now build, manage, and launch modern AI-powered websites in seconds.
+      We're thrilled to have you join ${appName}. Your account has been successfully created. You can now build, manage, and launch modern AI-powered websites in seconds.
     </p>
     <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 30px;">
       Your registered email address is: <strong style="color: #ffffff;">johndoe@example.com</strong>
     </p>
     <div style="text-align: center; margin-bottom: 30px;">
-      <a href="https://webbing.in/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Dashboard</a>
+      <a href="${appUrl}/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Dashboard</a>
     </div>
     <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
     <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
-      If you did not sign up for this account, please contact us at support@webbing.in.
+      If you did not sign up for this account, please contact us at ${appEmail}.
     </p>
   </div>
 </div>
@@ -124,12 +124,12 @@ const emailTemplates = {
   payment_request: {
     title: "Payment Under Review (on UTR Submission)",
     description: "Sent to the user confirming their payment submission is received and is currently under review by admin.",
-    subject: "Payment Verification Request Received - Webbing 💳",
-    getHtml: () => `
+    subject: (appName: string) => `Payment Verification Request Received - ${appName} 💳`,
+    getHtml: (appName: string, appEmail: string, appUrl: string) => `
 <div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center; height: 100%;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
     <div style="text-align: center; margin-bottom: 30px;">
-      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">💳 Webbing Payments</span>
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">💳 ${appName} Payments</span>
     </div>
     <h1 style="font-size: 22px; font-weight: 700; color: #ffffff; margin-bottom: 20px;">Payment Verification Under Review</h1>
     <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
@@ -161,7 +161,7 @@ const emailTemplates = {
     </p>
     <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
     <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
-      If you have any questions or need urgent activation, email support@webbing.in.
+      If you have any questions or need urgent activation, email ${appEmail}.
     </p>
   </div>
 </div>
@@ -170,12 +170,12 @@ const emailTemplates = {
   activation: {
     title: "Account Activated (on Payment Approval)",
     description: "Sent to the user when the admin verifies their payment and activates their premium subscription.",
-    subject: "Your Webbing Account Plan is Activated! 🚀",
-    getHtml: () => `
+    subject: (appName: string) => `Your ${appName} Account Plan is Activated! 🚀`,
+    getHtml: (appName: string, appEmail: string, appUrl: string) => `
 <div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center; height: 100%;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
     <div style="text-align: center; margin-bottom: 30px;">
-      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">🚀 Webbing Plan Activated</span>
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">🚀 ${appName} Plan Activated</span>
     </div>
     <h1 style="font-size: 22px; font-weight: 700; color: #34d399; margin-bottom: 20px;">Your Account is Activated!</h1>
     <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
@@ -188,11 +188,11 @@ const emailTemplates = {
       </p>
     </div>
     <div style="text-align: center; margin-bottom: 30px;">
-      <a href="https://webbing.in/signin" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Start Building Now</a>
+      <a href="${appUrl}/signin" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Start Building Now</a>
     </div>
     <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
     <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
-      Thank you for choosing Webbing. Let's make something amazing!
+      Thank you for choosing ${appName}. Let's make something amazing!
     </p>
   </div>
 </div>
@@ -201,12 +201,12 @@ const emailTemplates = {
   credits: {
     title: "Credits Purchased (on Credit Approval)",
     description: "Sent to the user when the admin approves their payment for extra credit packs.",
-    subject: "Webbing Credits Purchased Successfully! ⚡",
-    getHtml: () => `
+    subject: (appName: string) => `${appName} Credits Purchased Successfully! ⚡`,
+    getHtml: (appName: string, appEmail: string, appUrl: string) => `
 <div style="background-color: #0a0e17; padding: 40px 20px; font-family: 'Inter', Helvetica, Arial, sans-serif; color: #f3f4f6; text-align: center; height: 100%;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px; text-align: left; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
     <div style="text-align: center; margin-bottom: 30px;">
-      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">⚡ Webbing Credits</span>
+      <span style="font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">⚡ ${appName} Credits</span>
     </div>
     <h1 style="font-size: 22px; font-weight: 700; color: #818cf8; margin-bottom: 20px;">Credits Added Successfully!</h1>
     <p style="font-size: 15px; color: #9ca3af; line-height: 1.6; margin-bottom: 20px;">
@@ -220,11 +220,11 @@ const emailTemplates = {
       These credits are now available for website generations, AI copy writes, or image updates inside your workspace.
     </p>
     <div style="text-align: center; margin-bottom: 30px;">
-      <a href="https://webbing.in/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Workspace</a>
+      <a href="${appUrl}/signin" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Workspace</a>
     </div>
     <hr style="border: 0; border-top: 1px solid #1f2937; margin: 30px 0;">
     <p style="font-size: 13px; color: #6b7280; text-align: center; margin: 0;">
-      If you have any questions or concerns, email support@webbing.in.
+      If you have any questions or concerns, email ${appEmail}.
     </p>
   </div>
 </div>
@@ -261,16 +261,17 @@ export default function AdminConsole({
   const [refunds, setRefunds] = useState<any[]>(initialRefunds);
 
   // System branding states
-  const [appName, setAppName] = useState(initialSettings?.appName || "Webbing");
+  const defaultAppName = initialSettings?.appName || "Webbing";
+  const [appName, setAppName] = useState(defaultAppName);
   const [appLogo, setAppLogo] = useState(initialSettings?.appLogo || "");
-  const [appEmail, setAppEmail] = useState(initialSettings?.appEmail || "support@webbing.in");
+  const [appEmail, setAppEmail] = useState(initialSettings?.appEmail || `support@${baseDomain}`);
   const [landingHeroTitle, setLandingHeroTitle] = useState(initialSettings?.landingHeroTitle || "Build polished websites with AI in one flow.");
-  const [landingHeroSubtitle, setLandingHeroSubtitle] = useState(initialSettings?.landingHeroSubtitle || "Describe the business once and Webbing assembles a modern site with home, features, pricing, about, contact, hosting, and provider-aware AI routing.");
-  const [landingAboutTitle, setLandingAboutTitle] = useState(initialSettings?.landingAboutTitle || "Webbing is built for fast, useful site production.");
+  const [landingHeroSubtitle, setLandingHeroSubtitle] = useState(initialSettings?.landingHeroSubtitle || `Describe the business once and ${defaultAppName} assembles a modern site with home, features, pricing, about, contact, hosting, and provider-aware AI routing.`);
+  const [landingAboutTitle, setLandingAboutTitle] = useState(initialSettings?.landingAboutTitle || `${defaultAppName} is built for fast, useful site production.`);
   const [landingAboutText, setLandingAboutText] = useState(initialSettings?.landingAboutText || "The platform combines prompt-driven generation, reusable page sections, publishing workflows, and admin-level provider controls so teams can build without wrestling with scattered tools.");
   const [landingContactTitle, setLandingContactTitle] = useState(initialSettings?.landingContactTitle || "Need a custom workflow?");
-  const [landingContactText, setLandingContactText] = useState(initialSettings?.landingContactText || "Reach the Webbing team for provider setup, agency plans, domain support, and enterprise onboarding.");
-  const [landingContactEmail, setLandingContactEmail] = useState(initialSettings?.landingContactEmail || "support@webbing.in");
+  const [landingContactText, setLandingContactText] = useState(initialSettings?.landingContactText || `Reach the ${defaultAppName} team for provider setup, agency plans, domain support, and enterprise onboarding.`);
+  const [landingContactEmail, setLandingContactEmail] = useState(initialSettings?.landingContactEmail || `support@${baseDomain}`);
   
   const defaultFeatures = [
     { "icon": "Sparkles", "title": "AI copy and layout", "text": "Generate structured pages, hero copy, pricing blocks, feature grids, and contact sections from one prompt." },
@@ -915,8 +916,8 @@ export default function AdminConsole({
         {/* Version Indicator */}
         {!sidebarCollapsed && (
           <div style={{ padding: "0.5rem 0.8rem", color: "#4b5563", fontSize: "0.75rem", fontWeight: 600, textAlign: "center", borderTop: "1px solid rgba(255, 255, 255, 0.03)", paddingTop: "0.5rem", marginTop: "auto", display: "flex", flexDirection: "column", gap: "0.1rem" }}>
-            <span style={{ fontSize: "0.7rem", opacity: 0.8 }}>Webbing SaaS</span>
-            <span style={{ color: "#818cf8" }}>v0.8.0</span>
+            <span style={{ fontSize: "0.7rem", opacity: 0.8 }}>{appName} SaaS</span>
+            <span style={{ color: "#818cf8" }}>v0.9.0</span>
           </div>
         )}
 
@@ -1593,7 +1594,7 @@ export default function AdminConsole({
                   </h1>
                   <p style={{ color: "#9ca3af", fontSize: "0.9rem", margin: 0 }}>
                     {emailsSubTab === "templates"
-                      ? "Preview transactional system emails sent from support@webbing.in and dispatch test sends."
+                      ? `Preview transactional system emails sent from ${appEmail} and dispatch test sends.`
                       : "Configure your custom SMTP host server details to authorize automatic transactional emails."}
                   </p>
                 </div>
@@ -1742,12 +1743,12 @@ export default function AdminConsole({
                   <div style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0.75rem", overflow: "hidden", display: "flex", flexDirection: "column" }}>
                     <div style={{ padding: "0.75rem 1.25rem", background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ color: "#9ca3af", fontSize: "0.75rem" }}>
-                        Subject: <strong style={{ color: "#fff" }}>{(emailTemplates as any)[selectedTemplateId].subject}</strong>
+                        Subject: <strong style={{ color: "#fff" }}>{(emailTemplates as any)[selectedTemplateId].subject(appName)}</strong>
                       </div>
                       <span style={{ fontSize: "0.7rem", color: "#6b7280", background: "rgba(255,255,255,0.04)", padding: "0.2rem 0.5rem", borderRadius: "0.25rem" }}>HTML PREVIEW</span>
                     </div>
                     <iframe
-                      srcDoc={(emailTemplates as any)[selectedTemplateId].getHtml()}
+                      srcDoc={(emailTemplates as any)[selectedTemplateId].getHtml(appName, appEmail, `${protocol}://${baseDomain}`)}
                       title="Email Template Preview"
                       style={{ border: "none", width: "100%", height: "550px", background: "#0a0e17" }}
                     />
@@ -1830,7 +1831,7 @@ export default function AdminConsole({
                           className="premium-input"
                           value={smtpUser}
                           onChange={(e) => setSmtpUser(e.target.value)}
-                          placeholder="support@webbing.in"
+                          placeholder="e.g. support@yourdomain.com"
                           required
                           style={{ width: "100%" }}
                         />
@@ -1857,7 +1858,7 @@ export default function AdminConsole({
                           className="premium-input"
                           value={smtpFromName}
                           onChange={(e) => setSmtpFromName(e.target.value)}
-                          placeholder="e.g. Webbing Support"
+                          placeholder={`e.g. ${appName} Support`}
                           required
                           style={{ width: "100%" }}
                         />
@@ -1869,7 +1870,7 @@ export default function AdminConsole({
                           className="premium-input"
                           value={smtpFromEmail}
                           onChange={(e) => setSmtpFromEmail(e.target.value)}
-                          placeholder="e.g. support@webbing.in"
+                          placeholder="e.g. support@yourdomain.com"
                           required
                           style={{ width: "100%" }}
                         />
@@ -2080,7 +2081,7 @@ export default function AdminConsole({
                       className="premium-input"
                       value={appName}
                       onChange={(e) => setAppName(e.target.value)}
-                      placeholder="e.g. Webbing"
+                      placeholder="e.g. Platform Name"
                       required
                       style={{ width: "100%" }}
                     />
@@ -2092,7 +2093,7 @@ export default function AdminConsole({
                       className="premium-input"
                       value={appEmail}
                       onChange={(e) => setAppEmail(e.target.value)}
-                      placeholder="e.g. support@webbing.in"
+                      placeholder="e.g. support@yourdomain.com"
                       required
                       style={{ width: "100%" }}
                     />
@@ -2191,7 +2192,7 @@ export default function AdminConsole({
                           className="premium-input"
                           value={landingAboutTitle}
                           onChange={(e) => setLandingAboutTitle(e.target.value)}
-                          placeholder="Webbing is built for fast..."
+                          placeholder="Platform is built for fast..."
                           required
                           style={{ width: "100%" }}
                         />
@@ -2241,7 +2242,7 @@ export default function AdminConsole({
                           className="premium-input"
                           value={landingContactEmail}
                           onChange={(e) => setLandingContactEmail(e.target.value)}
-                          placeholder="support@webbing.in"
+                          placeholder="e.g. support@yourdomain.com"
                           required
                           style={{ width: "100%" }}
                         />
@@ -2461,7 +2462,7 @@ export default function AdminConsole({
                   </div>
                   <div>
                     <span style={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 700, textTransform: "uppercase" }}>Product Version</span>
-                    <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#f8fafc", marginTop: "0.25rem" }}>v0.8.0</div>
+                    <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#f8fafc", marginTop: "0.25rem" }}>v0.9.0</div>
                   </div>
                 </div>
 

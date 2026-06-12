@@ -107,3 +107,46 @@ export async function verifyLicenseOnline(key: string, domain: string): Promise<
   }
 }
 
+export async function checkSetupAndLicense(): Promise<{ setupRequired: boolean; licenseValid: boolean }> {
+  try {
+    const { prisma } = await import("@webbing/db");
+
+    // 1. Check if there are any ADMIN role users configured in the DB
+    const adminCount = await prisma.user.count({
+      where: { role: "ADMIN" }
+    });
+
+    if (adminCount === 0) {
+      return { setupRequired: true, licenseValid: false };
+    }
+
+    // Check default credentials
+    const defaultAdmin = await prisma.user.findUnique({
+      where: { email: "admin@webbing.in" }
+    });
+    if (defaultAdmin && defaultAdmin.passwordHash) {
+      const { verifyPassword } = await import("@webbing/db");
+      const isDefaultPassword = verifyPassword("Admin123", defaultAdmin.passwordHash);
+      if (isDefaultPassword) {
+        return { setupRequired: true, licenseValid: false };
+      }
+    }
+
+    // 2. Check license key
+    const licenseSetting = await prisma.systemSetting.findUnique({
+      where: { key: "licenseKey" }
+    });
+    const licenseKey = licenseSetting?.value || "";
+    const isValid = isValidLicenseKey(licenseKey);
+
+    return {
+      setupRequired: false,
+      licenseValid: isValid
+    };
+  } catch (err) {
+    console.error("checkSetupAndLicense error:", err);
+    return { setupRequired: true, licenseValid: false };
+  }
+}
+
+

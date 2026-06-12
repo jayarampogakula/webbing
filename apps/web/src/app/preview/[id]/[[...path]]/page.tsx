@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
+import { getSystemSettings } from "@/lib/settings";
 import { CheckCircle2, Mail, DollarSign, Star, Zap, Layers, Globe, Server, ArrowRight, Video, FileText, Check, Phone, ArrowUpRight, Clock } from "lucide-react";
 import EcommerceStore from "@/components/EcommerceStore";
 import ClientEffects from "@/components/ClientEffects";
@@ -60,6 +61,12 @@ function resolveImageUrl(url: any, style?: string): string {
 
 export default async function ProjectPreviewPage({ params }: { params: { id: string; path?: string[] } }) {
   try {
+    const settings = await getSystemSettings();
+    const appName = settings.appName || "Webbing";
+    const appLogoInitial = appName.charAt(0).toUpperCase();
+    const hostHeader = headers().get("host") || "localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || (hostHeader.includes("localhost") ? `http://${hostHeader}` : `https://${hostHeader}`);
+
     const slug = params.path?.join("/") || "index";
     const project = await prisma.project.findUnique({
       where: { id: params.id },
@@ -607,10 +614,10 @@ export default async function ProjectPreviewPage({ params }: { params: { id: str
                   </div>
                   {isFree && (
                     <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.06)", paddingTop: "1.5rem", width: "100%", display: "flex", justifyContent: "center" }}>
-                      <a href="https://webbing.in" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", color: "#cbd5e1", textDecoration: "none", fontSize: "0.8rem", fontWeight: 600, padding: "0.4rem 0.8rem", borderRadius: "0.4rem", background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                      <a href={appUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", color: "#cbd5e1", textDecoration: "none", fontSize: "0.8rem", fontWeight: 600, padding: "0.4rem 0.8rem", borderRadius: "0.4rem", background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
                         <span>Powered by</span>
-                        <span style={{ padding: "0.15rem 0.35rem", borderRadius: "0.25rem", background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", fontSize: "0.75rem", fontWeight: 800 }}>W</span>
-                        <strong>Webbing AI</strong>
+                        <span style={{ padding: "0.15rem 0.35rem", borderRadius: "0.25rem", background: "linear-gradient(to right, #6366f1, #a855f7)", color: "#fff", fontSize: "0.75rem", fontWeight: 800 }}>{appLogoInitial}</span>
+                        <strong>{appName} AI</strong>
                       </a>
                     </div>
                   )}

@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@webbing/db";
 import { verifySession } from "@/lib/session";
+import { checkSetupAndLicense } from "@/lib/licensing";
 import DashboardEditor from "./DashboardEditor";
 import { Sparkles } from "lucide-react";
 import { getSystemSettings } from "@/lib/settings";
@@ -35,6 +36,11 @@ async function getLlmKeys(userId: string) {
 }
 
 export default async function DashboardPage() {
+  const { setupRequired, licenseValid } = await checkSetupAndLicense();
+  if (setupRequired || !licenseValid) {
+    redirect("/setup");
+  }
+
   const sessionToken = cookies().get("webbing-session")?.value;
   const user = sessionToken ? verifySession(sessionToken) : null;
 

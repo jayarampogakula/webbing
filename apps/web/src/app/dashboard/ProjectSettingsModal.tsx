@@ -253,7 +253,7 @@ export default function ProjectSettingsModal({
                       <p style={{ margin: "0.4rem 0 0 0" }}>
                         Point a <strong>CNAME</strong> record for your domain (or subdomain like `www`) to:
                         <br />
-                        <code style={{ color: "#a78bfa", display: "inline-block", marginTop: "0.2rem", background: "rgba(0, 0, 0, 0.2)", padding: "0.1rem 0.4rem", borderRadius: "0.25rem" }}>cname.webbing.in</code>
+                        <code style={{ color: "#a78bfa", display: "inline-block", marginTop: "0.2rem", background: "rgba(0, 0, 0, 0.2)", padding: "0.1rem 0.4rem", borderRadius: "0.25rem" }}>cname.{baseDomain}</code>
                       </p>
                       {currentCustomDomain && currentCustomDomain === customDomain.trim().toLowerCase() && (
                         <div style={{ marginTop: "0.75rem", display: "flex", alignItems: "center", gap: "1rem" }}>
