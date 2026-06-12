@@ -234,7 +234,7 @@ const emailTemplates = {
 
 const THEME_PRESETS = [
   {
-    name: "Default Indigo",
+    name: "Midnight Neon",
     colors: {
       themeBgColor: "#060914",
       themeTextColor: "#f8fafc",
@@ -246,26 +246,26 @@ const THEME_PRESETS = [
     }
   },
   {
-    name: "Cyberpunk Purple",
+    name: "Cyberpunk Edge",
     colors: {
       themeBgColor: "#0c0714",
       themeTextColor: "#f3e8ff",
       themeMutedColor: "#a78bfa",
-      themePrimaryColor: "#8b5cf6",
-      themeSecondaryColor: "#ec4899",
-      themePanelColor: "#120a1f",
-      themeBorderColor: "rgba(139, 92, 246, 0.15)"
+      themePrimaryColor: "#d946ef",
+      themeSecondaryColor: "#06b6d4",
+      themePanelColor: "#140c22",
+      themeBorderColor: "rgba(217, 70, 239, 0.15)"
     }
   },
   {
-    name: "Ocean Emerald",
+    name: "Nordic Aurora",
     colors: {
-      themeBgColor: "#022c22",
+      themeBgColor: "#021712",
       themeTextColor: "#f0fdf4",
-      themeMutedColor: "#86efac",
+      themeMutedColor: "#a7f3d0",
       themePrimaryColor: "#10b981",
       themeSecondaryColor: "#06b6d4",
-      themePanelColor: "#064e3b",
+      themePanelColor: "#062820",
       themeBorderColor: "rgba(16, 185, 129, 0.15)"
     }
   },
@@ -275,82 +275,82 @@ const THEME_PRESETS = [
       themeBgColor: "#0a0a0a",
       themeTextColor: "#f5f5f5",
       themeMutedColor: "#a3a3a3",
-      themePrimaryColor: "#fbbf24",
-      themeSecondaryColor: "#d97706",
+      themePrimaryColor: "#eab308",
+      themeSecondaryColor: "#ca8a04",
       themePanelColor: "#171717",
-      themeBorderColor: "rgba(251, 191, 36, 0.15)"
+      themeBorderColor: "rgba(234, 179, 8, 0.15)"
     }
   },
   {
-    name: "Vampire Crimson",
+    name: "Rose Velvet",
     colors: {
-      themeBgColor: "#0f0507",
+      themeBgColor: "#120508",
       themeTextColor: "#ffe4e6",
       themeMutedColor: "#fda4af",
-      themePrimaryColor: "#e11d48",
-      themeSecondaryColor: "#f43f5e",
-      themePanelColor: "#1c0b0e",
-      themeBorderColor: "rgba(225, 29, 72, 0.18)"
+      themePrimaryColor: "#f43f5e",
+      themeSecondaryColor: "#fb923c",
+      themePanelColor: "#1d0b10",
+      themeBorderColor: "rgba(244, 63, 94, 0.15)"
     }
   },
   {
-    name: "Neon Sapphire",
+    name: "Carbon Minimalist",
     colors: {
-      themeBgColor: "#030712",
-      themeTextColor: "#f3f4f6",
-      themeMutedColor: "#9ca3af",
-      themePrimaryColor: "#2563eb",
-      themeSecondaryColor: "#3b82f6",
-      themePanelColor: "#111827",
-      themeBorderColor: "rgba(37, 99, 235, 0.15)"
-    }
-  },
-  {
-    name: "Sunset Amber",
-    colors: {
-      themeBgColor: "#0f0b08",
-      themeTextColor: "#fff7ed",
-      themeMutedColor: "#ffedd5",
-      themePrimaryColor: "#f97316",
-      themeSecondaryColor: "#f59e0b",
-      themePanelColor: "#1c140e",
-      themeBorderColor: "rgba(249, 115, 22, 0.15)"
-    }
-  },
-  {
-    name: "Forest Moss",
-    colors: {
-      themeBgColor: "#0b0f0b",
-      themeTextColor: "#f0fdf4",
-      themeMutedColor: "#a7f3d0",
-      themePrimaryColor: "#84cc16",
-      themeSecondaryColor: "#22c55e",
-      themePanelColor: "#141f14",
-      themeBorderColor: "rgba(132, 204, 22, 0.15)"
+      themeBgColor: "#000000",
+      themeTextColor: "#ffffff",
+      themeMutedColor: "#94a3b8",
+      themePrimaryColor: "#3b82f6",
+      themeSecondaryColor: "#64748b",
+      themePanelColor: "#0f172a",
+      themeBorderColor: "rgba(255, 255, 255, 0.08)"
     }
   },
   {
     name: "Arctic Frost",
     colors: {
-      themeBgColor: "#0f172a",
-      themeTextColor: "#f8fafc",
-      themeMutedColor: "#cbd5e1",
-      themePrimaryColor: "#38bdf8",
-      themeSecondaryColor: "#0ea5e9",
-      themePanelColor: "#1e293b",
-      themeBorderColor: "rgba(56, 189, 248, 0.15)"
+      themeBgColor: "#0b132b",
+      themeTextColor: "#e2e8f0",
+      themeMutedColor: "#8e9aaf",
+      themePrimaryColor: "#00b4d8",
+      themeSecondaryColor: "#90e0ef",
+      themePanelColor: "#1c2541",
+      themeBorderColor: "rgba(0, 180, 216, 0.15)"
     }
   },
   {
-    name: "Cherry Blossom",
+    name: "Volcanic Ember",
     colors: {
-      themeBgColor: "#180f12",
-      themeTextColor: "#fff1f2",
-      themeMutedColor: "#fecdd3",
-      themePrimaryColor: "#ec4899",
-      themeSecondaryColor: "#f472b6",
-      themePanelColor: "#27191f",
-      themeBorderColor: "rgba(236, 72, 153, 0.15)"
+      themeBgColor: "#0f0c0c",
+      themeTextColor: "#f9fafb",
+      themeMutedColor: "#d1d5db",
+      themePrimaryColor: "#ef4444",
+      themeSecondaryColor: "#f97316",
+      themePanelColor: "#1a1818",
+      themeBorderColor: "rgba(239, 68, 68, 0.15)"
+    }
+  },
+  {
+    name: "Forest Emerald",
+    colors: {
+      themeBgColor: "#06140c",
+      themeTextColor: "#f0fdf4",
+      themeMutedColor: "#cbd5e1",
+      themePrimaryColor: "#84cc16",
+      themeSecondaryColor: "#22c55e",
+      themePanelColor: "#0f2417",
+      themeBorderColor: "rgba(132, 204, 22, 0.15)"
+    }
+  },
+  {
+    name: "Aero Steel",
+    colors: {
+      themeBgColor: "#0f172a",
+      themeTextColor: "#f8fafc",
+      themeMutedColor: "#94a3b8",
+      themePrimaryColor: "#0ea5e9",
+      themeSecondaryColor: "#a855f7",
+      themePanelColor: "#1e293b",
+      themeBorderColor: "rgba(14, 165, 233, 0.15)"
     }
   }
 ];

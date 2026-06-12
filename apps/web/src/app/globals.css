@@ -53,9 +53,9 @@ option {
 .app-shell {
   min-height: 100vh;
   background:
-    linear-gradient(135deg, rgba(79, 124, 255, 0.13), transparent 26%),
-    linear-gradient(315deg, rgba(32, 199, 181, 0.1), transparent 28%),
-    #060914;
+    linear-gradient(135deg, color-mix(in srgb, var(--blue) 13%, transparent), transparent 26%),
+    linear-gradient(315deg, color-mix(in srgb, var(--teal) 10%, transparent), transparent 28%),
+    var(--bg);
 }
 
 .site-nav {
