@@ -425,11 +425,11 @@ export default function AdminConsole({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "keys" | "plans" | "payments" | "feedback" | "emails" | "payouts" | "refunds" | "branding" | "licensing">("dashboard");
   const [upiId, setUpiId] = useState(initialUpiId);
-  const [plans, setPlans] = useState<Plan[]>(initialPlans);
-  const [requests, setRequests] = useState<PaymentRequest[]>(initialRequests);
-  const [feedbacks, setFeedbacks] = useState<any[]>(initialFeedbacks);
-  const [payouts, setPayouts] = useState<any[]>(initialPayouts);
-  const [refunds, setRefunds] = useState<any[]>(initialRefunds);
+  const [plans, setPlans] = useState<Plan[]>(initialPlans || []);
+  const [requests, setRequests] = useState<PaymentRequest[]>(initialRequests || []);
+  const [feedbacks, setFeedbacks] = useState<any[]>(initialFeedbacks || []);
+  const [payouts, setPayouts] = useState<any[]>(initialPayouts || []);
+  const [refunds, setRefunds] = useState<any[]>(initialRefunds || []);
 
   // System branding states
   const isCursorWebs = typeof baseDomain === "string" && (baseDomain.toLowerCase().includes("cursonwebs") || baseDomain.toLowerCase().includes("cursorwebs"));
@@ -505,9 +505,9 @@ export default function AdminConsole({
     }
   }, []);
 
-  const totalUsers = users.length;
-  const totalSites = projects.length;
-  const activeSubs = subscriptions.filter((s) => s.status === "ACTIVE").length;
+  const totalUsers = (users || []).length;
+  const totalSites = (projects || []).length;
+  const activeSubs = (subscriptions || []).filter((s) => s && s.status === "ACTIVE").length;
 
   // Form states for adding/editing a Plan
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
@@ -1261,7 +1261,7 @@ export default function AdminConsole({
                     <tr><th>Site</th><th>Subdomain</th><th>Owner & Client Logins</th><th>Status</th><th>Workspace</th><th style={{ textAlign: "right" }}>Actions</th></tr>
                   </thead>
                   <tbody>
-                    {projects.map((p) => {
+                    {(projects || []).map((p) => {
                       const subdomainUrl = `${protocol}://${p.subdomain}.${baseDomain}`;
                       const customDomain = p.customDomain;
                       const customDomainHostname = customDomain?.hostname;
@@ -1344,7 +1344,7 @@ export default function AdminConsole({
                         </tr>
                       );
                     })}
-                    {projects.length === 0 && (
+                    {(projects || []).length === 0 && (
                       <tr>
                         <td colSpan={6} style={{ textAlign: "center", color: "#9ca3af", padding: "2rem" }}>No generated websites on the platform.</td>
                       </tr>
@@ -1373,7 +1373,7 @@ export default function AdminConsole({
                     <tr><th>Name</th><th>Email</th><th>Role</th><th>Workspace</th><th style={{ textAlign: "right" }}>Actions</th></tr>
                   </thead>
                   <tbody>
-                    {users.map((u) => (
+                    {(users || []).map((u) => (
                       <tr key={u.id}>
                         <td><strong>{u.name}</strong></td>
                         <td>{u.email}</td>
@@ -1418,7 +1418,7 @@ export default function AdminConsole({
                     </tr>
                   </thead>
                   <tbody>
-                    {subscriptions.map((s) => (
+                    {(subscriptions || []).map((s) => (
                       <tr key={s.id}>
                         <td><strong>{s.tenant.name}</strong></td>
                         <td style={{ textTransform: "capitalize" }}>{s.planId.replace("-", " ")}</td>
@@ -1477,7 +1477,7 @@ export default function AdminConsole({
         {/* TAB 3: GLOBAL LLM API KEYS */}
         {activeTab === "keys" && (
           <LlmKeyManager
-            initialKeys={llmKeys}
+            initialKeys={llmKeys || []}
             canAddGlobal
             title="Admin LLM API keys"
             description="Add multiple global or user-owned keys for OpenAI, Gemini, Claude, custom providers, and more."
