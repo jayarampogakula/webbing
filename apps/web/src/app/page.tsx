@@ -11,6 +11,8 @@ import PricingSection from "./components/PricingSection";
 import { getSystemSettings } from "@/lib/settings";
 import * as Icons from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 const features = [
   { icon: Sparkles, title: "AI copy and layout", text: "Generate structured pages, hero copy, pricing blocks, feature grids, and contact sections from one prompt." },
   { icon: Layers3, title: "Modern component system", text: "Every website is composed from reusable sections that are easier to edit, inspect, and expand." },

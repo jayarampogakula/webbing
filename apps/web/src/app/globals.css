@@ -46,8 +46,8 @@ button {
 }
 
 option {
-  background: #111827;
-  color: #f8fafc;
+  background: var(--panel);
+  color: var(--text);
 }
 
 .app-shell {
@@ -68,7 +68,7 @@ option {
   gap: 1.5rem;
   padding: 1rem clamp(1rem, 4vw, 4rem);
   border-bottom: 1px solid var(--line);
-  background: rgba(6, 9, 20, 0.82);
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
   backdrop-filter: blur(18px);
 }
 
@@ -612,7 +612,7 @@ option {
   background:
     linear-gradient(145deg, rgba(246, 184, 75, 0.16), transparent 28%),
     linear-gradient(315deg, rgba(32, 199, 181, 0.14), transparent 30%),
-    #07111b;
+    var(--bg);
 }
 
 .site-preview main {

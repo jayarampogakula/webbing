@@ -352,6 +352,54 @@ const THEME_PRESETS = [
       themePanelColor: "#1e293b",
       themeBorderColor: "#1e293b"
     }
+  },
+  {
+    name: "Light Minimalist",
+    colors: {
+      themeBgColor: "#f8fafc",
+      themeTextColor: "#0f172a",
+      themeMutedColor: "#475569",
+      themePrimaryColor: "#3b82f6",
+      themeSecondaryColor: "#10b981",
+      themePanelColor: "#ffffff",
+      themeBorderColor: "#cbd5e1"
+    }
+  },
+  {
+    name: "Warm Editorial",
+    colors: {
+      themeBgColor: "#fdfbf7",
+      themeTextColor: "#1c1917",
+      themeMutedColor: "#57534e",
+      themePrimaryColor: "#d97706",
+      themeSecondaryColor: "#059669",
+      themePanelColor: "#fafaf9",
+      themeBorderColor: "#e7e5e4"
+    }
+  },
+  {
+    name: "Nordic Light",
+    colors: {
+      themeBgColor: "#f1f5f9",
+      themeTextColor: "#1e293b",
+      themeMutedColor: "#64748b",
+      themePrimaryColor: "#0f766e",
+      themeSecondaryColor: "#0891b2",
+      themePanelColor: "#ffffff",
+      themeBorderColor: "#cbd5e1"
+    }
+  },
+  {
+    name: "Soft Lavender",
+    colors: {
+      themeBgColor: "#faf5ff",
+      themeTextColor: "#3b0764",
+      themeMutedColor: "#6b21a8",
+      themePrimaryColor: "#a855f7",
+      themeSecondaryColor: "#ec4899",
+      themePanelColor: "#ffffff",
+      themeBorderColor: "#f3e8ff"
+    }
   }
 ];
 
@@ -777,10 +825,32 @@ export default function AdminConsole({
     }
   };
 
+  // Dynamically compute color-scheme based on background brightness
+  let colorScheme = "dark";
+  const bgVal = themeBgColor || "#060914";
+  if (bgVal.startsWith("#")) {
+    const hex = bgVal.replace("#", "");
+    let r = 6, g = 9, b = 20;
+    if (hex.length === 3) {
+      r = parseInt(hex[0] + hex[0], 16);
+      g = parseInt(hex[1] + hex[1], 16);
+      b = parseInt(hex[2] + hex[2], 16);
+    } else if (hex.length === 6) {
+      r = parseInt(hex.slice(0, 2), 16);
+      g = parseInt(hex.slice(2, 4), 16);
+      b = parseInt(hex.slice(4, 6), 16);
+    }
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    if (brightness > 150) {
+      colorScheme = "light";
+    }
+  }
+
   return (
     <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "var(--bg)", overflow: "hidden" }}>
       <style dangerouslySetInnerHTML={{ __html: `
         :root {
+          color-scheme: ${colorScheme} !important;
           --bg: ${themeBgColor} !important;
           --text: ${themeTextColor} !important;
           --muted: ${themeMutedColor} !important;

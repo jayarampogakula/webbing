@@ -8,6 +8,8 @@ import DashboardEditor from "./DashboardEditor";
 import { Sparkles } from "lucide-react";
 import { getSystemSettings } from "@/lib/settings";
 
+export const dynamic = "force-dynamic";
+
 async function getLlmKeys(userId: string) {
   try {
     return await prisma.llmApiKey.findMany({
@@ -128,7 +130,7 @@ export default async function DashboardPage() {
         <header className="site-nav">
           <a className="brand" href="/">
             <span className="brand-mark"><Sparkles size={18} /></span>
-            Webbing
+            {systemSettings?.appName || "Webbing"}
           </a>
           <div className="nav-actions">
             <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>{user.email}</span>

@@ -9,6 +9,8 @@ import ClientDashboard from "@/components/ClientDashboard";
 import ClientEffects from "@/components/ClientEffects";
 import ContactForm from "@/components/ContactForm";
 
+export const dynamic = "force-dynamic";
+
 // Safe text renderer helper to avoid React child object crashes
 function renderText(val: any, fallback: string = ""): string {
   if (val === null || val === undefined) return fallback;

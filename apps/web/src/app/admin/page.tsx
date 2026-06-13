@@ -10,6 +10,8 @@ import AdminConsole from "./AdminConsole";
 import { Sparkles } from "lucide-react";
 import { getSystemSettings } from "@/lib/settings";
 
+export const dynamic = "force-dynamic";
+
 async function getLlmKeys() {
   try {
     return await prisma.llmApiKey.findMany({
@@ -100,7 +102,7 @@ export default async function AdminPage() {
         <header className="site-nav">
           <a className="brand" href="/">
             <span className="brand-mark"><Sparkles size={18} /></span>
-            Webbing
+            {systemSettings?.appName || "Webbing"}
           </a>
           <div className="nav-actions">
             <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>Admin: {user.email}</span>
@@ -134,7 +136,7 @@ export default async function AdminPage() {
           <header className="site-nav" style={{ borderBottom: "1px solid var(--line)", margin: 0, background: "var(--panel)" }}>
             <a className="brand" href="/">
               <span className="brand-mark"><Sparkles size={18} /></span>
-              Webbing
+              {systemSettings?.appName || "Webbing"}
             </a>
             <div className="nav-actions">
               <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>Admin: {user.email}</span>
