@@ -126,7 +126,8 @@ export default async function AdminPage() {
   const activeSubs = subscriptions.filter((s) => s.status === "ACTIVE").length;
 
       const isMasterDomain = baseDomain.toLowerCase() === "webbing.in" || baseDomain.toLowerCase() === "cursorwebs.com" || baseDomain.toLowerCase().includes("localhost");
-      const enableLicenseGenerator = (process.env.ENABLE_LICENSE_GENERATOR === "true" || process.env.NODE_ENV === "development") && isMasterDomain;
+      const isWebbingIn = baseDomain.toLowerCase() === "webbing.in";
+      const enableLicenseGenerator = isWebbingIn || ((process.env.ENABLE_LICENSE_GENERATOR === "true" || process.env.NODE_ENV === "development") && isMasterDomain);
 
       return (
         <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--bg)" }}>
