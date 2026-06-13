@@ -50,6 +50,8 @@ export default async function AdminPage() {
   const hostHeader = headers().get("host") || "webbing.in";
   const baseDomain = hostHeader.startsWith("app.") ? hostHeader.slice(4) : hostHeader;
   const protocol = hostHeader.includes("localhost") ? "http" : "https";
+  const isCursorWebs = baseDomain.toLowerCase().includes("cursonwebs") || baseDomain.toLowerCase().includes("cursorwebs");
+  const fallbackAppName = isCursorWebs ? "CursorWebs" : "Webbing";
 
   let users: any[] = [];
   let projects: any[] = [];
@@ -73,7 +75,7 @@ export default async function AdminPage() {
       getLlmKeys(),
       prisma.plan.findMany({ orderBy: { price: "asc" } }),
       prisma.paymentRequest.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
-      getSystemSettings(),
+      getSystemSettings(reqHost),
       prisma.feedback.findMany({ orderBy: { createdAt: "desc" } }),
       prisma.payoutRequest.findMany({ include: { user: true }, orderBy: { createdAt: "desc" } }),
       prisma.refundRequest.findMany({ include: { tenant: true, paymentRequest: true }, orderBy: { createdAt: "desc" } }),
@@ -102,7 +104,7 @@ export default async function AdminPage() {
         <header className="site-nav">
           <a className="brand" href="/">
             <span className="brand-mark"><Sparkles size={18} /></span>
-            {systemSettings?.appName || "Webbing"}
+            {systemSettings?.appName || fallbackAppName}
           </a>
           <div className="nav-actions">
             <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>Admin: {user.email}</span>
@@ -136,7 +138,7 @@ export default async function AdminPage() {
           <header className="site-nav" style={{ borderBottom: "1px solid var(--line)", margin: 0, background: "var(--panel)" }}>
             <a className="brand" href="/">
               <span className="brand-mark"><Sparkles size={18} /></span>
-              {systemSettings?.appName || "Webbing"}
+              {systemSettings?.appName || fallbackAppName}
             </a>
             <div className="nav-actions">
               <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>Admin: {user.email}</span>

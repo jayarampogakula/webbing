@@ -52,6 +52,8 @@ export default async function DashboardPage() {
   const hostHeader = headers().get("host") || "webbing.in";
   const baseDomain = hostHeader.startsWith("app.") ? hostHeader.slice(4) : hostHeader;
   const protocol = hostHeader.includes("localhost") ? "http" : "https";
+  const isCursorWebs = baseDomain.toLowerCase().includes("cursonwebs") || baseDomain.toLowerCase().includes("cursorwebs");
+  const fallbackAppName = isCursorWebs ? "CursorWebs" : "Webbing";
 
   let tenant = null;
   let llmKeys: Awaited<ReturnType<typeof getLlmKeys>> = [];
@@ -92,7 +94,7 @@ export default async function DashboardPage() {
       prisma.plan.findMany({ orderBy: { price: "asc" } }),
       prisma.systemSetting.findUnique({ where: { key: "upiId" } }),
       prisma.user.findUnique({ where: { id: user.userId } }),
-      getSystemSettings(),
+      getSystemSettings(hostHeader),
       prisma.systemSetting.findMany({
         where: { key: { startsWith: "yearlyDiscount_" } }
       })
@@ -130,7 +132,7 @@ export default async function DashboardPage() {
         <header className="site-nav">
           <a className="brand" href="/">
             <span className="brand-mark"><Sparkles size={18} /></span>
-            {systemSettings?.appName || "Webbing"}
+            {systemSettings?.appName || fallbackAppName}
           </a>
           <div className="nav-actions">
             <span style={{ color: "#9aa7bd", fontSize: "0.85rem" }}>{user.email}</span>

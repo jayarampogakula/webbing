@@ -432,7 +432,8 @@ export default function AdminConsole({
   const [refunds, setRefunds] = useState<any[]>(initialRefunds);
 
   // System branding states
-  const defaultAppName = initialSettings?.appName || "Webbing";
+  const isCursorWebs = baseDomain.toLowerCase().includes("cursonwebs") || baseDomain.toLowerCase().includes("cursorwebs");
+  const defaultAppName = initialSettings?.appName || (isCursorWebs ? "CursorWebs" : "Webbing");
   const [appName, setAppName] = useState(defaultAppName);
   const [appLogo, setAppLogo] = useState(initialSettings?.appLogo || "");
   const [appEmail, setAppEmail] = useState(initialSettings?.appEmail || `support@${baseDomain}`);

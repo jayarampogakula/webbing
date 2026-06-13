@@ -50,7 +50,7 @@ export default async function LandingPage() {
 
   const sessionToken = cookies().get("webbing-session")?.value;
   const user = sessionToken ? verifySession(sessionToken) : null;
-  const settings = await getSystemSettings();
+  const settings = await getSystemSettings(hostHeader);
 
   let parsedFeatures = features;
   if (settings.landingFeatures) {

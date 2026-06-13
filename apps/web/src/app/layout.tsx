@@ -8,7 +8,8 @@ import { getSystemSettings } from "@/lib/settings";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSystemSettings();
+  const hostHeader = headers().get("x-forwarded-host") || headers().get("host") || "";
+  const settings = await getSystemSettings(hostHeader);
   const appName = settings.appName || "Webbing";
   return {
     title: `${appName} - Production AI Website Builder SaaS`,
@@ -38,7 +39,8 @@ export default async function RootLayout({
     }
   }
 
-  const settings = await getSystemSettings();
+  const hostHeader = headers().get("x-forwarded-host") || headers().get("host") || "";
+  const settings = await getSystemSettings(hostHeader);
   
   // Dynamically compute color-scheme based on background brightness
   let colorScheme = "dark";

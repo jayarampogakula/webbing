@@ -41,27 +41,48 @@ export interface SystemSettings {
   themeBorderColor: string;
 }
 
-export async function getSystemSettings(): Promise<SystemSettings> {
+export async function getSystemSettings(host?: string): Promise<SystemSettings> {
+  let resolvedHost = host;
+  if (!resolvedHost) {
+    try {
+      const { headers } = await import("next/headers");
+      const headersList = headers();
+      resolvedHost = headersList.get("x-forwarded-host") || headersList.get("host") || "";
+    } catch (e) {
+      // Ignore if headers() is called outside request context
+    }
+  }
+
+  const cleanHost = resolvedHost ? resolvedHost.toLowerCase().split(":")[0] : "";
+  const isCursorWebs = cleanHost.includes("cursonwebs") || cleanHost.includes("cursorwebs");
+  const defaultApp = isCursorWebs ? "CursorWebs" : "Webbing";
+  const defaultEmail = isCursorWebs ? "support@cursonwebs.com" : "support@webbing.in";
+  const defaultHeroSubtitle = isCursorWebs
+    ? "Describe the business once and CursorWebs assembles a modern site with home, features, pricing, about, contact, hosting, and provider-aware AI routing."
+    : "Describe the business once and Webbing assembles a modern site with home, features, pricing, about, contact, hosting, and provider-aware AI routing.";
+  const defaultAboutTitle = isCursorWebs
+    ? "CursorWebs is built for fast, useful site production."
+    : "Webbing is built for fast, useful site production.";
+  const defaultContactText = isCursorWebs
+    ? "Reach the CursorWebs team for provider setup, agency plans, domain support, and enterprise onboarding."
+    : "Reach the Webbing team for provider setup, agency plans, domain support, and enterprise onboarding.";
+
   try {
     const settings = await prisma.systemSetting.findMany();
     const map = Object.fromEntries(settings.map((s) => [s.key, s.value]));
  
     return {
-      appName: map.appName || "Webbing",
+      appName: map.appName || defaultApp,
       appLogo: map.appLogo || "",
-      appEmail: map.appEmail || "support@webbing.in",
+      appEmail: map.appEmail || defaultEmail,
       upiId: map.upiId || "pogakula@ybl",
       landingHeroTitle: map.landingHeroTitle || "Build polished websites with AI in one flow.",
-      landingHeroSubtitle: map.landingHeroSubtitle || "Describe the business once and Webbing assembles a modern site with home, features, pricing, about, contact, hosting, and provider-aware AI routing.",
-      landingAboutTitle: map.landingAboutTitle || "Webbing is built for fast, useful site production.",
+      landingHeroSubtitle: map.landingHeroSubtitle || defaultHeroSubtitle,
+      landingAboutTitle: map.landingAboutTitle || defaultAboutTitle,
       landingAboutText: map.landingAboutText || "The platform combines prompt-driven generation, reusable page sections, publishing workflows, and admin-level provider controls so teams can build without wrestling with scattered tools.",
       landingContactTitle: map.landingContactTitle || "Need a custom workflow?",
-      landingContactText: map.landingContactText || "Reach the Webbing team for provider setup, agency plans, domain support, and enterprise onboarding.",
-      landingContactEmail: map.landingContactEmail || "support@webbing.in",
-      landingFeatures: map.landingFeatures || "",
-      policyPrivacy: map.policyPrivacy || "",
-      policyTerms: map.policyTerms || "",
-      policyRefund: map.policyRefund || "",
+      landingContactText: map.landingContactText || defaultContactText,
+      landingContactEmail: map.landingContactEmail || defaultEmail,
       affiliateEnabled: map.affiliateEnabled || "true",
       affiliateTier1Max: map.affiliateTier1Max || "10",
       affiliateTier1Rate: map.affiliateTier1Rate || "20",
@@ -87,17 +108,17 @@ export async function getSystemSettings(): Promise<SystemSettings> {
   } catch (error) {
     console.error("Error reading system settings from DB:", error);
     return {
-      appName: "Webbing",
+      appName: defaultApp,
       appLogo: "",
-      appEmail: "support@webbing.in",
+      appEmail: defaultEmail,
       upiId: "pogakula@ybl",
       landingHeroTitle: "Build polished websites with AI in one flow.",
-      landingHeroSubtitle: "Describe the business once and Webbing assembles a modern site with home, features, pricing, about, contact, hosting, and provider-aware AI routing.",
-      landingAboutTitle: "Webbing is built for fast, useful site production.",
+      landingHeroSubtitle: defaultHeroSubtitle,
+      landingAboutTitle: defaultAboutTitle,
       landingAboutText: "The platform combines prompt-driven generation, reusable page sections, publishing workflows, and admin-level provider controls so teams can build without wrestling with scattered tools.",
       landingContactTitle: "Need a custom workflow?",
-      landingContactText: "Reach the Webbing team for provider setup, agency plans, domain support, and enterprise onboarding.",
-      landingContactEmail: "support@webbing.in",
+      landingContactText: defaultContactText,
+      landingContactEmail: defaultEmail,
       landingFeatures: "",
       policyPrivacy: "",
       policyTerms: "",
