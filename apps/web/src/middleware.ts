@@ -48,6 +48,8 @@ export default function middleware(req: NextRequest) {
     appHost = "webbing.in";
   } else if (hostnameWithoutPort.endsWith("webbing.io")) {
     appHost = "webbing.io";
+  } else if (hostnameWithoutPort.endsWith("cursorwebs.com")) {
+    appHost = "cursorwebs.com";
   }
   
   // Extract subdomain dynamically regardless of port or environment
@@ -72,8 +74,10 @@ export default function middleware(req: NextRequest) {
     hostClean === `app.${appHost}` ||
     hostClean === "webbing.in" ||
     hostClean === "webbing.io" ||
+    hostClean === "cursorwebs.com" ||
     hostClean === "app.webbing.in" ||
     hostClean === "app.webbing.io" ||
+    hostClean === "app.cursorwebs.com" ||
     currentHost === "app"
   ) {
     const sessionToken = req.cookies.get("webbing-session")?.value;

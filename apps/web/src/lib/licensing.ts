@@ -130,8 +130,10 @@ export async function checkSetupAndLicense(host?: string): Promise<{ setupRequir
     const isPrimaryCentralServer = 
       cleanHost.endsWith("webbing.in") || 
       cleanHost.endsWith("webbing.io") ||
+      cleanHost.endsWith("cursorwebs.com") ||
       cleanAppHost.endsWith("webbing.in") ||
-      cleanAppHost.endsWith("webbing.io");
+      cleanAppHost.endsWith("webbing.io") ||
+      cleanAppHost.endsWith("cursorwebs.com");
 
     // Bypasses all setup/license constraints on master platform domains
     if (isPrimaryCentralServer) {

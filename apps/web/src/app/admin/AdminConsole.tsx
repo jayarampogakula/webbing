@@ -2382,7 +2382,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themeBgColor}
+                          value={themeBgColor.startsWith("#") && themeBgColor.length === 7 ? themeBgColor : "#060914"}
                           onChange={(e) => setThemeBgColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />
@@ -2401,7 +2401,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themeTextColor}
+                          value={themeTextColor.startsWith("#") && themeTextColor.length === 7 ? themeTextColor : "#f8fafc"}
                           onChange={(e) => setThemeTextColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />
@@ -2420,7 +2420,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themeMutedColor}
+                          value={themeMutedColor.startsWith("#") && themeMutedColor.length === 7 ? themeMutedColor : "#9aa7bd"}
                           onChange={(e) => setThemeMutedColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />
@@ -2439,7 +2439,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themePrimaryColor}
+                          value={themePrimaryColor.startsWith("#") && themePrimaryColor.length === 7 ? themePrimaryColor : "#4f7cff"}
                           onChange={(e) => setThemePrimaryColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />
@@ -2458,7 +2458,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themeSecondaryColor}
+                          value={themeSecondaryColor.startsWith("#") && themeSecondaryColor.length === 7 ? themeSecondaryColor : "#20c7b5"}
                           onChange={(e) => setThemeSecondaryColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />
@@ -2477,7 +2477,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themePanelColor}
+                          value={themePanelColor.startsWith("#") && themePanelColor.length === 7 ? themePanelColor : "#0d1323"}
                           onChange={(e) => setThemePanelColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />
@@ -2496,7 +2496,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themeBorderColor}
+                          value={themeBorderColor.startsWith("#") && themeBorderColor.length === 7 ? themeBorderColor : "#1d2433"}
                           onChange={(e) => setThemeBorderColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />

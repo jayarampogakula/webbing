@@ -125,7 +125,7 @@ export default async function AdminPage() {
   const totalSites = projects.length;
   const activeSubs = subscriptions.filter((s) => s.status === "ACTIVE").length;
 
-      const isMasterDomain = baseDomain.toLowerCase() === "webbing.in" || baseDomain.toLowerCase().includes("localhost");
+      const isMasterDomain = baseDomain.toLowerCase() === "webbing.in" || baseDomain.toLowerCase() === "cursorwebs.com" || baseDomain.toLowerCase().includes("localhost");
       const enableLicenseGenerator = (process.env.ENABLE_LICENSE_GENERATOR === "true" || process.env.NODE_ENV === "development") && isMasterDomain;
 
       return (

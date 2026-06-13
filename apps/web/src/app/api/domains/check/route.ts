@@ -12,9 +12,9 @@ export async function GET(req: Request) {
   try {
     const cleanDomain = domain.toLowerCase().replace(/^www\./, "");
 
-    // 1. If it's a standard subdomain of webbing.in or webbing.io, approve if the project exists and is published
-    if (cleanDomain.endsWith(".webbing.in") || cleanDomain.endsWith(".webbing.io")) {
-      const subdomain = cleanDomain.replace(/\.webbing\.(in|io)$/, "");
+    // 1. If it's a standard subdomain of webbing.in, webbing.io, or cursorwebs.com, approve if the project exists and is published
+    if (cleanDomain.endsWith(".webbing.in") || cleanDomain.endsWith(".webbing.io") || cleanDomain.endsWith(".cursorwebs.com")) {
+      const subdomain = cleanDomain.replace(/\.(webbing\.(in|io)|cursorwebs\.com)$/, "");
       const project = await prisma.project.findUnique({
         where: { subdomain }
       });
