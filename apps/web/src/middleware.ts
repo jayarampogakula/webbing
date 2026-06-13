@@ -68,6 +68,8 @@ export default function middleware(req: NextRequest) {
   // 1. Root and standard app/dashboard pages
   if (
     currentHost === "" ||
+    hostClean === appHost ||
+    hostClean === `app.${appHost}` ||
     hostClean === "webbing.in" ||
     hostClean === "webbing.io" ||
     hostClean === "app.webbing.in" ||

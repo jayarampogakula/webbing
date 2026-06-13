@@ -1115,7 +1115,7 @@ export default function AdminConsole({
         {!sidebarCollapsed && (
           <div style={{ padding: "0.5rem 0.8rem", color: "#4b5563", fontSize: "0.75rem", fontWeight: 600, textAlign: "center", borderTop: "1px solid rgba(255, 255, 255, 0.03)", paddingTop: "0.5rem", marginTop: "auto", display: "flex", flexDirection: "column", gap: "0.1rem" }}>
             <span style={{ fontSize: "0.7rem", opacity: 0.8 }}>{appName} SaaS</span>
-            <span style={{ color: "#818cf8" }}>v0.9.0</span>
+            <span style={{ color: "#818cf8" }}>V1.0</span>
           </div>
         )}
 
@@ -2887,7 +2887,7 @@ export default function AdminConsole({
                   </div>
                   <div>
                     <span style={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 700, textTransform: "uppercase" }}>Product Version</span>
-                    <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#f8fafc", marginTop: "0.25rem" }}>v0.9.0</div>
+                    <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#f8fafc", marginTop: "0.25rem" }}>V1.0</div>
                   </div>
                 </div>
 

@@ -2130,7 +2130,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
             {!sidebarCollapsed && (
               <div style={{ padding: "0.5rem 0.8rem", color: "#4b5563", fontSize: "0.75rem", fontWeight: 600, textAlign: "center", borderTop: "1px solid rgba(255, 255, 255, 0.03)", paddingTop: "0.5rem", marginTop: "auto", display: "flex", flexDirection: "column", gap: "0.1rem" }}>
                 <span style={{ fontSize: "0.75rem", opacity: 0.8 }}>{appName} SaaS</span>
-                <span style={{ color: "#818cf8" }}>v0.9.0</span>
+                <span style={{ color: "#818cf8" }}>V1.0</span>
               </div>
             )}
 

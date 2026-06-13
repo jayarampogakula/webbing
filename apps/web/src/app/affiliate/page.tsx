@@ -190,7 +190,7 @@ export default async function AffiliatePage() {
         </div>
         <div style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "0.8rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
           <span>© {new Date().getFullYear()} {settings.appName} Platforms Inc. All rights reserved.</span>
-          <span style={{ opacity: 0.6 }}>Version v0.9.0</span>
+          <span style={{ opacity: 0.6 }}>Version V1.0</span>
         </div>
       </footer>
     </div>
