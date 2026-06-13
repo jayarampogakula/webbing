@@ -432,7 +432,7 @@ export default function AdminConsole({
   const [refunds, setRefunds] = useState<any[]>(initialRefunds);
 
   // System branding states
-  const isCursorWebs = baseDomain.toLowerCase().includes("cursonwebs") || baseDomain.toLowerCase().includes("cursorwebs");
+  const isCursorWebs = typeof baseDomain === "string" && (baseDomain.toLowerCase().includes("cursonwebs") || baseDomain.toLowerCase().includes("cursorwebs"));
   const defaultAppName = initialSettings?.appName || (isCursorWebs ? "CursorWebs" : "Webbing");
   const [appName, setAppName] = useState(defaultAppName);
   const [appLogo, setAppLogo] = useState(initialSettings?.appLogo || "");
@@ -828,7 +828,7 @@ export default function AdminConsole({
 
   // Dynamically compute color-scheme based on background brightness
   let colorScheme = "dark";
-  const bgVal = themeBgColor || "#060914";
+  const bgVal = typeof themeBgColor === "string" ? themeBgColor : "#060914";
   if (bgVal.startsWith("#")) {
     const hex = bgVal.replace("#", "");
     let r = 6, g = 9, b = 20;
@@ -2453,7 +2453,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themeBgColor.startsWith("#") && themeBgColor.length === 7 ? themeBgColor : "#060914"}
+                          value={typeof themeBgColor === "string" && themeBgColor.startsWith("#") && themeBgColor.length === 7 ? themeBgColor : "#060914"}
                           onChange={(e) => setThemeBgColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />
@@ -2472,7 +2472,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themeTextColor.startsWith("#") && themeTextColor.length === 7 ? themeTextColor : "#f8fafc"}
+                          value={typeof themeTextColor === "string" && themeTextColor.startsWith("#") && themeTextColor.length === 7 ? themeTextColor : "#f8fafc"}
                           onChange={(e) => setThemeTextColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />
@@ -2491,7 +2491,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themeMutedColor.startsWith("#") && themeMutedColor.length === 7 ? themeMutedColor : "#9aa7bd"}
+                          value={typeof themeMutedColor === "string" && themeMutedColor.startsWith("#") && themeMutedColor.length === 7 ? themeMutedColor : "#9aa7bd"}
                           onChange={(e) => setThemeMutedColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />
@@ -2510,7 +2510,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themePrimaryColor.startsWith("#") && themePrimaryColor.length === 7 ? themePrimaryColor : "#4f7cff"}
+                          value={typeof themePrimaryColor === "string" && themePrimaryColor.startsWith("#") && themePrimaryColor.length === 7 ? themePrimaryColor : "#4f7cff"}
                           onChange={(e) => setThemePrimaryColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />
@@ -2529,7 +2529,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themeSecondaryColor.startsWith("#") && themeSecondaryColor.length === 7 ? themeSecondaryColor : "#20c7b5"}
+                          value={typeof themeSecondaryColor === "string" && themeSecondaryColor.startsWith("#") && themeSecondaryColor.length === 7 ? themeSecondaryColor : "#20c7b5"}
                           onChange={(e) => setThemeSecondaryColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />
@@ -2548,7 +2548,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themePanelColor.startsWith("#") && themePanelColor.length === 7 ? themePanelColor : "#0d1323"}
+                          value={typeof themePanelColor === "string" && themePanelColor.startsWith("#") && themePanelColor.length === 7 ? themePanelColor : "#0d1323"}
                           onChange={(e) => setThemePanelColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />
@@ -2567,7 +2567,7 @@ export default function AdminConsole({
                       <div style={{ display: "flex", gap: "0.5rem" }}>
                         <input
                           type="color"
-                          value={themeBorderColor.startsWith("#") && themeBorderColor.length === 7 ? themeBorderColor : "#1d2433"}
+                          value={typeof themeBorderColor === "string" && themeBorderColor.startsWith("#") && themeBorderColor.length === 7 ? themeBorderColor : "#1d2433"}
                           onChange={(e) => setThemeBorderColor(e.target.value)}
                           style={{ width: "42px", height: "42px", border: "1px solid rgba(226,232,240,0.16)", borderRadius: "0.5rem", cursor: "pointer", background: "none", padding: 0 }}
                         />
