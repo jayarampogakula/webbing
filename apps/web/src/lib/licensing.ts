@@ -40,7 +40,12 @@ export async function verifyLicenseOnline(key: string, domain: string): Promise<
     const cleanDomain = domain.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0].split(":")[0];
 
     // If the host itself matches the central server, execute direct database checks to bypass HTTP calls
-    const isCentralServer = cleanDomain === "webbing.in" || cleanDomain === "localhost" || cleanDomain.includes("webbing.in");
+    const isCentralServer = 
+      cleanDomain === "webbing.in" || 
+      cleanDomain === "localhost" || 
+      cleanDomain.includes("webbing.in") ||
+      cleanDomain.includes("cursorwebs.com") ||
+      cleanDomain.includes("cursonwebs.com");
 
     if (isCentralServer) {
       const { prisma } = await import("@webbing/db");
@@ -131,9 +136,11 @@ export async function checkSetupAndLicense(host?: string): Promise<{ setupRequir
       cleanHost.endsWith("webbing.in") || 
       cleanHost.endsWith("webbing.io") ||
       cleanHost.endsWith("cursorwebs.com") ||
+      cleanHost.endsWith("cursonwebs.com") ||
       cleanAppHost.endsWith("webbing.in") ||
       cleanAppHost.endsWith("webbing.io") ||
-      cleanAppHost.endsWith("cursorwebs.com");
+      cleanAppHost.endsWith("cursorwebs.com") ||
+      cleanAppHost.endsWith("cursonwebs.com");
 
     // Bypasses all setup/license constraints on master platform domains
     if (isPrimaryCentralServer) {
