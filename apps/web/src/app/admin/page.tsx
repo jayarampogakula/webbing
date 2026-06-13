@@ -63,7 +63,7 @@ export default async function AdminPage() {
   let systemSettings: any = null;
 
   try {
-    const [dbUsers, dbProjects, dbSubscriptions, dbTotalTenants, dbLlmKeys, dbPlans, dbRequests, dbSettings, dbFeedbacks, dbPayouts, dbRefunds] = await Promise.all([
+    const [dbUsers, dbProjects, dbSubscriptions, dbTotalTenants, dbLlmKeys, dbPlans, dbRequests, dbSettings, dbFeedbacks, dbPayouts, dbRefunds, dbDiscounts] = await Promise.all([
       prisma.user.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
       prisma.project.findMany({ include: { tenant: true, customDomain: true, user: true }, orderBy: { createdAt: "desc" } }),
       prisma.subscription.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
@@ -75,13 +75,18 @@ export default async function AdminPage() {
       prisma.feedback.findMany({ orderBy: { createdAt: "desc" } }),
       prisma.payoutRequest.findMany({ include: { user: true }, orderBy: { createdAt: "desc" } }),
       prisma.refundRequest.findMany({ include: { tenant: true, paymentRequest: true }, orderBy: { createdAt: "desc" } }),
+      prisma.systemSetting.findMany({ where: { key: { startsWith: "yearlyDiscount_" } } })
     ]);
     users = dbUsers;
     projects = dbProjects;
     subscriptions = dbSubscriptions;
     totalTenants = dbTotalTenants;
     llmKeys = dbLlmKeys;
-    plans = dbPlans;
+    const discountMap = Object.fromEntries((dbDiscounts || []).map((s: any) => [s.key, s.value]));
+    plans = dbPlans.map((p: any) => ({
+      ...p,
+      yearlyDiscount: parseInt(discountMap[`yearlyDiscount_${p.id}`] || "0", 10)
+    }));
     paymentRequests = dbRequests;
     systemSettings = dbSettings;
     feedbacks = dbFeedbacks;
@@ -124,8 +129,8 @@ export default async function AdminPage() {
       const enableLicenseGenerator = (process.env.ENABLE_LICENSE_GENERATOR === "true" || process.env.NODE_ENV === "development") && isMasterDomain;
 
       return (
-        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0a0e17" }}>
-          <header className="site-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: 0, background: "rgba(10, 14, 23, 0.95)" }}>
+        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--bg)" }}>
+          <header className="site-nav" style={{ borderBottom: "1px solid var(--line)", margin: 0, background: "var(--panel)" }}>
             <a className="brand" href="/">
               <span className="brand-mark"><Sparkles size={18} /></span>
               Webbing

@@ -1880,9 +1880,9 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   // ----------------------------------------------------
   if (activeView === "homepage") {
     return (
-      <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100vh", background: "#0a0e17", overflow: "hidden" }}>
+      <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100vh", background: "var(--bg)", overflow: "hidden" }}>
         {/* Persistent Site Header (Main Menu) */}
-        <header className="site-nav dashboard-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: 0, background: "rgba(10, 14, 23, 0.95)", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 1.5rem", height: "70px", flexShrink: 0 }}>
+        <header className="site-nav dashboard-nav" style={{ borderBottom: "1px solid var(--line)", margin: 0, background: "var(--panel)", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 1.5rem", height: "70px", flexShrink: 0 }}>
           <a className="brand" href="/">
             {appLogo ? (
               <img src={appLogo} alt={appName} style={{ height: "24px", maxWidth: "100px", objectFit: "contain", marginRight: "0.25rem" }} />
@@ -1914,7 +1914,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
           </div>
         </header>
 
-        <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "#070b13", overflow: "hidden", position: "relative" }}>
+        <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "var(--bg)", overflow: "hidden", position: "relative" }}>
         {/* Mobile sidebar backdrop mask */}
         {isMobile && !sidebarCollapsed && (
           <div 
@@ -2158,7 +2158,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
           </div>
         </div>
 
-        <div style={{ flexGrow: 1, padding: isMobile ? "1.25rem" : "2.5rem", background: "#0a0e17", overflowY: "auto" }}>
+        <div style={{ flexGrow: 1, padding: isMobile ? "1.25rem" : "2.5rem", background: "var(--bg)", overflowY: "auto" }}>
           {homeSubView === "affiliate" ? (
             <main style={{ maxWidth: "1000px", margin: "0 auto", color: "#fff" }}>
               {!(tenant.subscription && tenant.subscription.planId !== "free-plan" && tenant.subscription.planId !== "starter") ? (
@@ -2670,9 +2670,9 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
   // UNIFIED BUILDER WORKSPACE VIEW RENDER
   // ----------------------------------------------------
   return (
-    <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100vh", background: "#0a0e17", overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100vh", background: "var(--bg)", overflow: "hidden" }}>
       {/* Persistent Site Header (Main Menu) */}
-      <header className="site-nav dashboard-nav" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", margin: 0, background: "rgba(10, 14, 23, 0.95)", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 1.5rem", height: "70px", flexShrink: 0 }}>
+      <header className="site-nav dashboard-nav" style={{ borderBottom: "1px solid var(--line)", margin: 0, background: "var(--panel)", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 1.5rem", height: "70px", flexShrink: 0 }}>
         <a className="brand" href="/">
           {appLogo ? (
             <img src={appLogo} alt={appName} style={{ height: "24px", maxWidth: "100px", objectFit: "contain", marginRight: "0.25rem" }} />
@@ -2704,7 +2704,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
         </div>
       </header>
 
-      <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "#070b13", overflow: "hidden", position: "relative" }}>
+      <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "var(--bg)", overflow: "hidden", position: "relative" }}>
       {/* Mobile sidebar backdrop mask */}
       {isMobile && !sidebarCollapsed && (
         <div 
@@ -3222,7 +3222,7 @@ export default function DashboardEditor({ user, tenant, baseDomain, protocol, in
       </div>
 
       {isCreatingNew ? (
-        <div style={{ flexGrow: 1, padding: "2.5rem", background: "#0a0e17", overflowY: "auto" }}>
+        <div style={{ flexGrow: 1, padding: "2.5rem", background: "var(--bg)", overflowY: "auto" }}>
           <div style={{ maxWidth: "1150px", margin: "0 auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
               <div>

@@ -242,7 +242,7 @@ const THEME_PRESETS = [
       themePrimaryColor: "#4f7cff",
       themeSecondaryColor: "#20c7b5",
       themePanelColor: "#0d1323",
-      themeBorderColor: "rgba(226, 232, 240, 0.12)"
+      themeBorderColor: "#1d2433"
     }
   },
   {
@@ -254,7 +254,7 @@ const THEME_PRESETS = [
       themePrimaryColor: "#d946ef",
       themeSecondaryColor: "#06b6d4",
       themePanelColor: "#140c22",
-      themeBorderColor: "rgba(217, 70, 239, 0.15)"
+      themeBorderColor: "#30143c"
     }
   },
   {
@@ -266,7 +266,7 @@ const THEME_PRESETS = [
       themePrimaryColor: "#10b981",
       themeSecondaryColor: "#06b6d4",
       themePanelColor: "#062820",
-      themeBorderColor: "rgba(16, 185, 129, 0.15)"
+      themeBorderColor: "#0b332b"
     }
   },
   {
@@ -278,7 +278,7 @@ const THEME_PRESETS = [
       themePrimaryColor: "#eab308",
       themeSecondaryColor: "#ca8a04",
       themePanelColor: "#171717",
-      themeBorderColor: "rgba(234, 179, 8, 0.15)"
+      themeBorderColor: "#332808"
     }
   },
   {
@@ -290,7 +290,7 @@ const THEME_PRESETS = [
       themePrimaryColor: "#f43f5e",
       themeSecondaryColor: "#fb923c",
       themePanelColor: "#1d0b10",
-      themeBorderColor: "rgba(244, 63, 94, 0.15)"
+      themeBorderColor: "#3c121e"
     }
   },
   {
@@ -302,7 +302,7 @@ const THEME_PRESETS = [
       themePrimaryColor: "#3b82f6",
       themeSecondaryColor: "#64748b",
       themePanelColor: "#0f172a",
-      themeBorderColor: "rgba(255, 255, 255, 0.08)"
+      themeBorderColor: "#1e293b"
     }
   },
   {
@@ -314,7 +314,7 @@ const THEME_PRESETS = [
       themePrimaryColor: "#00b4d8",
       themeSecondaryColor: "#90e0ef",
       themePanelColor: "#1c2541",
-      themeBorderColor: "rgba(0, 180, 216, 0.15)"
+      themeBorderColor: "#1d3557"
     }
   },
   {
@@ -326,7 +326,7 @@ const THEME_PRESETS = [
       themePrimaryColor: "#ef4444",
       themeSecondaryColor: "#f97316",
       themePanelColor: "#1a1818",
-      themeBorderColor: "rgba(239, 68, 68, 0.15)"
+      themeBorderColor: "#3c1818"
     }
   },
   {
@@ -338,7 +338,7 @@ const THEME_PRESETS = [
       themePrimaryColor: "#84cc16",
       themeSecondaryColor: "#22c55e",
       themePanelColor: "#0f2417",
-      themeBorderColor: "rgba(132, 204, 22, 0.15)"
+      themeBorderColor: "#183c24"
     }
   },
   {
@@ -350,7 +350,7 @@ const THEME_PRESETS = [
       themePrimaryColor: "#0ea5e9",
       themeSecondaryColor: "#a855f7",
       themePanelColor: "#1e293b",
-      themeBorderColor: "rgba(14, 165, 233, 0.15)"
+      themeBorderColor: "#1e293b"
     }
   }
 ];
@@ -778,14 +778,26 @@ export default function AdminConsole({
   };
 
   return (
-    <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "#070b13", overflow: "hidden" }}>
+    <div style={{ display: "flex", width: "100%", height: "calc(100vh - 70px)", background: "var(--bg)", overflow: "hidden" }}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        :root {
+          --bg: ${themeBgColor} !important;
+          --text: ${themeTextColor} !important;
+          --muted: ${themeMutedColor} !important;
+          --blue: ${themePrimaryColor} !important;
+          --teal: ${themeSecondaryColor} !important;
+          --panel: ${themePanelColor} !important;
+          --panel-2: ${themePanelColor} !important;
+          --line: ${themeBorderColor} !important;
+        }
+      `}} />
       
       {/* PERSISTENT LEFT SIDEBAR */}
       <div style={{
         width: sidebarCollapsed ? "64px" : "200px",
         minWidth: sidebarCollapsed ? "64px" : "200px",
-        background: "rgba(10, 14, 23, 0.95)",
-        borderRight: "1px solid rgba(255,255,255,0.05)",
+        background: "var(--panel)",
+        borderRight: "1px solid var(--line)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
@@ -1133,7 +1145,7 @@ export default function AdminConsole({
       </div>
 
       {/* MAIN ADMIN WORKSPACE CONTENT VIEW */}
-      <div style={{ flexGrow: 1, padding: "2.5rem", background: "#0a0e17", overflowY: "auto" }}>
+      <div style={{ flexGrow: 1, padding: "2.5rem", background: "var(--bg)", overflowY: "auto" }}>
         
         {/* Alert Notices */}
         {message && (

@@ -10,7 +10,7 @@ export default async function PrivacyPage() {
   const settings = await getSystemSettings();
 
   return (
-    <div className="app-shell" style={{ background: "#0a0e17", minHeight: "100vh" }}>
+    <div className="app-shell" style={{ background: "var(--bg)", minHeight: "100vh" }}>
       <MarketingHeader user={user} appName={settings.appName} appLogo={settings.appLogo} />
       
       <main style={{ maxWidth: "800px", margin: "4rem auto", padding: "0 2rem", color: "#cbd5e1", lineHeight: "1.7" }}>
