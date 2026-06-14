@@ -211,7 +211,7 @@ option {
 
 .stat-tile, .surface-panel, .pricing-card, .feature-card, .auth-card, .table-wrap, .key-card {
   border: 1px solid var(--line);
-  background: rgba(13, 19, 35, 0.78);
+  background: var(--panel);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
 }
 

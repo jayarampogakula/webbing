@@ -51,8 +51,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No settings provided" }, { status: 400 });
     }
 
+    const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "localhost";
+    const cleanHost = host.toLowerCase().split(":")[0];
+    const isCursorWebs = cleanHost.includes("cursonwebs") || cleanHost.includes("cursorwebs");
+    const prefix = isCursorWebs ? "cursorwebs_" : "";
+
     if (settingsToSave.licenseKey) {
-      const host = req.headers.get("host") || "localhost";
       const verification = await verifyLicenseOnline(settingsToSave.licenseKey, host);
       if (!verification.success) {
         return NextResponse.json({ error: verification.error || "License verification failed." }, { status: 400 });
@@ -62,10 +66,11 @@ export async function POST(req: Request) {
     await Promise.all(
       Object.entries(settingsToSave).map(([key, value]) => {
         if (value === null || value === undefined) return Promise.resolve();
+        const dbKey = prefix + key;
         return prisma.systemSetting.upsert({
-          where: { key },
+          where: { key: dbKey },
           update: { value: String(value) },
-          create: { key, value: String(value) }
+          create: { key: dbKey, value: String(value) }
         });
       })
     );
